@@ -25,26 +25,26 @@ tibble::tibble(
   dplyr::mutate(project = basename(dir_path)) ->
   project_path
 
+# Create all Seurat objects
+# QC and filter each object
+# Calculate percent.mt on raw counts
+# SCTransform(do.scale=FALSE, do.center=FALSE) each Seurat object
+# CellCycleScoring() (while active assay is still SCT Assay)
+# Find cc score differences
+# Change defaultAssay <- 'RNA'
+# SCTransform(vars.to.regress = c("percent.mt", "CC.Difference"), do.scale=TRUE, do.center=TRUE) each Seurat object
+# Merge all Seurat objects (if I want to merge them for pooled analysis)
+# RunPCA()
+# RunUMAP()
+# FindNeighbors()
+# FindCluster()
+# Switch to RNA Assay
+# Perform DE analysis
+
 # Function ----------------------------------------------------------------
 
 fn_load_sc_10x <- function(.x) {
   # .x <- project_path$dir_path[[1]]
-  # Create all Seurat objects
-  # QC and filter each object
-  # Calculate percent.mt on raw counts
-  # SCTransform(do.scale=FALSE, do.center=FALSE) each Seurat object
-  # CellCycleScoring() (while active assay is still SCT Assay)
-  # Find cc score differences
-  # Change defaultAssay <- 'RNA'
-  # SCTransform(vars.to.regress = c("percent.mt", "CC.Difference"), do.scale=TRUE, do.center=TRUE) each Seurat object
-  # Merge all Seurat objects (if I want to merge them for pooled analysis)
-  # RunPCA()
-  # RunUMAP()
-  # FindNeighbors()
-  # FindCluster()
-  # Switch to RNA Assay
-  # Perform DE analysis
-  
   .regions <- c("CB" = "Brain", "CM" = "Meninge", "CS" = "Skull", "DB" = "Brain", "DM" = "Meninge", "DS" = "Skull")
   .cases <- c("CB" = "Sham", "CM" = "Sham", "CS" = "Sham", "DB" = "MCAO", "DM" = "MCAO", "DS" = "MCAO")
   
@@ -77,10 +77,12 @@ fn_load_sc_10x <- function(.x) {
     ncol = 3
   )
   ggsave(
-    filename = "{.project}-vlnplot.pdf" %>% glue::glue(),
+    filename = "vlnplot-{.project}.pdf" %>% glue::glue(),
     plot = .vlnplot,
     device = "pdf",
-    path = "data/result/"
+    path = "data/result/01-basic",
+    width = 5,
+    height = 5
   )
   .plot1 <- Seurat::FeatureScatter(
     object = .sc, 
@@ -93,6 +95,14 @@ fn_load_sc_10x <- function(.x) {
     feature2 = "nFeature_RNA"
   )
   .plot <- Seurat::CombinePlots(plots = list(.plot1, .plot2))
+  ggsave(
+    filename = "qc-{.project}.pdf" %>% glue::glue(),
+    plot = .plot,
+    device = "pdf",
+    path = "data/result/01-basic",
+    width = 7,
+    height = 5
+  )
   
   .sc_sub <- subset(
     x = .sc, 
