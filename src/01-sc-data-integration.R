@@ -13,7 +13,7 @@ library(rlang)
 
 # Load data ---------------------------------------------------------------
 
-data_dir <- "analysis/2022-02-08-single-cell/raw/singlecell/report"
+data_dir <- "data/raw/singlecell/report"
 
 tibble::tibble(
   dir_path = list.dirs(
@@ -21,7 +21,7 @@ tibble::tibble(
     recursive = FALSE
   )
 ) %>% 
-  dplyr::mutate(project = basename(dir_path))  ->
+  dplyr::mutate(project = basename(dir_path)) ->
   project_path
 
 # Function ----------------------------------------------------------------
