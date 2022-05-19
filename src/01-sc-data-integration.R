@@ -10,6 +10,7 @@
 library(magrittr)
 library(ggplot2)
 library(rlang)
+library(patchwork)
 
 # Load data ---------------------------------------------------------------
 
@@ -28,6 +29,22 @@ tibble::tibble(
 
 fn_load_sc_10x <- function(.x) {
   # .x <- project_path$dir_path[[1]]
+  # Create all Seurat objects
+  # QC and filter each object
+  # Calculate percent.mt on raw counts
+  # SCTransform(do.scale=FALSE, do.center=FALSE) each Seurat object
+  # CellCycleScoring() (while active assay is still SCT Assay)
+  # Find cc score differences
+  # Change defaultAssay <- 'RNA'
+  # SCTransform(vars.to.regress = c("percent.mt", "CC.Difference"), do.scale=TRUE, do.center=TRUE) each Seurat object
+  # Merge all Seurat objects (if I want to merge them for pooled analysis)
+  # RunPCA()
+  # RunUMAP()
+  # FindNeighbors()
+  # FindCluster()
+  # Switch to RNA Assay
+  # Perform DE analysis
+  
   .regions <- c("CB" = "Brain", "CM" = "Meninge", "CS" = "Skull", "DB" = "Brain", "DM" = "Meninge", "DS" = "Skull")
   .cases <- c("CB" = "Sham", "CM" = "Sham", "CS" = "Sham", "DB" = "MCAO", "DM" = "MCAO", "DS" = "MCAO")
   
@@ -48,19 +65,39 @@ fn_load_sc_10x <- function(.x) {
   .sc$case <- .case
   .sc$region <- .region
   
-  .sc <- Seurat::PercentageFeatureSet(.sc, pattern = "^mt-", col.name = "percent.mt")
+  .sc <- Seurat::PercentageFeatureSet(
+    object = .sc, 
+    pattern = "^mt-", 
+    col.name = "percent.mt"
+  )
   
   .vlnplot <- Seurat::VlnPlot(
     .sc, 
     features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), 
     ncol = 3
   )
-  
-  .plot1 <- Seurat::FeatureScatter(.sc, feature1 = "nCount_RNA", feature2 = "percent.mt")
-  .plot2 <- Seurat::FeatureScatter(.sc, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+  ggsave(
+    filename = "{.project}-vlnplot.pdf" %>% glue::glue(),
+    plot = .vlnplot,
+    device = "pdf",
+    path = "data/result/"
+  )
+  .plot1 <- Seurat::FeatureScatter(
+    object = .sc, 
+    feature1 = "nCount_RNA", 
+    feature2 = "percent.mt"
+  )
+  .plot2 <- Seurat::FeatureScatter(
+    object = .sc, 
+    feature1 = "nCount_RNA", 
+    feature2 = "nFeature_RNA"
+  )
   .plot <- Seurat::CombinePlots(plots = list(.plot1, .plot2))
   
-  .sc_sub <- subset(.sc, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & percent.mt < 5)
+  .sc_sub <- subset(
+    x = .sc, 
+    subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & percent.mt < 5
+  )
   
   .sc_sub_sct <- Seurat::SCTransform(
     object = .sc_sub,
@@ -68,21 +105,25 @@ fn_load_sc_10x <- function(.x) {
     do.center = FALSE
   )
   
-  
-  .sc_hub <- Seurat::CellCycleScoring(
-    object = .sc_sub,
+  .sc_sub_sct <- Seurat::CellCycleScoring(
+    object = .sc_sub_sct,
     g2m.features = Seurat::cc.genes$g2m.genes,
     s.features = Seurat::cc.genes$s.genes
   )
   
-  .sc_sub <- Seurat::SCTransform(
-    object = .sc_sub,
-    method = "glmGamPoi",
-    vars.to.regress = c("percent.mt", "S.Score"),
-    verbose = FALSE
+  .sc_sub_sct$CC.Difference <- .sc_sub_sct$S.Score - .sc_sub_sct$G2M.Score
+  
+  Seurat::DefaultAssay(.sc_sub_sct) <- "RNA"
+  
+  .sc_sub_sct_sct <- Seurat::SCTransform(
+    object = .sc_sub_sct,
+    # method = "glmGamPoi",
+    vars.to.regress = c("percent.mt", "CC.Difference"),
+    do.scale = TRUE,
+    do.center = TRUE
   )
   
-  .sc_sub
+  .sc_sub_sct_sct
 }
 
 
