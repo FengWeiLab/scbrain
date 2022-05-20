@@ -181,9 +181,9 @@ fn_filter_sct <- function(.sc) {
   .sc_sub <- subset(
     x = .sc, 
     subset = nFeature_RNA > 200 & 
-      nFeature_RNA < 3000 & 
-      percent.mt < 10 &
-      Percent.Largest.Gene < 20
+      nFeature_RNA < 6000 & 
+      percent.mt < 25 &
+      Percent.Largest.Gene < 30
   )
   
   .sc_sub_sct <- Seurat::SCTransform(
@@ -221,17 +221,34 @@ project_sc <- project_path %>%
       .x = dir_path,
       .f = fn_load_sc_10x
     )
-  ) %>% 
-  dplyr::mutate(
-    sct = purrr::map(
-      .x = sc,
-      .f = fn_filter_sct
-    )
   ) 
 
 readr::write_rds(
   x = project_sc, 
   file = "data/rda/project_sc.rds.gz"
+)
+
+project_sc %>% 
+  dplyr::mutate(
+    sct = purrr::map(
+      .x = sc,
+      .f = fn_filter_sct
+    )
+  ) %>% 
+  dplyr::mutate(
+    ratio = purrr::map2_dbl(
+      .x = sc,
+      .y = sct,
+      .f = function(.x, .y) {
+        ncol(.y)/ncol(.x)
+      }
+    )
+  ) ->
+  project_sc_sct
+
+readr::write_rds(
+  x = project_sc_sct, 
+  file = "data/rda/project_sc_sct.rds.gz"
 )
 
 # save image --------------------------------------------------------------
