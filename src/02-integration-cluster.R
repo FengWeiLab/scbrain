@@ -67,4 +67,47 @@ writexl::write_xlsx(x = project_sct_reads, path = "data/result/01-basic/reads-st
 project_sct %>% 
   dplyr::select(project, sct) %>% 
   tibble::deframe() ->
-  sct_list
+  sc_list
+
+features <- Seurat::SelectIntegrationFeatures(
+  object.list = sc_list,
+  nfeatures = 3000
+)
+sc_list <- Seurat::PrepSCTIntegration(
+  object.list = sc_list,
+  anchor.features = features
+)
+anchors <- Seurat::FindIntegrationAnchors(
+  object.list = sc_list,
+  normalization.method = "SCT",
+  anchor.features = features
+)
+sc_sct <- Seurat::IntegrateData(
+  anchorset = anchors,
+  normalization.method = "SCT"
+)
+
+readr::write_rds(
+  x = sc_sct,
+  file = "data/rda/sc_sct.rds.gz"
+)
+
+# Cluster -----------------------------------------------------------------
+
+sc_sct %>%
+  Seurat::RunPCA() %>%
+  Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
+  Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
+  Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
+  Seurat::FindClusters(resolution = 0.4) ->
+  sc_sct_cluster
+
+readr::write_rds(
+  x = sc_sct_cluster,
+  file = "data/rda/sc_sct_cluster.rds.gz"
+)
+
+
+# save --------------------------------------------------------------------
+
+save.image(file = "data/rda/02-integration-cluster.rda")
