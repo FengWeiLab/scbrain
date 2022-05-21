@@ -204,7 +204,7 @@ fn_filter_sct <- function(.sc) {
   
   .sc_sub_sct_sct <- Seurat::SCTransform(
     object = .sc_sub_sct,
-    # method = "glmGamPoi",
+    method = "glmGamPoi",
     vars.to.regress = c("percent.mt", "CC.Difference"),
     do.scale = TRUE,
     do.center = TRUE
