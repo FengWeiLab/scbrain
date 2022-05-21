@@ -1,12 +1,27 @@
+# Metainfo ----------------------------------------------------------------
 
+# @AUTHOR: Chun-Jie Liu
+# @CONTACT: chunjie.sam.liu.at.gmail.com
+# @DATE: Fri May 20 23:08:28 2022
+# @DESCRIPTION: cell annotation
 
-# Cell annotation ---------------------------------------------------------
+# Library -----------------------------------------------------------------
+
+library(magrittr)
+library(ggplot2)
+library(rlang)
+library(HGNChelper)
+library(Seurat)
+library(patchwork)
+# Load data ---------------------------------------------------------------
+
+sc_sct_cluster <- readr::read_rds(
+  file = "data/rda/sc_sct_cluster.rds.gz"
+)
 
 
 # sc-Type -----------------------------------------------------------------
 
-
-library(HGNChelper)
 # load gene set preparation function
 source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/gene_sets_prepare.R")
 # load cell type annotation function
@@ -95,8 +110,11 @@ cL_results %>%
         dplyr::arrange(tissue, -scores)
     }
   ))
+  
 
-sctype_scores
+sctype_scores <-  cL_results %>% 
+  dplyr::group_by(cluster) %>% 
+  dplyr::top_n(n = 1, wt = scores)  
 
 sctype_scores$type[as.numeric(as.character(sctype_scores$scores)) < sctype_scores$ncells/4] = "Unknown"
 
@@ -112,17 +130,14 @@ Seurat::DimPlot(
   label = TRUE,
   # repel = TRUE,
   group.by = 'customclassif'
-)  +
-  theme(
-    legend.position = "bottom"
-  )
+)
 
 
 
 # scMCA -------------------------------------------------------------------
 
 mca <- scMCA::scMCA(
-  scdata = exp(sc_sct_cluster[["SCT"]]@scale.data),
+  scdata = exp(sc_sct_cluster[["integrated"]]@scale.data),
   numbers_plot = 3
 )
 
