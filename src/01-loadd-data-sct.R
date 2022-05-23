@@ -84,6 +84,11 @@ fn_load_sc_10x <- function(.x) {
     pattern = "^mt-", 
     col.name = "percent.mt"
   )
+  .sc <- Seurat::PercentageFeatureSet(
+    object = .sc, 
+    pattern = "^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", 
+    col.name = "percent.ribo"
+  )
   apply(
     .sc@assays$RNA@counts,
     2,
@@ -93,8 +98,8 @@ fn_load_sc_10x <- function(.x) {
   
   .vlnplot <- Seurat::VlnPlot(
     .sc, 
-    features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), 
-    ncol = 3
+    features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), 
+    ncol = 4
   )
   
   ggsave(
@@ -180,8 +185,8 @@ fn_filter_sct <- function(.sc) {
   # .sc <- project_sc$sc[[1]]
   .sc_sub <- subset(
     x = .sc, 
-    subset = nFeature_RNA > 200 & 
-      nFeature_RNA < 6000 & 
+    subset = nFeature_RNA > 500 & 
+      nFeature_RNA < 6000 &
       percent.mt < 25 &
       Percent.Largest.Gene < 30
   )
