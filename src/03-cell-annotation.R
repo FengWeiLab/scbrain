@@ -126,13 +126,25 @@ for(j in unique(sctype_scores$cluster)) {
 
 Seurat::DimPlot(
   sc_sct_cluster,
-  reduction = "tsne",
+  reduction = "umap",
   label = TRUE,
   # repel = TRUE,
-  group.by = 'customclassif'
+  group.by = 'customclassif',
+  split.by = "region"
+) +
+  theme(
+    legend.position = "bottom"
+  ) ->
+  p
+
+ggsave(
+  filename = "test-annotation-plot-map.pdf",
+  plot = p,
+  device = "pdf",
+  path = "data/result/",
+  width = 25,
+  height = 13
 )
-
-
 
 # scMCA -------------------------------------------------------------------
 
