@@ -130,7 +130,8 @@ Seurat::DimPlot(
   label = TRUE,
   # repel = TRUE,
   group.by = 'customclassif',
-  split.by = "region"
+  split.by = "tissue",
+  ncol = 3
 ) +
   theme(
     legend.position = "bottom"
@@ -143,7 +144,7 @@ ggsave(
   device = "pdf",
   path = "data/result/",
   width = 25,
-  height = 13
+  height = 20
 )
 
 # scMCA -------------------------------------------------------------------
