@@ -99,24 +99,25 @@ sc_sct %>%
   Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
   Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
   Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-  Seurat::FindClusters(resolution = 0.4) ->
+  # Seurat::FindClusters(resolution = 0.4) ->
+  Seurat::FindClusters(resolution = c(0.1, 0.2, 0.25, 0.3,0.4, 0.5)) ->
   sc_sct_cluster
 
-sc_sct %>%
-  Seurat::RunPCA() %>%
-  Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
-  Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
-  Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-  Seurat::FindClusters(resolution = 0.5) ->
-  sc_sct_cluster0.5
-
-sc_sct %>%
-  Seurat::RunPCA() %>%
-  Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
-  Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
-  Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-  Seurat::FindClusters(resolution = 0.3) ->
-  sc_sct_cluster0.3
+# sc_sct %>%
+#   Seurat::RunPCA() %>%
+#   Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
+#   Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
+#   Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
+#   Seurat::FindClusters(resolution = 0.5) ->
+#   sc_sct_cluster0.5
+# 
+# sc_sct %>%
+#   Seurat::RunPCA() %>%
+#   Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
+#   Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
+#   Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
+#   Seurat::FindClusters(resolution = 0.3) ->
+  # sc_sct_cluster0.3
 
 readr::write_rds(
   x = sc_sct_cluster,
