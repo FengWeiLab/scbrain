@@ -86,7 +86,8 @@ fn_load_sc_10x <- function(.x) {
   )
   .sc <- Seurat::PercentageFeatureSet(
     object = .sc, 
-    pattern = "^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", 
+    # pattern = "^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", 
+    pattern = "^Rp[sl][[:digit:]]|^Rplp[[:digit:]]|^Rpsa",
     col.name = "percent.ribo"
   )
   apply(
@@ -96,12 +97,12 @@ fn_load_sc_10x <- function(.x) {
   ) ->
     .sc$Percent.Largest.Gene
   
+
   .vlnplot <- Seurat::VlnPlot(
     .sc, 
     features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), 
     ncol = 4
   )
-  
   ggsave(
     filename = "vlnplot-{.project}.pdf" %>% glue::glue(),
     plot = .vlnplot,
@@ -110,6 +111,7 @@ fn_load_sc_10x <- function(.x) {
     width = 5,
     height = 5
   )
+  
   .plot1 <- Seurat::FeatureScatter(
     object = .sc, 
     feature1 = "nCount_RNA", 
@@ -129,13 +131,14 @@ fn_load_sc_10x <- function(.x) {
     width = 7,
     height = 5
   )
+  
   .sc@meta.data %>% 
     dplyr::arrange(percent.mt) %>% 
     ggplot(aes(nCount_RNA, nFeature_RNA, color = percent.mt)) +
     geom_point() +
     scale_color_gradientn(colors=c("black","blue","green2","red","yellow")) +
     ggtitle("Example of plotting QC metrics") +
-    geom_hline(yintercept = 750) +
+    geom_hline(yintercept = 500) +
     geom_hline(yintercept = 3000) +
     theme_bw() ->
     .metrics
@@ -147,6 +150,26 @@ fn_load_sc_10x <- function(.x) {
     width = 7,
     height = 5
   )
+  
+  .sc@meta.data %>% 
+    dplyr::arrange(percent.ribo) %>% 
+    ggplot(aes(nCount_RNA, nFeature_RNA, color = percent.ribo)) +
+    geom_point() +
+    scale_color_gradientn(colors=c("black","blue","green2","red","yellow")) +
+    ggtitle("Example of plotting QC metrics") +
+    geom_hline(yintercept = 500) +
+    geom_hline(yintercept = 3000) +
+    theme_bw() ->
+    .metrics_ribo
+  ggsave(
+    plot = .metrics_ribo,
+    filename = "{.project}-metrics-ribo.pdf" %>% glue::glue(),
+    device = "pdf",
+    path = "data/result/01-basic",
+    width = 7,
+    height = 5
+  )
+  
   .sc@meta.data %>% 
     ggplot(aes(percent.mt)) +
     geom_histogram(binwidth = 0.5, fill="yellow", colour="black") +
@@ -162,6 +185,23 @@ fn_load_sc_10x <- function(.x) {
     width = 7,
     height = 5
   )
+  
+  .sc@meta.data %>% 
+    ggplot(aes(percent.ribo)) +
+    geom_histogram(binwidth = 0.5, fill="yellow", colour="black") +
+    ggtitle("Distribution of Percentage Mitochondrion") +
+    geom_vline(xintercept = 20) +
+    theme_bw() ->
+    .percent_ribo
+  ggsave(
+    plot = .percent_mt,
+    filename = "{.project}-percent-ribo.pdf" %>% glue::glue(),
+    device = "pdf",
+    path = "data/result/01-basic",
+    width = 7,
+    height = 5
+  )
+  
   .sc@meta.data %>%
     ggplot(aes(Percent.Largest.Gene)) + 
     geom_histogram(binwidth = 0.7, fill="yellow", colour="black") +
@@ -188,6 +228,7 @@ fn_filter_sct <- function(.sc) {
     subset = nFeature_RNA > 500 & 
       nFeature_RNA < 6000 &
       percent.mt < 25 &
+      percent.ribo < 25 &
       Percent.Largest.Gene < 30
   )
   
@@ -210,7 +251,7 @@ fn_filter_sct <- function(.sc) {
   .sc_sub_sct_sct <- Seurat::SCTransform(
     object = .sc_sub_sct,
     method = "glmGamPoi",
-    vars.to.regress = c("percent.mt", "CC.Difference"),
+    vars.to.regress = c("percent.mt", "percent.ribo", "CC.Difference"),
     do.scale = TRUE,
     do.center = TRUE
   )
