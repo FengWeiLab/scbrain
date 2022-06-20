@@ -327,3 +327,4 @@ cells %>%
 # save image --------------------------------------------------------------
 
 save.image(file = "data/rda/03-cell-annotation.rda")
+load(file = "data/rda/03-cell-annotation.rda")
