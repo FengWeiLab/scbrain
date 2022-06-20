@@ -96,33 +96,27 @@ readr::write_rds(
 
 sc_sct %>%
   Seurat::RunPCA() %>%
-  Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
-  Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
-  Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-  # Seurat::FindClusters(resolution = 0.4) ->
+  Seurat::RunUMAP(reduction = "pca", dims = 1:50) %>%
+  Seurat::RunTSNE(reduction = "pca", dims = 1:50) %>%
+  Seurat::FindNeighbors(reduction = "pca", dims = 1:50) %>%
   Seurat::FindClusters(resolution = c(0.1, 0.2, 0.25, 0.3,0.4, 0.5)) ->
   sc_sct_cluster
 
-# sc_sct %>%
-#   Seurat::RunPCA() %>%
-#   Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
-#   Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
-#   Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-#   Seurat::FindClusters(resolution = 0.5) ->
-#   sc_sct_cluster0.5
-# 
-# sc_sct %>%
-#   Seurat::RunPCA() %>%
-#   Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
-#   Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
-#   Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-#   Seurat::FindClusters(resolution = 0.3) ->
-  # sc_sct_cluster0.3
+
 
 readr::write_rds(
   x = sc_sct_cluster,
   file = "data/rda/sc_sct_cluster.rds.gz"
 )
+
+
+
+# 
+# VizDimLoadings(sc_sct_cluster, dims = 1:2, reduction = "pca")
+# DimPlot(sc_sct_cluster, reduction = "pca", group.by = "region")
+# DimHeatmap(sc_sct_cluster, dim = 1, cells = 500, balanced = TRUE)
+# ElbowPlot(sc_sct_cluster, ndims = 60)
+# DimPlot(sc_sct_cluster, reduction = "umap")
 
 
 # save --------------------------------------------------------------------
