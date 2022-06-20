@@ -222,14 +222,14 @@ fn_load_sc_10x <- function(.x) {
 }
 
 fn_filter_sct <- function(.sc) {
-  # .sc <- project_sc$sc[[1]]
+  .sc <- project_sc$sc[[2]]
   .sc_sub <- subset(
     x = .sc, 
     subset = nFeature_RNA > 500 & 
       nFeature_RNA < 6000 &
       percent.mt < 25 &
-      percent.ribo < 25 &
-      Percent.Largest.Gene < 30
+      percent.ribo < 50 &
+      Percent.Largest.Gene < 40
   )
   
   .sc_sub_sct <- Seurat::SCTransform(
