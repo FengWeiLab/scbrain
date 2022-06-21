@@ -96,10 +96,10 @@ readr::write_rds(
 
 sc_sct %>%
   Seurat::RunPCA() %>%
-  Seurat::RunUMAP(reduction = "pca", dims = 1:50) %>%
-  Seurat::RunTSNE(reduction = "pca", dims = 1:50) %>%
-  Seurat::FindNeighbors(reduction = "pca", dims = 1:50) %>%
-  Seurat::FindClusters(resolution = c(0.1, 0.2, 0.25, 0.3,0.4, 0.5)) ->
+  Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
+  Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
+  Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
+  Seurat::FindClusters(resolution = c(0.1, 0.2, 0.25, 0.3, 0.4, 0.5)) ->
   sc_sct_cluster
 
 
@@ -109,8 +109,8 @@ readr::write_rds(
   file = "data/rda/sc_sct_cluster.rds.gz"
 )
 
-
-
+# 
+# 
 # 
 # VizDimLoadings(sc_sct_cluster, dims = 1:2, reduction = "pca")
 # DimPlot(sc_sct_cluster, reduction = "pca", group.by = "region")
@@ -123,3 +123,4 @@ readr::write_rds(
 
 save.image(file = "data/rda/02-integration-cluster.rda")
 load(file = "data/rda/02-integration-cluster.rda")
+# 
