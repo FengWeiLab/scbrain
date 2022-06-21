@@ -13,6 +13,7 @@ library(rlang)
 library(HGNChelper)
 library(Seurat)
 library(patchwork)
+library(SingleR)
 
 # Load data ---------------------------------------------------------------
 
@@ -20,6 +21,10 @@ sc_sct_cluster <- readr::read_rds(
   file = "data/rda/sc_sct_cluster.rds.gz"
 )
 
+
+# sc_sct_cluster@meta.data$integrated_snn_res.0.1 %>% table()
+# sc_sct_cluster@meta.data$integrated_snn_res.0.2 %>% table()
+# sc_sct_cluster@meta.data$integrated_snn_res.0.1 %>% table()
 
 # sc-Type -----------------------------------------------------------------
 
@@ -58,7 +63,7 @@ gs_list <- list(
 )
 
 es.max <- sctype_score(
-  scRNAseqData = sc_sct_cluster[["SCT"]]@scale.data,
+  scRNAseqData = sc_sct_cluster[["integrated"]]@scale.data,
   scaled = TRUE,
   gs = gs_list$gs_positive,
   gs2 = gs_list$gs_negative
@@ -119,16 +124,37 @@ sctype_scores <-  cL_results %>%
 
 sctype_scores$type[as.numeric(as.character(sctype_scores$scores)) < sctype_scores$ncells/4] = "Unknown"
 
-sc_sct_cluster@meta.data$customclassif <- ""
+sc_sct_cluster@meta.data$sctype <- ""
 for(j in unique(sctype_scores$cluster)) {
   cl_type = sctype_scores[sctype_scores$cluster == j, ]
-  sc_sct_cluster@meta.data$customclassif[sc_sct_cluster@meta.data$seurat_clusters == j] = as.character(cl_type$type[1])
+  sc_sct_cluster@meta.data$sctype[sc_sct_cluster@meta.data$seurat_clusters == j] = as.character(cl_type$type[1])
 }
 
+
+
+# SingleR -----------------------------------------------------------------
+
+mouse.se <- celldex::MouseRNAseqData()
+sc_sct_cluster.sce <- as.SingleCellExperiment(sc_sct_cluster)
+
+sc_sct_cluster.sce.pred <- SingleR::SingleR(
+  test = sc_sct_cluster.sce,
+  ref = mouse.se,
+  labels = mouse.se$label.main
+)
+
+
+sc_sct_cluster$singler <- sc_sct_cluster.sce.pred$labels
+
+# Umap plot ---------------------------------------------------------------
+
+
+
 sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.25
+sc_sct_cluster <- SetIdent(sc_sct_cluster, value = "seurat_clusters")
+
 
 pcc <- readr::read_tsv(file = "https://chunjie-sam-liu.life/data/pcc.tsv")
-sc_sct_cluster <- SetIdent(sc_sct_cluster, value = "seurat_clusters")
 
 theme_umap <- theme(
   axis.text = element_blank(),
@@ -137,11 +163,11 @@ theme_umap <- theme(
   # legend.position = "none"
 )
 
-fn_plot_umap <- function(.x) {
+fn_plot_umap <- function(.x, .celltype="sctype") {
   # .x <- sc_sct_cluster
   .umap <- as.data.frame(.x@reductions$umap@cell.embeddings)
-  .xx <- .x@meta.data[, c("seurat_clusters", "customclassif")] %>% 
-    dplyr::rename(cluster = seurat_clusters, celltype =  customclassif)
+  .xx <- .x@meta.data[, c("seurat_clusters", .celltype)] %>% 
+    dplyr::rename(cluster = seurat_clusters, celltype =  .celltype)
   .xxx <- dplyr::bind_cols(.umap, .xx)
   .xxx %>% 
     dplyr::select(cluster, celltype) %>% 
@@ -204,16 +230,25 @@ fn_plot_umap <- function(.x) {
     )
 }
 
-p <- fn_plot_umap(.x = sc_sct_cluster)
+p <- fn_plot_umap(.x = sc_sct_cluster, .celltype = "sctype")
 
 
-ggsave(
-  filename = "cluster-plot-umap.pdf",
-  plot = p,
-  device = "pdf",
-  path = "data/result/",
-  width = 20,
-  height = 10
+
+# 
+# ggsave(
+#   filename = "cluster-plot-umap.pdf",
+#   plot = p,
+#   device = "pdf",
+#   path = "data/result/",
+#   width = 20,
+#   height = 10
+# )
+
+Seurat::DimPlot(
+  sc_sct_cluster,
+  reduction = "tsne",
+  label = TRUE,
+  cols = pcc$color,
 )
 
 Seurat::DimPlot(
@@ -322,7 +357,14 @@ cells %>%
   dplyr::filter(grepl(pattern = "Brain", x = tissue)) %>%
   print(n = Inf)
 
+# Marker genes ------------------------------------------------------------
 
+all.markers <- FindAllMarkers(
+  object = sc_sct_cluster, 
+  only.pos = TRUE, 
+  min.pct = 0.25, 
+  logfc.threshold = 0.25
+)
 
 # save image --------------------------------------------------------------
 
