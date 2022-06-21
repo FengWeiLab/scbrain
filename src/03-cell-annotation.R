@@ -116,7 +116,7 @@ cL_results %>%
         dplyr::arrange(tissue, -scores)
     }
   ))
-  
+
 
 sctype_scores <-  cL_results %>% 
   dplyr::group_by(cluster) %>% 
@@ -134,8 +134,9 @@ for(j in unique(sctype_scores$cluster)) {
 
 # SingleR -----------------------------------------------------------------
 
-mouse.se <- celldex::MouseRNAseqData()
 sc_sct_cluster.sce <- as.SingleCellExperiment(sc_sct_cluster)
+
+mouse.se <- celldex::MouseRNAseqData()
 
 sc_sct_cluster.sce.pred <- SingleR::SingleR(
   test = sc_sct_cluster.sce,
