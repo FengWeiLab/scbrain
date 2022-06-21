@@ -222,7 +222,7 @@ fn_load_sc_10x <- function(.x) {
 }
 
 fn_filter_sct <- function(.sc) {
-  .sc <- project_sc$sc[[2]]
+  # .sc <- project_sc$sc[[2]]
   .sc_sub <- subset(
     x = .sc, 
     subset = nFeature_RNA > 500 & 
