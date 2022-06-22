@@ -21,6 +21,9 @@ sc_sct_cluster <- readr::read_rds(
   file = "data/rda/sc_sct_cluster.rds.gz"
 )
 
+sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.25
+sc_sct_cluster <- SetIdent(sc_sct_cluster, value = "seurat_clusters")
+
 
 # sc_sct_cluster@meta.data$integrated_snn_res.0.1 %>% table()
 # sc_sct_cluster@meta.data$integrated_snn_res.0.2 %>% table()
@@ -41,12 +44,14 @@ gs_list_brain = gene_sets_prepare(db_, "Brain")
 gs_list_immune_system %>%
   purrr::map(.f = function(.x) {
     names(.x) <- paste(names(.x), "(Immune cell)")
+    .x$`Cancer cells (Immune cell)` <- NULL
     .x
   }) ->
   gs_list_immune_system
 gs_list_brain %>%
   purrr::map(.f = function(.x) {
     names(.x) <- paste(names(.x), "(Brain)")
+    .x$`Cancer cells (Immune cell)` <- NULL
     .x
   }) ->
   gs_list_brain
@@ -116,7 +121,8 @@ cL_results %>%
         dplyr::arrange(tissue, -scores)
     }
   ))
-
+cL_results %>% 
+  dplyr::filter(cluster == 8)
 
 sctype_scores <-  cL_results %>% 
   dplyr::group_by(cluster) %>% 
@@ -149,10 +155,6 @@ sc_sct_cluster$singler <- sc_sct_cluster.sce.pred$labels
 
 # Umap plot ---------------------------------------------------------------
 
-
-
-sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.25
-sc_sct_cluster <- SetIdent(sc_sct_cluster, value = "seurat_clusters")
 
 
 pcc <- readr::read_tsv(file = "https://chunjie-sam-liu.life/data/pcc.tsv")
@@ -264,14 +266,14 @@ Seurat::DimPlot(
   theme_umap ->
   p1;p1
 
-ggsave(
-  filename = "cluster-plot-umap-region.pdf",
-  plot = p1,
-  device = "pdf",
-  path = "data/result/",
-  width = 20,
-  height = 8
-)
+# ggsave(
+#   filename = "cluster-plot-umap-region.pdf",
+#   plot = p1,
+#   device = "pdf",
+#   path = "data/result/",
+#   width = 20,
+#   height = 8
+# )
 
 Seurat::DimPlot(
   sc_sct_cluster,
@@ -286,14 +288,14 @@ Seurat::DimPlot(
   theme_umap ->
   p2;p2
 
-ggsave(
-  filename = "cluster-plot-umap-tisue.pdf",
-  plot = p2,
-  device = "pdf",
-  path = "data/result/",
-  width = 20,
-  height = 15
-)
+# ggsave(
+#   filename = "cluster-plot-umap-tisue.pdf",
+#   plot = p2,
+#   device = "pdf",
+#   path = "data/result/",
+#   width = 20,
+#   height = 15
+# )
 
 
 # Seurat::DimPlot(
@@ -321,15 +323,15 @@ ggsave(
 #     legend.position = "bottom"
 #   ) ->
 #   p
-
-ggsave(
-  filename = "test-annotation-plot-map.pdf",
-  plot = p,
-  device = "pdf",
-  path = "data/result/",
-  width = 25,
-  height = 20
-)
+# 
+# ggsave(
+#   filename = "test-annotation-plot-map.pdf",
+#   plot = p,
+#   device = "pdf",
+#   path = "data/result/",
+#   width = 25,
+#   height = 20
+# )
 
 # scMCA -------------------------------------------------------------------
 
@@ -338,13 +340,13 @@ mca <- scMCA::scMCA(
   numbers_plot = 3
 )
 
-mca$cors_matrix[1:4,1:3]
-mca$scMCA %>%
-  tibble::enframe() ->
-  dd
-dd %>%
-  dplyr::group_by(value) %>%
-  dplyr::count()
+# mca$cors_matrix[1:4,1:3]
+# mca$scMCA %>%
+#   tibble::enframe() ->
+#   dd
+# dd %>%
+#   dplyr::group_by(value) %>%
+#   dplyr::count()
 
 
 ref.expr %>%
@@ -354,9 +356,18 @@ ref.expr %>%
   dplyr::mutate(tissue = gsub(pattern = ".*\\(|\\)", replacement = "", x = value)) ->
   cells
 
-cells %>%
-  dplyr::filter(grepl(pattern = "Brain", x = tissue)) %>%
+cells %>% 
+  dplyr::group_by(tissue) %>% 
+  dplyr::count() %>% 
+  dplyr::ungroup(tissue) %>% 
+  dplyr::arrange(-n) %>% 
   print(n = Inf)
+
+cells %>%
+  dplyr::filter(grepl(pattern = "^Brain|Bone-Marrow$|Peripheral_Blood", x = tissue)) %>%
+  print(n = Inf)
+
+
 
 # Marker genes ------------------------------------------------------------
 
@@ -367,6 +378,34 @@ all.markers <- FindAllMarkers(
   logfc.threshold = 0.25
 )
 
+# Features ----------------------------------------------------------------
+
+all_marker_genes <- c("Cd3e", "Cd8a", "Nkg7", "Hexb", "Cx3cr1", "Ccl3", "Ccl4", "Il1b", "Lyz2", "Clec10a")
+
+# Lymphoid lineage clusters
+Bcells <- c("Cd79a")
+Mature_Bcells <- c(Bcells, "Ms4a1")
+CD4T <- c("Cd3e")
+CD8T <- c("Cd3e", "Cd8a")
+NKcells <- c("Nkg7", "Gzmk")
+
+# myeloid lineage clusters
+myeloid <- c("Lyz2", "Cd68")
+microglia <- c("Hexb", "Cx3cr1")
+cns_macrophage <- c("C1qc", "Fcna", "Pf4", "Cd14", "Cd163")
+macrophages <- c("Cd68", "RT1-Db1")
+monocytes <- c("Fcnb", "Fcgr3a")
+granulocytes <- c("S100a9", "Hp")
+myeloid_dendritc_cells <- c("Clec9a", "Xcr1")
+plasmacytoid_dendritic_cells <- c("Siglech", "Runx2")
+
+DefaultAssay(sc_sct_cluster) <- "SCT"
+FeaturePlot(
+  object = sc_sct_cluster,
+  features = CD8T,
+  cols = c("lightgrey", "#CD0000"),
+  order = TRUE
+) 
 # save image --------------------------------------------------------------
 
 save.image(file = "data/rda/03-cell-annotation.rda")
