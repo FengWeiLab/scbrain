@@ -166,9 +166,9 @@ theme_umap <- theme(
   # legend.position = "none"
 )
 
-fn_plot_umap <- function(.x, .celltype="sctype") {
+fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
   # .x <- sc_sct_cluster
-  .umap <- as.data.frame(.x@reductions$umap@cell.embeddings)
+  .umap <- as.data.frame(.x@reductions[[.reduction]]@cell.embeddings)
   .xx <- .x@meta.data[, c("seurat_clusters", .celltype)] %>% 
     dplyr::rename(cluster = seurat_clusters, celltype =  .celltype)
   .xxx <- dplyr::bind_cols(.umap, .xx)
