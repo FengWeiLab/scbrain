@@ -25,9 +25,6 @@ sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.25
 sc_sct_cluster <- SetIdent(sc_sct_cluster, value = "seurat_clusters")
 
 
-# sc_sct_cluster@meta.data$integrated_snn_res.0.1 %>% table()
-# sc_sct_cluster@meta.data$integrated_snn_res.0.2 %>% table()
-# sc_sct_cluster@meta.data$integrated_snn_res.0.1 %>% table()
 
 # sc-Type -----------------------------------------------------------------
 
@@ -153,8 +150,35 @@ sc_sct_cluster.sce.pred <- SingleR::SingleR(
 
 sc_sct_cluster$singler <- sc_sct_cluster.sce.pred$labels
 
-# Umap plot ---------------------------------------------------------------
 
+# scMCA -------------------------------------------------------------------
+
+mca <- scMCA::scMCA(
+  scdata = exp(sc_sct_cluster[["integrated"]]@scale.data),
+  numbers_plot = 3
+)
+
+ref.expr %>%
+  colnames() %>%
+  tibble::enframe() %>%
+  dplyr::mutate(cell = gsub(pattern = "\\(.*\\)", replacement = "", x = value)) %>%
+  dplyr::mutate(tissue = gsub(pattern = ".*\\(|\\)", replacement = "", x = value)) ->
+  cells
+
+cells %>%
+  dplyr::filter(grepl(pattern = "Brain|Bone-Marrow$|Peripheral_Blood", x = tissue)) ->
+  cells_cand
+
+cells_cand %>% 
+  dplyr::filter(grepl(pattern = "Endo", x = cell))
+
+sc_sct_cluster@meta.data %>% head()
+mca$cors_matrix[, 1] %>% sort(decreasing = T) %>% head()
+mca$scMCA[1:4]
+
+sc_sct_cluster$scmca <- mca$scMCA
+
+# Umap plot ---------------------------------------------------------------
 
 
 pcc <- readr::read_tsv(file = "https://chunjie-sam-liu.life/data/pcc.tsv")
@@ -169,6 +193,7 @@ theme_umap <- theme(
 fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
   # .x <- sc_sct_cluster
   .umap <- as.data.frame(.x@reductions[[.reduction]]@cell.embeddings)
+  colnames(.umap) <- c("UMAP_1", "UMAP_2")
   .xx <- .x@meta.data[, c("seurat_clusters", .celltype)] %>% 
     dplyr::rename(cluster = seurat_clusters, celltype =  .celltype)
   .xxx <- dplyr::bind_cols(.umap, .xx)
@@ -184,11 +209,24 @@ fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
     dplyr::select(-n) %>% 
     dplyr::mutate(celltype = glue::glue("{cluster} {celltype}")) ->
     .xxx_celltype
+  
   .xxx %>% 
     dplyr::group_by(cluster) %>% 
     dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2)) %>% 
     dplyr::left_join(.xxx_celltype, by = "cluster") ->
     .xxx_label
+  
+  .labs <- if (.reduction == "umap") {
+    labs(
+      x = "UMAP1",
+      y = "UMAP2"
+    )
+  } else {
+    labs(
+      x = "tSNE1",
+      y = "tSNE2"
+    )
+  }
   
   ggplot(data = .xxx) +
     geom_point(
@@ -219,22 +257,38 @@ fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
     ) +
     theme(
       panel.background = element_blank(),
-      axis.line = element_line(colour = "black"),
+      axis.line = element_line(
+        colour = "black",
+        size = 0.5,
+        arrow = grid::arrow(
+          angle = 5,
+          length = unit(5, "npc"),
+          type = "closed"
+        )
+      ),
       axis.ticks = element_blank(),
       axis.text = element_blank(),
-      axis.title = element_text(size = 14, face = "bold"),
+      axis.title = element_text(
+        size = 12, 
+        face = "bold", 
+        hjust = 0.05
+      ),
       legend.background = element_blank(),
       legend.key = element_blank(),
-      legend.text = element_text(size = 14)
+      legend.text = element_text(
+        face = "bold",
+        color = "black",
+        size = 12
+      )
     ) +
-    labs(
-      x = "UMAP1",
-      y = "UMAP2"
-    )
+    coord_fixed(
+      ratio = 1,
+    ) +
+    .labs
 }
 
-p <- fn_plot_umap(.x = sc_sct_cluster, .celltype = "sctype")
-
+p <- fn_plot_umap(.x = sc_sct_cluster, .celltype = "sctype", .reduction = "tsne")
+p
 
 
 # 
@@ -247,12 +301,6 @@ p <- fn_plot_umap(.x = sc_sct_cluster, .celltype = "sctype")
 #   height = 10
 # )
 
-Seurat::DimPlot(
-  sc_sct_cluster,
-  reduction = "tsne",
-  label = TRUE,
-  cols = pcc$color,
-)
 
 Seurat::DimPlot(
   sc_sct_cluster,
@@ -333,50 +381,16 @@ Seurat::DimPlot(
 #   height = 20
 # )
 
-# scMCA -------------------------------------------------------------------
-
-mca <- scMCA::scMCA(
-  scdata = exp(sc_sct_cluster[["integrated"]]@scale.data),
-  numbers_plot = 3
-)
-
-# mca$cors_matrix[1:4,1:3]
-# mca$scMCA %>%
-#   tibble::enframe() ->
-#   dd
-# dd %>%
-#   dplyr::group_by(value) %>%
-#   dplyr::count()
-
-
-ref.expr %>%
-  colnames() %>%
-  tibble::enframe() %>%
-  dplyr::mutate(cell = gsub(pattern = "\\(.*\\)", replacement = "", x = value)) %>%
-  dplyr::mutate(tissue = gsub(pattern = ".*\\(|\\)", replacement = "", x = value)) ->
-  cells
-
-cells %>% 
-  dplyr::group_by(tissue) %>% 
-  dplyr::count() %>% 
-  dplyr::ungroup(tissue) %>% 
-  dplyr::arrange(-n) %>% 
-  print(n = Inf)
-
-cells %>%
-  dplyr::filter(grepl(pattern = "^Brain|Bone-Marrow$|Peripheral_Blood", x = tissue)) %>%
-  print(n = Inf)
-
 
 
 # Marker genes ------------------------------------------------------------
 
-all.markers <- FindAllMarkers(
-  object = sc_sct_cluster, 
-  only.pos = TRUE, 
-  min.pct = 0.25, 
-  logfc.threshold = 0.25
-)
+# all.markers <- FindAllMarkers(
+#   object = sc_sct_cluster, 
+#   only.pos = TRUE, 
+#   min.pct = 0.25, 
+#   logfc.threshold = 0.25
+# )
 
 # Features ----------------------------------------------------------------
 
@@ -402,10 +416,19 @@ plasmacytoid_dendritic_cells <- c("Siglech", "Runx2")
 DefaultAssay(sc_sct_cluster) <- "SCT"
 FeaturePlot(
   object = sc_sct_cluster,
-  features = CD8T,
+  features = Bcells,
   cols = c("lightgrey", "#CD0000"),
   order = TRUE
 ) 
+
+FeaturePlot(
+  object = sc_sct_cluster,
+  features = "Dntt",
+  cols = c("lightgrey", "#CD0000"),
+  order = TRUE,
+  reduction = "tsne"
+) 
+VlnPlot(sc_sct_cluster, features = c("Ms4a1", "Cd79a"), slot = "counts", log = TRUE)
 # save image --------------------------------------------------------------
 
 save.image(file = "data/rda/03-cell-annotation.rda")
