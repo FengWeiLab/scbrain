@@ -95,13 +95,12 @@ readr::write_rds(
 # Cluster -----------------------------------------------------------------
 
 sc_sct %>%
-  Seurat::RunPCA() %>%
+  Seurat::RunPCA(npcs = 30) %>%
   Seurat::RunUMAP(reduction = "pca", dims = 1:30) %>%
   Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
   Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-  Seurat::FindClusters(resolution = c(0.1, 0.2, 0.25, 0.3, 0.4, 0.5)) ->
+  Seurat::FindClusters(resolution = c(0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)) ->
   sc_sct_cluster
-
 
 
 readr::write_rds(
