@@ -22,7 +22,7 @@ sc_sct_cluster <- readr::read_rds(
 )
 
 
-sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.2
+sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.3
 sc_sct_cluster <- SetIdent(sc_sct_cluster, value = "seurat_clusters")
 
 
@@ -302,7 +302,7 @@ fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
         x = UMAP_1,
         y = UMAP_2,
       ),
-      size = 7
+      size = 6
     ) +
     scale_colour_manual(
       name = NULL,
@@ -348,106 +348,36 @@ fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
 p <- fn_plot_umap(.x = sc_sct_cluster, .celltype = "sctype", .reduction = "tsne")
 p
 
-
-Seurat::DimPlot(
-  sc_sct_cluster,
-  reduction = "tsne",
-  label = TRUE,
-  label.size = 6,
-  cols = pcc$color,
+ggsave(
+  filename = "cluster-plot-tsne-sctype.pdf",
+  plot = p,
+  device = "pdf",
+  path = "data/result/",
+  width = 13,
+  height = 9
 )
-# 
-# ggsave(
-#   filename = "cluster-plot-umap.pdf",
-#   plot = p,
-#   device = "pdf",
-#   path = "data/result/",
-#   width = 20,
-#   height = 10
-# )
 
+p1 <- fn_plot_umap(.x = sc_sct_cluster, .celltype = "sctype", .reduction = "umap")
+p1
 
+ggsave(
+  filename = "cluster-plot-umap-sctype.pdf",
+  plot = p1,
+  device = "pdf",
+  path = "data/result/",
+  width = 13,
+  height = 9
+)
 
-
-Seurat::DimPlot(
-  sc_sct_cluster,
-  reduction = "umap",
-  label = TRUE,
-  label.size = 6,
-  cols = pcc$color,
-  split.by = "region"
-) +
-  labs(x = "UAMP1", y = "UMAP2") +
-  theme_umap ->
-  p1;p1
-
-# ggsave(
-#   filename = "cluster-plot-umap-region.pdf",
-#   plot = p1,
-#   device = "pdf",
-#   path = "data/result/",
-#   width = 20,
-#   height = 8
-# )
-
-Seurat::DimPlot(
-  sc_sct_cluster,
-  reduction = "umap",
-  label = TRUE,
-  label.size = 6,
-  cols = pcc$color,
+DimPlot(
+  object = sc_sct_cluster,
+  reduction = "tsne",
+  cols  = pcc$color,
+  # group.by = "tissue"
   split.by = "tissue",
+  label = TRUE,
   ncol = 3
-) +
-  labs(x = "UAMP1", y = "UMAP2") +
-  theme_umap ->
-  p2;p2
-
-# ggsave(
-#   filename = "cluster-plot-umap-tisue.pdf",
-#   plot = p2,
-#   device = "pdf",
-#   path = "data/result/",
-#   width = 20,
-#   height = 15
-# )
-
-
-# Seurat::DimPlot(
-#   sc_sct_cluster,
-#   reduction = "umap",
-#   label = TRUE,
-#   label.size = 4,
-#   cols = pcc$color,
-#   group.by = 'customclassif',
-# ) +
-#   theme_umap +
-#   labs(x = "UAMP1", y = "UMAP2")  ->
-#   p2;p2
-
-# Seurat::DimPlot(
-#   sc_sct_cluster,
-#   reduction = "umap",
-#   label = TRUE,
-#   # repel = TRUE,
-#   group.by = 'customclassif',
-#   split.by = "tissue",
-#   ncol = 3
-# ) +
-#   theme(
-#     legend.position = "bottom"
-#   ) ->
-#   p
-# 
-# ggsave(
-#   filename = "test-annotation-plot-map.pdf",
-#   plot = p,
-#   device = "pdf",
-#   path = "data/result/",
-#   width = 25,
-#   height = 20
-# )
-
+)
 
 
 # Marker genes ------------------------------------------------------------
@@ -471,22 +401,35 @@ readr::write_rds(
 )
 
 
+
 # Gene plot ---------------------------------------------------------------
 all.markers %>% 
   dplyr::group_by(cluster) %>% 
-  dplyr::slice_max(n = 5, order_by = avg_log2FC) %>% 
-  print(n = Inf)
+  dplyr::slice_max(n = 3, order_by = avg_log2FC) %>% 
+  print(n = Inf) ->
+  all.markers_head
 
-DefaultAssay(sc_sct_cluster) <- "RNA"
+DefaultAssay(sc_sct_cluster) <- "SCT"
+
+cL_results %>% 
+  dplyr::filter(cluster == 5)
+
+DotPlot(
+  sc_sct_cluster, 
+  features = unique(all.markers_head$gene), 
+  cols = c("blue", "red"), 
+  dot.scale = 8
+  ) +
+  RotatedAxis()
 
 VlnPlot(
   object = sc_sct_cluster,
-  features = c("Vpreb2"),
+  features = c("Hbb-bt"),
 )
 
 FeaturePlot(
   object = sc_sct_cluster,
-  features = "Vpreb2",
+  features = "Ttr",
   cols = c("lightgrey", "#CD0000"),
   order = TRUE,
   reduction = "tsne"
@@ -496,6 +439,12 @@ FeaturePlot(
 
 all_marker_genes <- c("Cd3e", "Cd8a", "Nkg7", "Hexb", "Cx3cr1", "Ccl3", "Ccl4", "Il1b", "Lyz2", "Clec10a")
 
+
+
+## NN 2022
+
+
+## NN 2021
 # Lymphoid lineage clusters
 Bcells <- c("Cd79a")
 Mature_Bcells <- c(Bcells, "Ms4a1")
@@ -513,8 +462,11 @@ granulocytes <- c("S100a9", "Hp")
 myeloid_dendritc_cells <- c("Clec9a", "Xcr1")
 plasmacytoid_dendritic_cells <- c("Siglech", "Runx2")
 
+
+# JCBFM
 SMC_vascular_smooth_muscle_cells <- c("Acta2")
 FB_perivascular_fibroblast_like <- c("Dcn")
+
 CAM_cns_associated_macrophages <- ("Pf4")
 MdC_monocyte_derived <- c("Ccr2")
 vEC_venous_endothelial <- c("Itm2a")
@@ -531,24 +483,14 @@ NPC_neural_progenitor <- c()
 LYM_lymphocytes <- c()
 RBC_red_blood_cell <- c()
 
-cL_results %>% 
-  dplyr::filter(cluster == 18)
-
-DefaultAssay(sc_sct_cluster) <- "SCT"
 
 FeaturePlot(
   object = sc_sct_cluster,
-  features = "Gzmk",
+  features = "Dcn",
   cols = c("lightgrey", "#CD0000"),
   order = TRUE,
   reduction = "tsne"
 ) 
-
-# PAX6,HES5,GFAP,SLC1A3
-
-# GFAP,SLC1A3,SLC1A2,GLUL,S100B,ALDH1L1,AQP4,IGFBP3,ATP13A4,CBS,SOX9,CD40,CD80,CD86,C5AR1
-
-
 
 # save image --------------------------------------------------------------
 
