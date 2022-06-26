@@ -372,6 +372,15 @@ ggsave(
 DimPlot(
   object = sc_sct_cluster,
   reduction = "tsne",
+  # cols  = pcc$color,
+  group.by = "region",
+  # split.by = "tissue",
+  # label = TRUE,
+)
+
+DimPlot(
+  object = sc_sct_cluster,
+  reduction = "tsne",
   cols  = pcc$color,
   # group.by = "tissue"
   split.by = "tissue",
@@ -486,7 +495,7 @@ RBC_red_blood_cell <- c()
 
 FeaturePlot(
   object = sc_sct_cluster,
-  features = "Dcn",
+  features = "Col1a1",
   cols = c("lightgrey", "#CD0000"),
   order = TRUE,
   reduction = "tsne"
