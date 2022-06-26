@@ -21,7 +21,8 @@ sc_sct_cluster <- readr::read_rds(
   file = "data/rda/sc_sct_cluster.rds.gz"
 )
 
-sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.25
+
+sc_sct_cluster$seurat_clusters <- sc_sct_cluster$integrated_snn_res.0.2
 sc_sct_cluster <- SetIdent(sc_sct_cluster, value = "seurat_clusters")
 
 
@@ -33,10 +34,11 @@ source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/gene_
 # load cell type annotation function
 source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/sctype_score_.R")
 # DB file
-db_ = "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_full.xlsx";
+db_full = "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_full.xlsx";
+db_short <- "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_short.xlsx"
 tissue = "Immune system" # e.g. Immune system, Liver, Pancreas, Kidney, Eye, Brain
-gs_list_immune_system = gene_sets_prepare(db_, "Immune system")
-gs_list_brain = gene_sets_prepare(db_, "Brain")
+gs_list_immune_system = gene_sets_prepare(db_full, "Immune system")
+gs_list_brain = gene_sets_prepare(db_full, "Brain")
 
 gs_list_immune_system %>%
   purrr::map(.f = function(.x) {
@@ -44,28 +46,29 @@ gs_list_immune_system %>%
     .x$`Cancer cells (Immune cell)` <- NULL
     .x
   }) ->
-  gs_list_immune_system
+  gs_list_immune_system_mod
+
 gs_list_brain %>%
   purrr::map(.f = function(.x) {
     names(.x) <- paste(names(.x), "(Brain)")
-    .x$`Cancer cells (Immune cell)` <- NULL
+    .x$`Cancer cells (Brain)` <- NULL
     .x
   }) ->
-  gs_list_brain
+  gs_list_brain_mod
 
 gs_list <- list(
   gs_positive = c(
-    gs_list_immune_system$gs_positive,
-    gs_list_brain$gs_positive
+    gs_list_immune_system_mod$gs_positive,
+    gs_list_brain_mod$gs_positive
   ),
   gs_negative = c(
-    gs_list_immune_system$gs_negative,
-    gs_list_brain$gs_negative
+    gs_list_immune_system_mod$gs_negative,
+    gs_list_brain_mod$gs_negative
   )
 )
 
 es.max <- sctype_score(
-  scRNAseqData = sc_sct_cluster[["integrated"]]@scale.data,
+  scRNAseqData = sc_sct_cluster[["SCT"]]@scale.data,
   scaled = TRUE,
   gs = gs_list$gs_positive,
   gs2 = gs_list$gs_negative
@@ -118,8 +121,9 @@ cL_results %>%
         dplyr::arrange(tissue, -scores)
     }
   ))
+
 cL_results %>% 
-  dplyr::filter(cluster == 8)
+  dplyr::filter(cluster == 3)
 
 sctype_scores <-  cL_results %>% 
   dplyr::group_by(cluster) %>% 
@@ -137,46 +141,46 @@ for(j in unique(sctype_scores$cluster)) {
 
 # SingleR -----------------------------------------------------------------
 
-sc_sct_cluster.sce <- as.SingleCellExperiment(sc_sct_cluster)
-
-mouse.se <- celldex::MouseRNAseqData()
-
-sc_sct_cluster.sce.pred <- SingleR::SingleR(
-  test = sc_sct_cluster.sce,
-  ref = mouse.se,
-  labels = mouse.se$label.main
-)
-
-
-sc_sct_cluster$singler <- sc_sct_cluster.sce.pred$labels
+# sc_sct_cluster.sce <- as.SingleCellExperiment(sc_sct_cluster)
+# 
+# mouse.se <- celldex::MouseRNAseqData()
+# 
+# sc_sct_cluster.sce.pred <- SingleR::SingleR(
+#   test = sc_sct_cluster.sce,
+#   ref = mouse.se,
+#   labels = mouse.se$label.main
+# )
+# 
+# 
+# sc_sct_cluster$singler <- sc_sct_cluster.sce.pred$labels
 
 
 # scMCA -------------------------------------------------------------------
 
-mca <- scMCA::scMCA(
-  scdata = exp(sc_sct_cluster[["integrated"]]@scale.data),
-  numbers_plot = 3
-)
-
-ref.expr %>%
-  colnames() %>%
-  tibble::enframe() %>%
-  dplyr::mutate(cell = gsub(pattern = "\\(.*\\)", replacement = "", x = value)) %>%
-  dplyr::mutate(tissue = gsub(pattern = ".*\\(|\\)", replacement = "", x = value)) ->
-  cells
-
-cells %>%
-  dplyr::filter(grepl(pattern = "Brain|Bone-Marrow$|Peripheral_Blood", x = tissue)) ->
-  cells_cand
-
-cells_cand %>% 
-  dplyr::filter(grepl(pattern = "Endo", x = cell))
-
-sc_sct_cluster@meta.data %>% head()
-mca$cors_matrix[, 1] %>% sort(decreasing = T) %>% head()
-mca$scMCA[1:4]
-
-sc_sct_cluster$scmca <- mca$scMCA
+# mca <- scMCA::scMCA(
+#   scdata = exp(sc_sct_cluster[["integrated"]]@scale.data),
+#   numbers_plot = 3
+# )
+# 
+# ref.expr %>%
+#   colnames() %>%
+#   tibble::enframe() %>%
+#   dplyr::mutate(cell = gsub(pattern = "\\(.*\\)", replacement = "", x = value)) %>%
+#   dplyr::mutate(tissue = gsub(pattern = ".*\\(|\\)", replacement = "", x = value)) ->
+#   cells
+# 
+# cells %>%
+#   dplyr::filter(grepl(pattern = "Brain|Bone-Marrow$|Peripheral_Blood", x = tissue)) ->
+#   cells_cand
+# 
+# cells_cand %>% 
+#   dplyr::filter(grepl(pattern = "Endo", x = cell))
+# 
+# sc_sct_cluster@meta.data %>% head()
+# mca$cors_matrix[, 1] %>% sort(decreasing = T) %>% head()
+# mca$scMCA[1:4]
+# 
+# sc_sct_cluster$scmca <- mca$scMCA
 
 # Umap plot ---------------------------------------------------------------
 
@@ -192,6 +196,9 @@ theme_umap <- theme(
 
 fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
   # .x <- sc_sct_cluster
+  # .celltype="sctype"
+  # .reduction="tsne"
+  
   .umap <- as.data.frame(.x@reductions[[.reduction]]@cell.embeddings)
   colnames(.umap) <- c("UMAP_1", "UMAP_2")
   .xx <- .x@meta.data[, c("seurat_clusters", .celltype)] %>% 
@@ -212,9 +219,57 @@ fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
   
   .xxx %>% 
     dplyr::group_by(cluster) %>% 
-    dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2)) %>% 
-    dplyr::left_join(.xxx_celltype, by = "cluster") ->
+    tidyr::nest() %>%
+    dplyr::mutate(u = purrr::map(.x = data, .f = function(.m) {
+      # d %>% 
+      #   dplyr::filter(cluster == 14) %>% 
+      #   dplyr::pull(data) %>% 
+      #   .[[1]] ->
+      #   .m
+
+      .m %>%
+        dplyr::summarise(u1 = mean(UMAP_1), u2 = mean(UMAP_2)) ->
+        .mm
+
+      .m %>%
+        dplyr::mutate(u1 = UMAP_1 > .mm$u1, u2 = UMAP_2 > .mm$u2) ->
+        .mmd
+      
+      .mmd %>%
+        dplyr::group_by(u1, u2) %>%
+        dplyr::count() %>%
+        dplyr::ungroup() %>%
+        dplyr::arrange(-n) ->
+        .mmm
+      
+      .fc <- .mmm$n[[1]] / .mmm$n[[2]] # 1.1
+      .mmm
+      .fc
+      
+      if(.fc > 1.1) {
+        .mmd %>%
+          dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) %>%
+          dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+      } else {
+        .mmd %>%
+          # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) %>%
+          dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+      }
+
+    })) %>% 
+    dplyr::ungroup() %>% 
+    tidyr::unnest(cols = u) %>% 
+    dplyr::select(-data) %>% 
+    dplyr::left_join(.xxx_celltype, by = "cluster") %>% 
+    dplyr::arrange(cluster) ->
     .xxx_label
+  
+  # .xxx %>% 
+  #   dplyr::group_by(cluster) %>% 
+  #   dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2)) %>% 
+  #   dplyr::left_join(.xxx_celltype, by = "cluster")
+  #   
+    
   
   .labs <- if (.reduction == "umap") {
     labs(
@@ -228,15 +283,17 @@ fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
     )
   }
   
-  ggplot(data = .xxx) +
+  ggplot() +
     geom_point(
+      data = .xxx,
       aes(
         x = UMAP_1,
         y = UMAP_2,
         colour = cluster,
         shape = NULL,
         alpha = NULL
-      )
+      ),
+      size = 0.7
     ) +
     geom_text(
       data = .xxx_label,
@@ -245,14 +302,15 @@ fn_plot_umap <- function(.x, .celltype="sctype", .reduction="umap") {
         x = UMAP_1,
         y = UMAP_2,
       ),
-      size = 6
+      size = 7
     ) +
     scale_colour_manual(
       name = NULL,
       values = pcc$color,
       labels = .xxx_label$celltype,
       guide = guide_legend(
-        ncol = 1, 
+        ncol = 1,
+        override.aes = list(size=4)
       )
     ) +
     theme(
@@ -291,6 +349,13 @@ p <- fn_plot_umap(.x = sc_sct_cluster, .celltype = "sctype", .reduction = "tsne"
 p
 
 
+Seurat::DimPlot(
+  sc_sct_cluster,
+  reduction = "tsne",
+  label = TRUE,
+  label.size = 6,
+  cols = pcc$color,
+)
 # 
 # ggsave(
 #   filename = "cluster-plot-umap.pdf",
@@ -300,6 +365,8 @@ p
 #   width = 20,
 #   height = 10
 # )
+
+
 
 
 Seurat::DimPlot(
@@ -385,12 +452,45 @@ Seurat::DimPlot(
 
 # Marker genes ------------------------------------------------------------
 
-# all.markers <- FindAllMarkers(
-#   object = sc_sct_cluster, 
-#   only.pos = TRUE, 
-#   min.pct = 0.25, 
-#   logfc.threshold = 0.25
-# )
+DefaultAssay(sc_sct_cluster) <- "integrated"
+sc_sct_cluster <- PrepSCTFindMarkers(object = sc_sct_cluster)
+
+
+all.markers <- FindAllMarkers(
+  object = sc_sct_cluster,
+  assay = "SCT",
+  only.pos = TRUE,
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+
+readr::write_rds(
+  x = all.markers,
+  file = "data/rda/sc_sct_cluster_marker_genes.rds.gz"
+)
+
+
+# Gene plot ---------------------------------------------------------------
+all.markers %>% 
+  dplyr::group_by(cluster) %>% 
+  dplyr::slice_max(n = 5, order_by = avg_log2FC) %>% 
+  print(n = Inf)
+
+DefaultAssay(sc_sct_cluster) <- "RNA"
+
+VlnPlot(
+  object = sc_sct_cluster,
+  features = c("Vpreb2"),
+)
+
+FeaturePlot(
+  object = sc_sct_cluster,
+  features = "Vpreb2",
+  cols = c("lightgrey", "#CD0000"),
+  order = TRUE,
+  reduction = "tsne"
+) 
 
 # Features ----------------------------------------------------------------
 
@@ -413,22 +513,43 @@ granulocytes <- c("S100a9", "Hp")
 myeloid_dendritc_cells <- c("Clec9a", "Xcr1")
 plasmacytoid_dendritic_cells <- c("Siglech", "Runx2")
 
+SMC_vascular_smooth_muscle_cells <- c("Acta2")
+FB_perivascular_fibroblast_like <- c("Dcn")
+CAM_cns_associated_macrophages <- ("Pf4")
+MdC_monocyte_derived <- c("Ccr2")
+vEC_venous_endothelial <- c("Itm2a")
+capEC_capillary_endothelial <- c("Itm2a")
+aEC_endothelial_cells <- c("Itm2a")
+PC_pericytes <- c("Kcnj8")
+CPC_choroid_plexus_capillary_endothelia <- c("Plvap")
+EPC_ependymocytes <- c("Ttr", "Tmem212")
+MG_microglia <- c("Hexb")
+NEUT_neutrophils <- c("S100a8")
+ASC_astrocytes <- c("Aldoc")
+OLG_oligodendrocytes <- c("Plp1")
+NPC_neural_progenitor <- c()
+LYM_lymphocytes <- c()
+RBC_red_blood_cell <- c()
+
+cL_results %>% 
+  dplyr::filter(cluster == 18)
+
 DefaultAssay(sc_sct_cluster) <- "SCT"
-FeaturePlot(
-  object = sc_sct_cluster,
-  features = Bcells,
-  cols = c("lightgrey", "#CD0000"),
-  order = TRUE
-) 
 
 FeaturePlot(
   object = sc_sct_cluster,
-  features = "Dntt",
+  features = "Gzmk",
   cols = c("lightgrey", "#CD0000"),
   order = TRUE,
   reduction = "tsne"
 ) 
-VlnPlot(sc_sct_cluster, features = c("Ms4a1", "Cd79a"), slot = "counts", log = TRUE)
+
+# PAX6,HES5,GFAP,SLC1A3
+
+# GFAP,SLC1A3,SLC1A2,GLUL,S100B,ALDH1L1,AQP4,IGFBP3,ATP13A4,CBS,SOX9,CD40,CD80,CD86,C5AR1
+
+
+
 # save image --------------------------------------------------------------
 
 save.image(file = "data/rda/03-cell-annotation.rda")
