@@ -658,14 +658,24 @@ list(
 
 list(
   `0` = list(
-    markers = c("Apoe", "C1qb", "C1qa"),
+    markers = c("Apoe", "C1qb", "C1qa", "Ctss"),
     fullname = "Macrophage",
     shortname = "Macrophage"
   ),
   `1` = list(
-    markers = c("Hexb", "Ctss"),
-    fullname = "microglia",
-    shortname = "Microglia"
+    markers = c("Retnlg", "Il1b", "Ifitm1"),
+    fullname = "Neutrophil",
+    shortname = "Neutrophil"
+  ),
+  `2` = list(
+    markers = c("Igkc", "Cd79a", "Ly6d", "Ighm", "Ms4a1"),
+    fullname = "mature B Cell",
+    shortname = "Mature B Cell"
+  ),
+  `3` = list(
+    markers = c("Ccl5", "Ms4a4b", "Cd3d", "Ighm", "Ms4a1"),
+    fullname = "CD8+ T cells",
+    shortname = "CD8+ T cells"
   )
 )
 
@@ -680,11 +690,11 @@ list(
     dplyr::filter(!grepl("^mt-", gene)) %>% 
     dplyr::group_by(cluster) %>%
     dplyr::slice_max(n = 6, order_by = avg_log2FC) %>%
-    dplyr::filter(cluster == 0)
+    dplyr::filter(cluster == 3)
   
   FeaturePlot(
     object = b,
-    features = "Ctss",
+    features = "Cd8a",
     cols = c("lightgrey", "#CD0000"),
     order = TRUE,
     reduction = "tsne",
