@@ -569,39 +569,6 @@ readr::write_rds(
 
 
 # Manual marker gene ------------------------------------------------------
-(brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype_tsne[[1]] |
-  brain_meninge_skull_sct_cluster_sctype_marker$gene_dotplot[[1]]) /
-  (brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype_tsne[[2]] |
-  brain_meninge_skull_sct_cluster_sctype_marker$gene_dotplot[[2]]) /
-  (brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype_tsne[[3]] |
-     brain_meninge_skull_sct_cluster_sctype_marker$gene_dotplot[[3]]) +
-  plot_annotation(
-    tag_levels = "A"
-  ) ->
-  tmp_plot
-
-ggsave(
-  filename = "tmp_plot.pdf",
-  plot = tmp_plot,
-  path = "data/result/",
-  width = 18,
-  height = 13
-)
-
-
-
-brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[1]] %>% 
-  dplyr::group_by(cluster) %>% 
-  dplyr::slice_max(n = 3, order_by = avg_log2FC) %>% 
-  print(n = Inf)
-
-brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype_umap[[1]] 
-brain_meninge_skull_sct_cluster_sctype_marker$gene_dotplot[[1]]
-
-b <- brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[1]]
-
-DefaultAssay(b) <- "SCT"
-
 list(
   `0` = list(
     markers = c("Cldn5", "Itm2a"),
@@ -631,44 +598,103 @@ list(
   ),
   `5` = list(
     markers = c("Ttr", "Enpp2"),
-    fullname = "Ependymal",
-    shortname = ""
+    fullname = "Ependymal cell",
+    shortname = "Ttr+ Ependymal"
   ),
   `6` = list(
     markers = c("Apoe", "Pf4"),
     fullname = "central nervous system (CNS)-associated macrophages",
     shortname = "Macrophages"
   ),
+  `7` = list(
+    markers = c("Plp1", "Ptgds"),
+    fullname = "Oligodendrocyte",
+    shortname = "Oligodendrocyte"
+  ),
+  `8` = list(
+    markers = c("mt-Atp8", "mt-Co3"),
+    fullname = "remove",
+    shortname = "remove"
+  ),
+  `9` = list(
+    markers = c("S100a8", "S100a9"),
+    fullname = "Neutrophil",
+    shortname = "Neutrophil"
+  ),
   
   `10` = list(
     markers = c("Dcn", "Apod"),
     fullname = "perivascular fibroblast-like cells",
     shortname = "FB"
+  ),
+  `11` = list(
+    markers = c("Plvap", "Plpp1"),
+    fullname = "choroid plexus capillary endothelial cells",
+    shortname = "CPC"
+  ),
+  `12` = list(
+    markers = c("Rarres2", "Tmem212"),
+    fullname = "Ciliated ependymal cell",
+    shortname = "CEC"
   )
-  
+) %>% 
+  tibble::enframe() %>% 
+  dplyr::mutate(
+    a = purrr::map(
+      .x = value,
+      .f = function(.x) {
+        .x$markers <- paste0(.x$markers, collapse = ",")
+        .x %>% 
+          tibble::enframe() %>%  
+          tidyr::unnest(cols = value) %>% 
+          tidyr::spread(key = name, value = value)
+      }
+    )
+  ) %>% 
+  dplyr::select(-value) %>% 
+  tidyr::unnest(cols = a) %>% 
+  dplyr::rename(cluster = name) ->
+  brain_marker_celltype 
+
+list(
+  `0` = list(
+    markers = c("Apoe", "C1qb", "C1qa"),
+    fullname = "Macrophage",
+    shortname = "Macrophage"
+  ),
+  `1` = list(
+    markers = c("Hexb", "Ctss"),
+    fullname = "microglia",
+    shortname = "Microglia"
+  )
 )
 
+
 {
- FeaturePlot(
+  b <- brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[2]]
+  d <- brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[2]] 
+  
+  DefaultAssay(b) <- "SCT"
+  
+  d %>% 
+    dplyr::filter(!grepl("^mt-", gene)) %>% 
+    dplyr::group_by(cluster) %>%
+    dplyr::slice_max(n = 6, order_by = avg_log2FC) %>%
+    dplyr::filter(cluster == 0)
+  
+  FeaturePlot(
     object = b,
-    features = "Cd14",
+    features = "Ctss",
     cols = c("lightgrey", "#CD0000"),
     order = TRUE,
     reduction = "tsne",
     max.cutoff = 3,
   )
-
 }
 
   
 
-brain_meninge_skull_sct_cluster_sctype_marker$sc
 
-fn_gene_dotplot(
-  .sct_cluster = brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[1]],
-  .marker = brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[1]],
-  .n = 2
-)
 
 
 # Save image --------------------------------------------------------------
