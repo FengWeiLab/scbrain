@@ -598,7 +598,7 @@ list(
   ),
   `5` = list(
     markers = c("Ttr", "Enpp2"),
-    fullname = "Ependymal cell",
+    fullname = "Ttr+ Ependymal cell",
     shortname = "Ttr+ Ependymal"
   ),
   `6` = list(
@@ -674,8 +674,33 @@ list(
   ),
   `3` = list(
     markers = c("Ccl5", "Ms4a4b", "Cd3d", "Ighm", "Ms4a1"),
-    fullname = "CD8+ T cells",
-    shortname = "CD8+ T cells"
+    fullname = "Tcell/NKT",
+    shortname = "Tcell/NKT"
+  ),
+  `4` = list(
+    markers = c("Mgp", "Igfbp5", "Prg4"),
+    fullname = "Dcn+ Endothelial cell",
+    shortname = "Dcn+ EC"
+  ),
+  `5` = list(
+    markers = c("Ttr", "Enpp2", "Ecrg4"),
+    fullname = "Ependymal cell",
+    shortname = "Ttr+ Ependymal"
+  ),
+  `6` = list(
+    markers = c("Camp", "Ngp", "Ltf", "S100a8", "S100a9"),
+    fullname = "Neutrophil",
+    shortname = "Ngp+ Neutrophil"
+  ),
+  `7` = list(
+    markers = c("Hbb-bt", "Hbb-bs", "Hbb-a2", "Hbb-a1"),
+    fullname = "Erythroid",
+    shortname = "Hbb-bt+ Erythroid"
+  ),
+  `8` = list(
+    markers = c("Vpreb3", "Ebf1", "Dnajc7"),
+    fullname = "Erythroid",
+    shortname = "Hbb-bt+ Erythroid"
   )
 )
 
@@ -690,11 +715,12 @@ list(
     dplyr::filter(!grepl("^mt-", gene)) %>% 
     dplyr::group_by(cluster) %>%
     dplyr::slice_max(n = 6, order_by = avg_log2FC) %>%
-    dplyr::filter(cluster == 3)
+    # dplyr::filter(avg_log2FC > 3) %>% 
+    dplyr::filter(cluster == 8) 
   
   FeaturePlot(
     object = b,
-    features = "Cd8a",
+    features = "Dnajc7",
     cols = c("lightgrey", "#CD0000"),
     order = TRUE,
     reduction = "tsne",
