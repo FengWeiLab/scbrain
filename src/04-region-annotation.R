@@ -491,7 +491,9 @@ readr::write_rds(
 )
 
 
-
+# brain_meninge_skull_sct_cluster <- readr::read_rds(
+#   file = "data/rda/brain_meninge_skull_sct_cluster.rds.gz"
+# )
 
 
 
@@ -567,8 +569,15 @@ readr::write_rds(
   file = "data/rda/brain_meninge_skull_sct_cluster_sctype_marker.rds.gz"
 )
 
+# brain_meninge_skull_sct_cluster_sctype_marker <- readr::read_rds(
+#   file = "data/rda/brain_meninge_skull_sct_cluster_sctype_marker.rds.gz"
+# )
 
 # Manual marker gene ------------------------------------------------------
+
+# Brain -------------------------------------------------------------------
+
+
 list(
   `0` = list(
     markers = c("Cldn5", "Itm2a"),
@@ -656,6 +665,9 @@ list(
   dplyr::rename(cluster = name) ->
   brain_marker_celltype 
 
+# Meninge -----------------------------------------------------------------
+
+
 list(
   `0` = list(
     markers = c("Apoe", "C1qb", "C1qa", "Ctss"),
@@ -669,7 +681,7 @@ list(
   ),
   `2` = list(
     markers = c("Igkc", "Cd79a", "Ly6d", "Ighm", "Ms4a1"),
-    fullname = "mature B Cell",
+    fullname = "Mature B Cell",
     shortname = "Mature B Cell"
   ),
   `3` = list(
@@ -699,28 +711,151 @@ list(
   ),
   `8` = list(
     markers = c("Vpreb3", "Ebf1", "Dnajc7"),
-    fullname = "Erythroid",
-    shortname = "Hbb-bt+ Erythroid"
+    fullname = "Pro-B cells",
+    shortname = "Pro-B cells"
+  ),
+  `9` = list(
+    markers = c("Gzma", "Ccl5", "AW112010", "Nkg7"),
+    fullname = "NKT",
+    shortname = "NKT cell"
+  ),
+  `10` = list(
+    markers = c("Cpa3", "Il17a", "Ctla2a"),
+    fullname = "Basophil/Neutrophil",
+    shortname = "Basophil/Neutrophil"
+  ),
+  `11` = list(
+    markers = c("Igkc", "Ighm", "Alas2"),
+    fullname = "Naive B cells",
+    shortname = "Naive B cells"
+  ),
+  `12` = list(
+    markers = c("Chgb", "Pde6g", "Gnb3", "Tph1"),
+    fullname = "Endocrine cells",
+    shortname = "Endocrine cells"
+  ),
+  `13` = list(
+    markers = c("Cst3", "Vtn", "Mgll", "Tph1"),
+    fullname = "Dendritic cells",
+    shortname = "Dendritic cells"
+  ),
+  `14` = list(
+    markers = c("Ly6c1", "Flt1", "Igfbp7"),
+    fullname = "Endothelial cell",
+    shortname = "Endothelial cell"
   )
-)
+) %>% 
+  tibble::enframe() %>% 
+  dplyr::mutate(
+    a = purrr::map(
+      .x = value,
+      .f = function(.x) {
+        .x$markers <- paste0(.x$markers, collapse = ",")
+        .x %>% 
+          tibble::enframe() %>%  
+          tidyr::unnest(cols = value) %>% 
+          tidyr::spread(key = name, value = value)
+      }
+    )
+  ) %>% 
+  dplyr::select(-value) %>% 
+  tidyr::unnest(cols = a) %>% 
+  dplyr::rename(cluster = name) ->
+  meninge_marker_celltype 
 
+# Skull cell --------------------------------------------------------------
+
+list(
+  `0` = list(
+    markers = c("Mmp9", "Cxcr2", "Retnlg"),
+    fullname = "Neutrophil",
+    shortname = "Neutrophil"
+  ),
+  `1` = list(
+    markers = c("Acod1", "Il1r2", "Retnlg"),
+    fullname = "Myeloid cell",
+    shortname = "Myeloid cell"
+  ),
+  `2` = list(
+    markers = c("Fn1", "S100a4", "F13a1"),
+    fullname = "Macrophages",
+    shortname = "Macrophages"
+  ),
+  `3` = list(
+    markers = c("Ighm", "Ly6d", "Vpreb3"),
+    fullname = "Pre-B cells",
+    shortname = "Pre-B cells"
+  ),
+  `4` = list(
+    markers = c("H2-Aa", "Cd74", "H2-Ab1"),
+    fullname = "Dendritic cell",
+    shortname = "Dendritic cell"
+  ),
+  `5` = list(
+    markers = c("Elane", "Prtn3", "Mpo"),
+    fullname = "Mpo+ Neutrophil",
+    shortname = "Mpo+ Neutrophil"
+  ),
+  `6` = list(
+    markers = c("Ccl5", "Gzma", "Trbc2"),
+    fullname = "NKT cell",
+    shortname = "NKT cell"
+  ),
+  `7` = list(
+    markers = c("Ccl4", "Igkc", "Bst2"),
+    fullname = "Basophil/Neutrophil",
+    shortname = "Basophil/Neutrophil"
+  ),
+  `8` = list(
+    markers = c("Hba-a1", "Hbb-bs", "Hbb-bt"),
+    fullname = "Erythroid cell",
+    shortname = "Erythroid cell"
+  ),
+  `9` = list(
+    markers = c("Vpreb1", "Igll1", "Vpreb3"),
+    fullname = "Pro-B cells",
+    shortname = "Pro-B cells"
+  ),
+  `10` = list(
+    markers = c("Col1a2", "Col1a1", "Col3a1"),
+    fullname = "Fibroblast Col3a1",
+    shortname = "Fibroblast Col3a1"
+  )
+) %>% 
+  tibble::enframe() %>% 
+  dplyr::mutate(
+    a = purrr::map(
+      .x = value,
+      .f = function(.x) {
+        .x$markers <- paste0(.x$markers, collapse = ",")
+        .x %>% 
+          tibble::enframe() %>%  
+          tidyr::unnest(cols = value) %>% 
+          tidyr::spread(key = name, value = value)
+      }
+    )
+  ) %>% 
+  dplyr::select(-value) %>% 
+  tidyr::unnest(cols = a) %>% 
+  dplyr::rename(cluster = name) ->
+  skull_marker_celltype 
 
 {
-  b <- brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[2]]
-  d <- brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[2]] 
+  b <- brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[3]]
+  d <- brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[3]] 
   
   DefaultAssay(b) <- "SCT"
   
   d %>% 
     dplyr::filter(!grepl("^mt-", gene)) %>% 
     dplyr::group_by(cluster) %>%
-    dplyr::slice_max(n = 6, order_by = avg_log2FC) %>%
+    dplyr::slice_max(n = 7, order_by = avg_log2FC) %>%
     # dplyr::filter(avg_log2FC > 3) %>% 
-    dplyr::filter(cluster == 8) 
+    dplyr::filter(cluster == 10) 
   
   FeaturePlot(
     object = b,
-    features = "Dnajc7",
+    features = "Mpo",
     cols = c("lightgrey", "#CD0000"),
     order = TRUE,
     reduction = "tsne",
@@ -736,3 +871,4 @@ list(
 # Save image --------------------------------------------------------------
 
 save.image(file = "data/rda/04-region-annotation.rda")
+load(file = "data/rda/04-region-annotation.rda")
