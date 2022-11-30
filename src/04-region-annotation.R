@@ -386,6 +386,30 @@ fn_gene_dotplot <- function(.sct_cluster, .marker, .n = 3) {
     RotatedAxis()
 }
 
+fn_gene_dotplot_new <- function(.sct_cluster, .marker) {
+  .marker %>% 
+    dplyr::pull(markers) %>% 
+    stringr::str_split(pattern = ",") %>% 
+    unlist() ->
+    .m
+  .mm <- intersect(.m, rownames(.sct_cluster))
+  DefaultAssay(.sct_cluster) <- "SCT"
+
+  Idents(.sct_cluster) <-  "celltype"
+  
+  DotPlot(
+    .sct_cluster, 
+    features = unique(.mm), 
+    cols = c("blue", "red"), 
+    dot.scale = 8
+  ) +
+    RotatedAxis() +
+    labs(
+      x = "Genes",
+      y = "Cell types"
+    )
+}
+
 
 fn_qc <- function(.region, .sct) {
   # .sct
@@ -511,6 +535,7 @@ brain_meninge_skull_sct_cluster %>%
   
 
 #
+
 # Annotation --------------------------------------------------------------
 
 
@@ -840,33 +865,144 @@ list(
   dplyr::rename(cluster = name) ->
   skull_marker_celltype 
 
-{
-  b <- brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[3]]
-  d <- brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[3]] 
-  
-  DefaultAssay(b) <- "SCT"
-  
-  d %>% 
-    dplyr::filter(!grepl("^mt-", gene)) %>% 
-    dplyr::group_by(cluster) %>%
-    dplyr::slice_max(n = 7, order_by = avg_log2FC) %>%
-    # dplyr::filter(avg_log2FC > 3) %>% 
-    dplyr::filter(cluster == 10) 
-  
-  FeaturePlot(
-    object = b,
-    features = "Mpo",
-    cols = c("lightgrey", "#CD0000"),
-    order = TRUE,
-    reduction = "tsne",
-    max.cutoff = 3,
-  )
-}
+# {
+#   b <- brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[3]]
+#   d <- brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[3]] 
+#   
+#   DefaultAssay(b) <- "SCT"
+#   
+#   d %>% 
+#     dplyr::filter(!grepl("^mt-", gene)) %>% 
+#     dplyr::group_by(cluster) %>%
+#     dplyr::slice_max(n = 7, order_by = avg_log2FC) %>%
+#     # dplyr::filter(avg_log2FC > 3) %>% 
+#     dplyr::filter(cluster == 10) 
+#   
+#   FeaturePlot(
+#     object = b,
+#     features = "Mpo",
+#     cols = c("lightgrey", "#CD0000"),
+#     order = TRUE,
+#     reduction = "tsne",
+#     max.cutoff = 3,
+#   )
+# }
 
   
 
 
 
+
+
+
+# manual  cell types ------------------------------------------------------
+
+
+brain_meninge_skull_sct_cluster_sctype_marker %>% 
+  dplyr::mutate(
+    marker_celltype = list(
+      brain_marker_celltype, 
+      meninge_marker_celltype, 
+      skull_marker_celltype
+    )
+  )  %>% 
+  dplyr::mutate(
+    sct_cluster_celltype = purrr::map2(
+      .x = sct_cluster_sctype,
+      .y = marker_celltype,
+      .f = function(.x, .y) {
+        .x@meta.data
+        .y %>% 
+          dplyr::select(cluster, shortname) %>% 
+          tibble::deframe() ->
+          .yy
+        .x@meta.data %>% 
+          dplyr::mutate(celltype = plyr::revalue(
+            seurat_clusters,
+            .yy
+          )) ->
+          .x@meta.data
+        .x
+      }
+  )) ->
+  brain_meninge_skull_sct_cluster_sctype_marker_celltype
+
+
+
+readr::write_rds(
+  x = brain_meninge_skull_sct_cluster_sctype_marker_celltype,
+  file = "data/rda/brain_meninge_skull_sct_cluster_sctype_marker_celltype.rds.gz"
+)
+
+
+
+brain_meninge_skull_sct_cluster_sctype_marker_celltype %>% 
+  dplyr::mutate(
+    sct_cluster_celltype_umap = purrr::map(
+      .x = sct_cluster_celltype,
+      .f = fn_plot_umap_tsne,
+      .celltype = "celltype",
+      .reduction = "umap"
+    )
+  ) %>% 
+  dplyr::mutate(
+    sct_cluster_celltype_tsne = purrr::map(
+      .x = sct_cluster_celltype,
+      .f = fn_plot_umap_tsne,
+      .celltype = "celltype",
+      .reduction = "tsne"
+    )
+  ) %>% 
+  dplyr::mutate(
+    gene_dotplot_new = purrr::map2(
+      .x = sct_cluster_celltype,
+      .y = marker_celltype,
+      .f = fn_gene_dotplot_new
+    )
+  ) ->
+  brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot
+
+
+(brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot$sct_cluster_celltype_umap[[1]] +
+  brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot$gene_dotplot_new[[1]]) / (brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot$sct_cluster_celltype_umap[[2]] +
+  brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot$gene_dotplot_new[[2]]) /
+  (brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot$sct_cluster_celltype_umap[[3]] +
+  brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot$gene_dotplot_new[[3]]) +
+  plot_annotation(
+    tag_levels = "A"
+  ) ->
+  brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot_patch
+
+ggsave(
+  filename = "tmp_plot_new.pdf",
+  plot = brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot_patch,
+  device = "pdf",
+  path = "data/result/",
+  width = 20,
+  height = 14
+)
+
+
+brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot %>% 
+  dplyr::select(sct_cluster_celltype ) %>% 
+  dplyr::mutate(a = purrr::map(.x = sct_cluster_celltype, .f = function(.x) {
+    .x@meta.data
+  })) %>% 
+  dplyr::select(-sct_cluster_celltype) %>% 
+  tidyr::unnest(cols = a) ->
+  region_composition
+
+region_composition %>% 
+  ggplot(aes(x = region, fill = celltype)) +
+  geom_bar(position="fill") +
+  scale_fill_manual(values = pcc$color, name = "Cell type") +
+  scale_y_continuous(expand = c(0, 0.01)) +
+  theme(
+    panel.background = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.text = element_text(size = 12, color = "black")
+  ) +
+  labs(x = "Region")
 
 # Save image --------------------------------------------------------------
 
