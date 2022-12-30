@@ -247,6 +247,83 @@ fn_volcano <- function(.x, .y) {
     )
 }
 
+fn_enrichment <- function(.gs, .color = "red") {
+  .cc <- c("red" = "#AE1700", "green" = "#112a13")
+  .go_bp <- clusterProfiler::enrichGO(
+    gene = .gs,
+    # universe = .de$GeneName,
+    keyType = "SYMBOL",
+    OrgDb = org.Mm.eg.db::org.Mm.eg.db,
+    ont = "BP",
+    pAdjustMethod = "BH",
+  )
+  
+  .go_bp %>%
+    tibble::as_tibble()  %>% 
+    dplyr::mutate(
+      Description = stringr::str_wrap(
+        stringr::str_to_sentence(string = Description), 
+        width = 60
+      )
+    ) %>%
+    dplyr::mutate(adjp = -log10(p.adjust)) %>%
+    dplyr::select(ID, Description, adjp, Count) %>%
+    head(20) %>%
+    dplyr::arrange(adjp, Count) %>%
+    dplyr::mutate(
+      Description = factor(Description, levels = Description)
+    ) ->
+    .go_bp_for_plot
+  
+  .go_bp_for_plot %>%
+    ggplot(aes(x = Description, y = adjp)) +
+    geom_col(fill = .cc[.color], color = NA, width = 0.7) +
+    geom_text(aes(label = Count), hjust = 4, color = "white", size = 5) +
+    labs(y = "-log10(Adj. P value)") +
+    scale_y_continuous(expand = c(0, 0.02)) +
+    coord_flip() +
+    theme(
+      panel.background = element_rect(fill = NA),
+      panel.grid = element_blank(),
+      axis.line.x = element_line(color = "black"),
+      axis.line.y = element_line(color = "black"),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(color = "black", size = 13, hjust = 1),
+      axis.ticks.length.y = unit(3, units = "mm"),
+      axis.text.x = element_text(color = "black", size = 12)
+    ) ->
+    .go_bp_plot
+  
+  tibble::tibble(
+    gobp = list(.go_bp),
+    goplot = list(.go_bp_plot)
+  )
+  
+}
+
+
+fn_save_enrichment_xlsx_pdf <- function(.d, .p, .filename, .path = "data/uvresult/01-de") {
+  .xlsx_filename <- glue::glue("{.filename}.xlsx")
+  .pdf_filename <- glue::glue("{.filename}.pdf")
+  
+  writexl::write_xlsx(
+    x = as.data.frame(.d),
+    path = file.path(
+      .path,
+      .xlsx_filename
+    )
+  )
+  
+  ggsave(
+    plot = .p,
+    filename = .pdf_filename,
+    device = "pdf",
+    path = .path,
+    width = 10,
+    height = 6.5
+  )
+}
+
 # DE ----------------------------------------------------------------------
 
 se_group %>% 
@@ -572,6 +649,75 @@ ggsave(
   width = 8,
   height = 6
 )
+
+
+# Intersected genes enrichment --------------------------------------------
+
+up_list <- list(
+  "UVB0/1 vs. BC" = union(
+    se_group_de_volcano_red_green$red[[1]],
+    se_group_de_volcano_red_green$red[[2]]
+  ),
+  "UVS0/1 vs. SC" = union(
+    se_group_de_volcano_red_green$red[[3]],
+    se_group_de_volcano_red_green$red[[4]]
+  )
+)
+
+up_inter <- intersect(
+  up_list$`UVB0/1 vs. BC`,
+  up_list$`UVS0/1 vs. SC`
+)
+
+up_inter_enrichment <- fn_enrichment(
+  .gs = up_inter,
+  .color = "red"
+)
+
+down_list <- list(
+  "UVB0/1 vs. BC" = union(
+    se_group_de_volcano_red_green$green[[1]],
+    se_group_de_volcano_red_green$green[[2]]
+  ),
+  "UVS0/1 vs. SC" = union(
+    se_group_de_volcano_red_green$green[[3]],
+    se_group_de_volcano_red_green$green[[4]]
+  )
+)
+
+down_inter <- intersect(
+  down_list$`UVB0/1 vs. BC`,
+  down_list$`UVS0/1 vs. SC`
+)
+
+down_inter_enrichment <- fn_enrichment(
+  .gs = down_inter,
+  .color = "green"
+)
+
+dplyr::bind_rows(
+  up_inter_enrichment,
+  down_inter_enrichment
+) %>% 
+  dplyr::mutate(reg = c("go_up", "go_down")) ->
+  up_down_gobp
+
+
+up_down_gobp %>% 
+  purrr::pmap(
+    .f = function(gobp, goplot, reg) {
+      .filename <- glue::glue("Inter-GOBP-{reg}") %>%
+        toupper()
+      
+      fn_save_enrichment_xlsx_pdf(
+        .d = gobp,
+        .p = goplot,
+        .filename = .filename
+      )
+    }
+  )
+
+
 # save image --------------------------------------------------------------
 
 
