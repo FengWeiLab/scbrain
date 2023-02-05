@@ -1,0 +1,117 @@
+# Metainfo ----------------------------------------------------------------
+
+# @AUTHOR: Chun-Jie Liu
+# @CONTACT: chunjie.sam.liu.at.gmail.com
+# @DATE: Sun Feb  5 17:18:01 2023
+# @DESCRIPTION: 05-load-data-uv-sc.R
+
+# Library -----------------------------------------------------------------
+
+library(magrittr)
+library(ggplot2)
+library(patchwork)
+library(rlang)
+
+# src ---------------------------------------------------------------------
+
+
+# header ------------------------------------------------------------------
+
+future::plan(future::multisession, workers = 10)
+
+# function ----------------------------------------------------------------
+
+fn_load_sc_10x <- function(.x) {
+  # .x <- "scuvdata/UVB"
+  .regions <- c(
+    "UVB" = "Brain",
+    "UVM" = "Meninge",
+    "UVS" = "Skull"
+  )
+  .cases <- c(
+    "UVB" = "UV",
+    "UVM" = "UV",
+    "UVS" = "UV"
+  )
+  
+  .project <- basename(.x)
+  .case <- plyr::revalue(x = .project, replace = .cases)
+  .region <- plyr::revalue(x = .project, replace = .regions)
+  
+  .dir <- file.path(.x, "filtered_feature_bc_matrix")
+  .counts <- Seurat::Read10X(data.dir = .dir)
+  
+  .sc <- Seurat::CreateSeuratObject(
+    counts = .counts,
+    project = .project,
+    min.cells = 2, 
+    min.features = 100
+  )
+  
+  .sc$tissue <- .project
+  .sc$case <- .case
+  .sc$region <- .region
+  
+  .sc <- Seurat::PercentageFeatureSet(
+    object = .sc, 
+    pattern = "^mt-", 
+    col.name = "percent.mt"
+  )
+  .sc <- Seurat::PercentageFeatureSet(
+    object = .sc, 
+    # pattern = "^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", 
+    pattern = "^Rp[sl][[:digit:]]|^Rplp[[:digit:]]|^Rpsa",
+    col.name = "percent.ribo"
+  )
+  apply(
+    .sc@assays$RNA@counts,
+    2,
+    function(x) (100 * max(x)) / sum(x)
+  ) ->
+    .sc$Percent.Largest.Gene
+  
+  .sc
+}
+
+# load data ---------------------------------------------------------------
+
+
+data_dir <- "scuvdata"
+
+tibble::tibble(
+  dir_path = list.dirs(
+    file.path(data_dir),
+    recursive = FALSE
+  )
+) %>% 
+  dplyr::mutate(project = basename(dir_path)) ->
+  project_path
+
+
+project_sc <- project_path %>% 
+  dplyr::mutate(
+    sc = purrr::map(
+      .x = dir_path,
+      .f = fn_load_sc_10x
+    )
+  ) 
+
+readr::write_rds(
+  x = project_sc, 
+  file = "scuvdata/rda/project_uvsc.rds.gz"
+)
+
+# body --------------------------------------------------------------------
+
+
+
+
+# footer ------------------------------------------------------------------
+
+future::plan(future::sequential)
+
+# save image --------------------------------------------------------------
+
+save.image(
+  file = "scuvdata/rda/project_uvsc.rda"
+)
