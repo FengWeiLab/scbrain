@@ -26,12 +26,24 @@ fn_load_sc_10x <- function(.x) {
   .regions <- c(
     "UVB" = "Brain",
     "UVM" = "Meninge",
-    "UVS" = "Skull"
+    "UVS" = "Skull",
+    "CB" = "Brain", 
+    "CM" = "Meninge", 
+    "CS" = "Skull", 
+    "DB" = "Brain", 
+    "DM" = "Meninge", 
+    "DS" = "Skull"
   )
   .cases <- c(
     "UVB" = "UV",
     "UVM" = "UV",
-    "UVS" = "UV"
+    "UVS" = "UV",
+    "CB" = "Sham", 
+    "CM" = "Sham", 
+    "CS" = "Sham", 
+    "DB" = "MCAO", 
+    "DM" = "MCAO", 
+    "DS" = "MCAO"
   )
   
   .project <- basename(.x)
@@ -75,18 +87,29 @@ fn_load_sc_10x <- function(.x) {
 
 # load data ---------------------------------------------------------------
 
-
-data_dir <- "scuvdata"
-
-tibble::tibble(
-  dir_path = list.dirs(
-    file.path(data_dir),
-    recursive = FALSE
-  )
+dplyr::bind_rows(
+  tibble::tibble(
+    dir_path = list.dirs(
+      file.path(
+        "data/raw/singlecell/report", 
+        "1_Cellranger"
+      ),
+      recursive = FALSE
+    )
+  ),
+  tibble::tibble(
+    dir_path = list.dirs(
+      file.path("scuvdata"),
+      recursive = FALSE
+    )
+  ) 
 ) %>% 
+  dplyr::filter(!grepl(pattern = "rda", x = dir_path)) %>% 
   dplyr::mutate(project = basename(dir_path)) ->
   project_path
 
+
+# laod 
 
 project_sc <- project_path %>% 
   dplyr::mutate(
@@ -98,7 +121,7 @@ project_sc <- project_path %>%
 
 readr::write_rds(
   x = project_sc, 
-  file = "scuvdata/rda/project_uvsc.rds.gz"
+  file = "scuvdata/rda/project_sc_raw_all.rds.gz"
 )
 
 # body --------------------------------------------------------------------
@@ -113,5 +136,5 @@ future::plan(future::sequential)
 # save image --------------------------------------------------------------
 
 save.image(
-  file = "scuvdata/rda/project_uvsc.rda"
+  file = "scuvdata/rda/05-load-data-uv.rda"
 )
