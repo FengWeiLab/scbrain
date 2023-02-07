@@ -56,8 +56,8 @@ fn_load_sc_10x <- function(.x) {
   .sc <- Seurat::CreateSeuratObject(
     counts = .counts,
     project = .project,
-    min.cells = 2, 
-    min.features = 100
+    min.cells = 3, 
+    min.features = 200
   )
   
   .sc$tissue <- .project
@@ -113,7 +113,7 @@ dplyr::bind_rows(
 
 project_sc <- project_path %>% 
   dplyr::mutate(
-    sc = purrr::map(
+    sc = furrr::future_map(
       .x = dir_path,
       .f = fn_load_sc_10x
     )
@@ -121,7 +121,7 @@ project_sc <- project_path %>%
 
 readr::write_rds(
   x = project_sc, 
-  file = "scuvdata/rda/project_sc_raw_all.rds.gz"
+  file = "data/scuvrda/project_sc_raw_all.rds.gz"
 )
 
 # body --------------------------------------------------------------------
@@ -136,5 +136,5 @@ future::plan(future::sequential)
 # save image --------------------------------------------------------------
 
 save.image(
-  file = "scuvdata/rda/05-load-data-uv.rda"
+  file = "data/scuvrda/05-load-data-uv.rda"
 )
