@@ -183,3 +183,7 @@ ggsave(
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
+
+save.image(
+  file = "data/scuvrda/07-remove-batch-effect.rda"
+)
