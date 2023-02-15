@@ -115,7 +115,7 @@ sc_sham_mcao_uv_scn %>%
   tibble::deframe() ->
   sc_sham_mcao_uv_scn_list
 
-# select features taht repeatedly variable across datasets from integration
+# select features that repeatedly variable across data set from integration
 
 features <- Seurat::SelectIntegrationFeatures(
   object.list = sc_sham_mcao_uv_scn_list,
@@ -153,3 +153,5 @@ future::plan(future::sequential)
 save.image(
   file = "data/scuvrda/06-merge-two-data.rda"
 )
+
+load(file = "data/scuvrda/06-merge-two-data.rda")
