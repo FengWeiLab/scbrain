@@ -11,6 +11,7 @@ library(magrittr)
 library(ggplot2)
 library(patchwork)
 library(rlang)
+library(Seurat)
 
 # src ---------------------------------------------------------------------
 
@@ -22,7 +23,64 @@ future::plan(future::multisession, workers = 10)
 # function ----------------------------------------------------------------
 
 
+fn_filter_sct <- function(.sc) {
+  .sc_sub <- subset(
+    x = .sc, 
+    subset = nFeature_RNA > 500 & 
+      nFeature_RNA < 6000 &
+      percent.mt < 25 &
+      percent.ribo < 50 &
+      Percent.Largest.Gene < 40
+  )
+  
+  .sc_sub_sct <- Seurat::SCTransform(
+    object = .sc_sub,
+    do.scale = FALSE,
+    do.center = FALSE
+  )
+  
+  .sc_sub_sct <- Seurat::CellCycleScoring(
+    object = .sc_sub_sct,
+    g2m.features = Seurat::cc.genes$g2m.genes,
+    s.features = Seurat::cc.genes$s.genes
+  )
+  
+  .sc_sub_sct$CC.Difference <- .sc_sub_sct$S.Score - .sc_sub_sct$G2M.Score
+  
+  Seurat::DefaultAssay(.sc_sub_sct) <- "RNA"
+  
+  .sc_sub_sct_sct <- Seurat::SCTransform(
+    object = .sc_sub_sct,
+    method = "glmGamPoi",
+    vars.to.regress = c("percent.mt", "percent.ribo", "CC.Difference"),
+    do.scale = TRUE,
+    do.center = TRUE
+  )
+  .sc_sub_sct_sct
+  
+}
 
+fn_filter_sc <- function(.sc) {
+  
+  .sc_sub <- subset(
+    x = .sc, 
+    subset = nFeature_RNA > 500 & 
+      nFeature_RNA < 6000 &
+      percent.mt < 25 &
+      percent.ribo < 50 &
+      Percent.Largest.Gene < 40
+  )
+  
+  
+  Seurat::FindVariableFeatures(
+    object = Seurat::NormalizeData(
+      object = .sc_sub
+    ),
+    selection.method = "vst",
+    nfeatures = 2000
+  )
+  #
+}
 # load data ---------------------------------------------------------------
 
 
@@ -37,30 +95,12 @@ sc_sham_mcao_uv <- readr::read_rds(
 # Normalization -----------------------------------------------------------
 
 
+
 sc_sham_mcao_uv %>% 
   dplyr::mutate(
     scn = purrr::map(
       .x = sc,
-      .f = function(.sc) {
-        
-        .sc_sub <- subset(
-          x = .sc, 
-          subset = nFeature_RNA > 500 & 
-            nFeature_RNA < 6000 &
-            percent.mt < 25 &
-            percent.ribo < 50 &
-            Percent.Largest.Gene < 40
-        )
-        
-        Seurat::FindVariableFeatures(
-          object = Seurat::NormalizeData(
-            object = .sc_sub
-          ),
-          selection.method = "vst",
-          nfeatures = 3000
-        )
-        #
-      }
+      .f = fn_filter_sct
     )
   ) ->
   sc_sham_mcao_uv_scn
@@ -71,6 +111,10 @@ readr::write_rds(
   file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
 )
 
+
+sc_sham_mcao_uv_scn <- readr::read_rds(
+  file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
+)
 
 # save stat ---------------------------------------------------------------
 
@@ -116,19 +160,92 @@ sc_sham_mcao_uv_scn %>%
   tibble::deframe() ->
   sc_sham_mcao_uv_scn_list
 
+
+sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[1:4] %>% 
+  purrr::map(
+    .f = function(.x) {
+      .t <- .x$tissue %>% unique()
+      
+      Seurat::RenameCells(object = .x, add.cell.id = .t)
+    }
+  )
+
 # select features that repeatedly variable across data set from integration
+# 
+# features <- Seurat::SelectIntegrationFeatures(
+#   object.list = sc_sham_mcao_uv_scn_list,
+#   # nfeatures = 3000
+# )
+
 
 features <- Seurat::SelectIntegrationFeatures(
   object.list = sc_sham_mcao_uv_scn_list,
   nfeatures = 3000
 )
 
-# Integration -------------------------------------------------------------
+sc_list <- Seurat::PrepSCTIntegration(
+  object.list = sc_sham_mcao_uv_scn_list,
+  anchor.features = features
+)
 
 anchors <- Seurat::FindIntegrationAnchors(
-  object.list = sc_sham_mcao_uv_scn_list,
+  object.list = sc_list,
+  normalization.method = "SCT",
+  anchor.features = features
+)
+
+sc_sct <- Seurat::IntegrateData(
+  anchorset = anchors,
+  normalization.method = "SCT"
+)
+
+readr::write_rds(
+  x = sc_sct,
+  file = "ata/scuvrda/sc_sct.rds.gz"
+)
+
+
+# Integration -------------------------------------------------------------
+
+
+a <- sc_sham_mcao_uv_scn_list[1:6] %>% 
+  purrr::map(
+    .f = function(.x) {
+      .t <- .x$tissue %>% unique()
+      
+      Seurat::RenameCells(object = .x, add.cell.id = .t)
+    }
+  )
+
+# a_genename <- a %>% 
+#   purrr::map(rownames)
+
+a_feature <- Seurat::SelectIntegrationFeatures(
+  object.list = a,
+  # nfeatures = 3000
+ 
+)
+
+
+# ggvenn::ggvenn(
+#   data = c(
+#     list(feature = a_feature),
+#     a_genename[4:6]
+#   )
+# )
+
+
+a_anchors <- Seurat::FindIntegrationAnchors(
+  object.list = a,
   anchor.features = features,
-  k.filter = NA
+  # k.filter = NA
+)
+  
+
+anchors <- Seurat::FindIntegrationAnchors(
+  object.list = a,
+  anchor.features = features,
+  # k.filter = NA
 )
 
 
