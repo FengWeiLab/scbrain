@@ -77,7 +77,7 @@ fn_filter_sc <- function(.sc) {
       object = .sc_sub
     ),
     selection.method = "vst",
-    nfeatures = 2000
+    nfeatures = 3000
   )
   #
 }
@@ -123,7 +123,7 @@ sc_sham_mcao_uv %>%
   dplyr::mutate(
     scn = purrr::map(
       .x = sc,
-      .f = fn_filter_sct_v2
+      .f = fn_filter_sc
     )
   ) ->
   sc_sham_mcao_uv_scn
@@ -192,7 +192,26 @@ sc_sham_mcao_uv_scn %>%
   ) ->
   sc_sham_mcao_uv_scn_list
 
-sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[c(1, 4)]
+# sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[c(1, 4)]
+
+
+sc_sham_mcao_uv_scn_list %>% 
+  purrr::map(
+    Seurat::VariableFeatures
+  ) -> 
+  separate_features
+
+c(
+  separate_features,
+  list(
+    Integration = features
+  )
+) %>% 
+  readr::write_rds(
+    file = "separate_integrated_features.rds.gz",
+    compress = "gz"
+  )
+
 
 
 features <- Seurat::SelectIntegrationFeatures(
