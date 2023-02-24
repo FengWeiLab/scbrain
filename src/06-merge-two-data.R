@@ -116,7 +116,7 @@ sc_sham_mcao_uv <- readr::read_rds(
 
 
 # Normalization -----------------------------------------------------------
-sc_sham_mcao_uv$sc 
+sc_sham_mcao_uv$sc %>% 
   purrr::map(nrow)
 
 sc_sham_mcao_uv %>% 
