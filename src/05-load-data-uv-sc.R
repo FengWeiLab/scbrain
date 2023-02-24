@@ -119,8 +119,32 @@ project_sc <- project_path %>%
     )
   ) 
 
+
+project_sc %>% 
+  dplyr::select(2, 3) %>%
+  tibble::deframe() %>% 
+  purrr::map(nrow)
+
+commonfeatures <- project_sc$sc %>% 
+  purrr::map(.f = rownames) %>% 
+  purrr::reduce(.f = intersect)
+
+length(commonfeatures)
+
+project_sc %>% 
+  dplyr::mutate(
+    sc = purrr::map(
+      .x = sc,
+      .f = function(.x) {
+        .x[commonfeatures, ]
+      }
+    )
+  ) ->
+  project_sc_filter
+  
+
 readr::write_rds(
-  x = project_sc, 
+  x = project_sc_filter, 
   file = "data/scuvrda/project_sc_raw_all.rds.gz"
 )
 
