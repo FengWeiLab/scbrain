@@ -81,6 +81,29 @@ fn_filter_sc <- function(.sc) {
   )
   #
 }
+
+fn_filter_sct_v2 <- function(.sc) {
+  .sc_sub <- subset(
+    x = .sc, 
+    subset = nFeature_RNA > 500 & 
+      nFeature_RNA < 6000 &
+      percent.mt < 25 &
+      percent.ribo < 50 &
+      Percent.Largest.Gene < 40
+  )
+  
+  
+  Seurat::SCTransform(
+    .sc,
+    vst.flavor = "v2", 
+    verbose = FALSE
+  ) %>% 
+    Seurat::RunPCA(
+      npcs = 30, 
+      verbose = FALSE
+    )
+}
+
 # load data ---------------------------------------------------------------
 
 
@@ -93,28 +116,30 @@ sc_sham_mcao_uv <- readr::read_rds(
 
 
 # Normalization -----------------------------------------------------------
-
-
+sc_sham_mcao_uv$sc 
+  purrr::map(nrow)
 
 sc_sham_mcao_uv %>% 
   dplyr::mutate(
     scn = purrr::map(
       .x = sc,
-      .f = fn_filter_sct
+      .f = fn_filter_sct_v2
     )
   ) ->
   sc_sham_mcao_uv_scn
 
+sc_sham_mcao_uv_scn$scn %>% 
+  purrr::map(nrow)
 
-readr::write_rds(
-  x = sc_sham_mcao_uv_scn,
-  file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
-)
-
-
-sc_sham_mcao_uv_scn <- readr::read_rds(
-  file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
-)
+# readr::write_rds(
+#   x = sc_sham_mcao_uv_scn,
+#   file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
+# )
+# 
+# 
+# sc_sham_mcao_uv_scn <- readr::read_rds(
+#   file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
+# )
 
 # save stat ---------------------------------------------------------------
 
@@ -157,25 +182,17 @@ writexl::write_xlsx(
 
 sc_sham_mcao_uv_scn %>% 
   dplyr::select(project, scn) %>% 
-  tibble::deframe() ->
-  sc_sham_mcao_uv_scn_list
-
-
-sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[1:4] %>% 
+  tibble::deframe() %>% 
   purrr::map(
     .f = function(.x) {
       .t <- .x$tissue %>% unique()
       
       Seurat::RenameCells(object = .x, add.cell.id = .t)
     }
-  )
+  ) ->
+  sc_sham_mcao_uv_scn_list
 
-# select features that repeatedly variable across data set from integration
-# 
-# features <- Seurat::SelectIntegrationFeatures(
-#   object.list = sc_sham_mcao_uv_scn_list,
-#   # nfeatures = 3000
-# )
+sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[c(1, 4)]
 
 
 features <- Seurat::SelectIntegrationFeatures(
@@ -201,7 +218,7 @@ sc_sct <- Seurat::IntegrateData(
 
 readr::write_rds(
   x = sc_sct,
-  file = "ata/scuvrda/sc_sct.rds.gz"
+  file = "data/scuvrda/sc_sct.rds.gz"
 )
 
 

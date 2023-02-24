@@ -109,7 +109,7 @@ dplyr::bind_rows(
   project_path
 
 
-# laod 
+# load
 
 project_sc <- project_path %>% 
   dplyr::mutate(
