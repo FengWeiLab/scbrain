@@ -128,6 +128,12 @@ sc_sham_mcao_uv %>%
   ) ->
   sc_sham_mcao_uv_scn
 
+readr::write_rds(
+  x = sc_sham_mcao_uv_scn,
+  file = "sc_sham_mcao_uv_scn.rds.gz",
+  compress = "gz"
+)
+
 sc_sham_mcao_uv_scn$scn %>% 
   purrr::map(nrow)
 
@@ -192,7 +198,12 @@ sc_sham_mcao_uv_scn %>%
   ) ->
   sc_sham_mcao_uv_scn_list
 
-# sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[c(1, 4)]
+sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[c(1, 4)]
+
+readr::write_rds(
+  sc_sham_mcao_uv_scn_list,
+  file = "sc_sham_mcao_uv_scn_list.rds"
+)
 
 
 sc_sham_mcao_uv_scn_list %>% 
