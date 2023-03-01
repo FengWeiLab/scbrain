@@ -116,9 +116,6 @@ sc_sham_mcao_uv <- readr::read_rds(
 
 
 # Normalization -----------------------------------------------------------
-sc_sham_mcao_uv$sc %>% 
-  purrr::map(nrow)
-
 sc_sham_mcao_uv %>% 
   dplyr::mutate(
     scn = purrr::map(
@@ -130,22 +127,10 @@ sc_sham_mcao_uv %>%
 
 readr::write_rds(
   x = sc_sham_mcao_uv_scn,
-  file = "sc_sham_mcao_uv_scn.rds.gz",
-  compress = "gz"
+  file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
 )
 
-sc_sham_mcao_uv_scn$scn %>% 
-  purrr::map(nrow)
 
-# readr::write_rds(
-#   x = sc_sham_mcao_uv_scn,
-#   file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
-# )
-# 
-# 
-# sc_sham_mcao_uv_scn <- readr::read_rds(
-#   file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
-# )
 
 # save stat ---------------------------------------------------------------
 
@@ -198,56 +183,45 @@ sc_sham_mcao_uv_scn %>%
   ) ->
   sc_sham_mcao_uv_scn_list
 
-sc_sham_mcao_uv_scn_list <- sc_sham_mcao_uv_scn_list[c(1, 4)]
 
-readr::write_rds(
-  sc_sham_mcao_uv_scn_list,
-  file = "sc_sham_mcao_uv_scn_list.rds"
-)
-
-
-sc_sham_mcao_uv_scn_list %>% 
-  purrr::map(
-    Seurat::VariableFeatures
-  ) -> 
-  separate_features
-
-c(
-  separate_features,
-  list(
-    Integration = features
-  )
-) %>% 
-  readr::write_rds(
-    file = "separate_integrated_features.rds.gz",
-    compress = "gz"
-  )
+# Integration -------------------------------------------------------------
 
 
 
 features <- Seurat::SelectIntegrationFeatures(
-  object.list = sc_sham_mcao_uv_scn_list,
-  nfeatures = 3000
-)
-
-sc_list <- Seurat::PrepSCTIntegration(
-  object.list = sc_sham_mcao_uv_scn_list,
-  anchor.features = features
-)
-
+  object.list = sc_sham_mcao_uv_scn_list
+  )
 anchors <- Seurat::FindIntegrationAnchors(
-  object.list = sc_list,
-  normalization.method = "SCT",
+  object.list = sc_sham_mcao_uv_scn_list, 
   anchor.features = features
 )
-
-sc_sct <- Seurat::IntegrateData(
-  anchorset = anchors,
-  normalization.method = "SCT"
+combined <- Seurat::IntegrateData(
+  anchorset = anchors
 )
+# for sct
+# features <- Seurat::SelectIntegrationFeatures(
+#   object.list = sc_sham_mcao_uv_scn_list,
+#   nfeatures = 3000
+# )
+# 
+# sc_list <- Seurat::PrepSCTIntegration(
+#   object.list = sc_sham_mcao_uv_scn_list,
+#   anchor.features = features
+# )
+# 
+# anchors <- Seurat::FindIntegrationAnchors(
+#   object.list = sc_list,
+#   normalization.method = "SCT",
+#   anchor.features = features
+# )
+# 
+# sc_sct <- Seurat::IntegrateData(
+#   anchorset = anchors,
+#   normalization.method = "SCT"
+# )
 
 readr::write_rds(
-  x = sc_sct,
+  x = combined,
   file = "data/scuvrda/sc_sct.rds.gz"
 )
 
@@ -255,59 +229,6 @@ readr::write_rds(
 # Integration -------------------------------------------------------------
 
 
-a <- sc_sham_mcao_uv_scn_list[1:6] %>% 
-  purrr::map(
-    .f = function(.x) {
-      .t <- .x$tissue %>% unique()
-      
-      Seurat::RenameCells(object = .x, add.cell.id = .t)
-    }
-  )
-
-# a_genename <- a %>% 
-#   purrr::map(rownames)
-
-a_feature <- Seurat::SelectIntegrationFeatures(
-  object.list = a,
-  # nfeatures = 3000
- 
-)
-
-
-# ggvenn::ggvenn(
-#   data = c(
-#     list(feature = a_feature),
-#     a_genename[4:6]
-#   )
-# )
-
-
-a_anchors <- Seurat::FindIntegrationAnchors(
-  object.list = a,
-  anchor.features = features,
-  # k.filter = NA
-)
-  
-
-anchors <- Seurat::FindIntegrationAnchors(
-  object.list = a,
-  anchor.features = features,
-  # k.filter = NA
-)
-
-
-sc_sham_mcao_uv_scn_integrated <- Seurat::IntegrateData(
-  anchorset = anchors,
-  features = features,
-  dims = 1:20
-)
-
-readr::write_rds(
-  sc_sham_mcao_uv_scn_integrated,
-  file = "data/scuvrda/sc_sham_mcao_uv_scn_integrated.rds.gz"
-)
-
-Seurat::DefaultAssay(sc_sham_mcao_uv_scn_integrated) <- "integrated"
 
 # footer ------------------------------------------------------------------
 
