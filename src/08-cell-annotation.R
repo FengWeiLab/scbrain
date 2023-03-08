@@ -47,7 +47,7 @@ readr::write_rds(
   file = "data/scuvrda/sc_cluster.rds.gz"
 )
 
-
+sc_cluster <- readr::read_rds(file = "data/scuvrda/sc_cluster.rds.gz")
 
 # footer ------------------------------------------------------------------
 
