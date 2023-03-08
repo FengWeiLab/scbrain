@@ -39,11 +39,14 @@ sc_sham_mcao_uv_scn_integrated %>%
   Seurat::RunUMAP(reduction = "pca", dims = 1:30) |> 
   Seurat::RunTSNE(reduction = "pca", dims = 1:30) %>%
   Seurat::FindNeighbors(reduction = "pca", dims = 1:30) %>%
-  # Seurat::FindClusters(resolution = c(0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)) ->
   Seurat::FindClusters(resolution = c(0.3)) ->
   sc_cluster
 
-DimPlot(sc_cluster, reduction = "tsne",split.by = "tissue")
+readr::write_rds(
+  x = sc_cluster,
+  file = "data/scuvrda/sc_cluster.rds.gz"
+)
+
 
 
 # footer ------------------------------------------------------------------
