@@ -127,15 +127,28 @@ sc_sham_mcao_uv %>%
 
 readr::write_rds(
   x = sc_sham_mcao_uv_scn,
-  file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
+  file = "data/scuvrda/sc_sham_mcao_uv_sc.rds.gz"
 )
 
+sc_sham_mcao_uv %>% 
+  dplyr::mutate(
+    sct = purrr::map(
+      .x = sc,
+      .f = fn_filter_sct
+    )
+  ) ->
+  sc_sham_mcao_uv_sct
+
+readr::write_rds(
+  x = sc_sham_mcao_uv_sct,
+  file = "data/scuvrda/sc_sham_mcao_uv_sct.rds.gz"
+)
 
 
 # save stat ---------------------------------------------------------------
 
 
-sc_sham_mcao_uv_scn %>% 
+sc_sham_mcao_uv_scn %>%
   dplyr::mutate(
     stat = purrr::map2(
       .x = sc,
@@ -143,12 +156,12 @@ sc_sham_mcao_uv_scn %>%
       .f = function(.x, .y) {
         .xd <- .x@meta.data
         .yd <- .y@meta.data
-        
+
         .n_x_cells <- nrow(.xd)
         .mean_reads_per_cell <- mean(.xd$nCount_RNA)
         .median_gene_per_cell <- median(.xd$nFeature_RNA)
         .n_y_cells <- nrow(.yd)
-        
+
         tibble::tibble(
           `estimated number of cells` = .n_x_cells,
           `mean reads per cell` = .mean_reads_per_cell,
@@ -157,13 +170,13 @@ sc_sham_mcao_uv_scn %>%
         )
       }
     )
-  ) %>% 
-  dplyr::select(project, stat) %>% 
+  ) %>%
+  dplyr::select(project, stat) %>%
   tidyr::unnest(cols = stat) ->
   project_stat
 
 writexl::write_xlsx(
-  x = project_stat, 
+  x = project_stat,
   path = "data/scuvresult/01-basic/reads-stat.xlsx"
   )
 
