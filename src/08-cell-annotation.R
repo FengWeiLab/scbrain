@@ -27,6 +27,29 @@ options(future.globals.maxSize = 5 * 1024^3)
 
 # load data ---------------------------------------------------------------
 
+regions <- c(
+  "UVB" = "Brain",
+  "UVM" = "Meninge",
+  "UVS" = "Skull",
+  "CB" = "Brain", 
+  "CM" = "Meninge", 
+  "CS" = "Skull", 
+  "DB" = "Brain", 
+  "DM" = "Meninge", 
+  "DS" = "Skull"
+)
+cases <- c(
+  "UVB" = "UV",
+  "UVM" = "UV",
+  "UVS" = "UV",
+  "CB" = "Sham", 
+  "CM" = "Sham", 
+  "CS" = "Sham", 
+  "DB" = "MCAO", 
+  "DM" = "MCAO", 
+  "DS" = "MCAO"
+)
+
 sc_sham_mcao_uv_scn_integrated <- readr::read_rds(
   file = "data/scuvrda/sc_sct.rds.gz"
 )
@@ -47,10 +70,28 @@ readr::write_rds(
   file = "data/scuvrda/sc_cluster.rds.gz"
 )
 
-sc_cluster <- readr::read_rds(file = "data/scuvrda/sc_cluster.rds.gz")
+# sc_cluster <- readr::read_rds(file = "data/scuvrda/sc_cluster.rds.gz")
+
+Seurat::DefaultAssay(sc_cluster) <- "integrated"
+
+all.markers <- FindAllMarkers(
+  object = sc_cluster,
+  # assay = "SCT",
+  only.pos = TRUE,
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+readr::write_rds(
+  x = all.markers,
+  file = "data/scuvrda/all.markers.rds.gz"
+)
+
 
 # footer ------------------------------------------------------------------
 
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
+
+save.image(file = "data/scuvrda/08-cell-annotation.rda.gz")
