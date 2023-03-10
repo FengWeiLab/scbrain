@@ -22,23 +22,23 @@ pcc <- readr::read_tsv(file = "https://chunjie-sam-liu.life/data/pcc.tsv")
 project_sct <- readr::read_rds(file = "data/rda/project_sc_sct.rds.gz")
 
 regions <- c(
-  "CB" = "Brain", 
-  "CM" = "Meninge", 
-  "CS" = "Skull", 
-  "DB" = "Brain", 
-  "DM" = "Meninge", 
+  "CB" = "Brain",
+  "CM" = "Meninge",
+  "CS" = "Skull",
+  "DB" = "Brain",
+  "DM" = "Meninge",
   "DS" = "Skull"
 )
 cases <- c(
-  "CB" = "Sham", 
-  "CM" = "Sham", 
-  "CS" = "Sham", 
-  "DB" = "MCAO", 
-  "DM" = "MCAO", 
+  "CB" = "Sham",
+  "CM" = "Sham",
+  "CS" = "Sham",
+  "DB" = "MCAO",
+  "DM" = "MCAO",
   "DS" = "MCAO"
 )
 
-project_sct %>% 
+project_sct %>%
   dplyr::mutate(
     region = plyr::revalue(x = project, replace = regions),
     case = plyr::revalue(x = project, replace = cases)
@@ -50,23 +50,23 @@ project_sct %>%
 
 
 
-project_sct_regions %>% 
-  dplyr::filter(region == "Brain") %>% 
-  dplyr::select(project, sct) %>% 
+project_sct_regions %>%
+  dplyr::filter(region == "Brain") %>%
+  dplyr::select(project, sct) %>%
   tibble::deframe() ->
   brain_sct_list
 
 
-project_sct_regions %>% 
-  dplyr::filter(region == "Meninge") %>% 
-  dplyr::select(project, sct) %>% 
+project_sct_regions %>%
+  dplyr::filter(region == "Meninge") %>%
+  dplyr::select(project, sct) %>%
   tibble::deframe() ->
   meninge_sct_list
 
 
-project_sct_regions %>% 
-  dplyr::filter(region == "Skull") %>% 
-  dplyr::select(project, sct) %>% 
+project_sct_regions %>%
+  dplyr::filter(region == "Skull") %>%
+  dplyr::select(project, sct) %>%
   tibble::deframe() ->
   skull_sct_list
 
@@ -75,7 +75,7 @@ project_sct_regions %>%
 
 fn_sct_integrate <- function(.sct_list) {
   # .sct_list <- brain_sct_list
-  
+
   .features <- Seurat::SelectIntegrationFeatures(
     object.list = .sct_list,
     nfeatures = 3000
@@ -93,7 +93,7 @@ fn_sct_integrate <- function(.sct_list) {
     anchorset = .anchors,
     normalization.method = "SCT"
   )
-  
+
   .sct_list
 }
 
@@ -112,12 +112,12 @@ fn_cluster <- function(.sct) {
 fn_gs_list <- function() {
   source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/gene_sets_prepare.R")
   source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/sctype_score_.R")
-  
+
   db_full = "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_full.xlsx";
   db_short <- "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_short.xlsx"
   gs_list_immune_system = gene_sets_prepare(db_full, "Immune system")
   gs_list_brain = gene_sets_prepare(db_full, "Brain")
-  
+
   gs_list_immune_system %>%
     purrr::map(.f = function(.x) {
       names(.x) <- paste(names(.x), "(Immune cell)")
@@ -125,7 +125,7 @@ fn_gs_list <- function() {
       .x
     }) ->
     gs_list_immune_system_mod
-  
+
   gs_list_brain %>%
     purrr::map(.f = function(.x) {
       names(.x) <- paste(names(.x), "(Brain)")
@@ -133,7 +133,7 @@ fn_gs_list <- function() {
       .x
     }) ->
     gs_list_brain_mod
-  
+
   gs_list <- list(
     gs_positive = c(
       gs_list_immune_system_mod$gs_positive,
@@ -144,24 +144,24 @@ fn_gs_list <- function() {
       gs_list_brain_mod$gs_negative
     )
   )
-  
+
   gs_list
 }
 
 fn_sctype <- function(.sct_cluster, .res = 0.3, gs_list) {
   .snn_res <- glue::glue("integrated_snn_res.{.res}")
-  
+
   .sct_cluster$seurat_clusters <- .sct_cluster[[.snn_res]]
   .sct_cluster <- SetIdent(.sct_cluster, value = "seurat_clusters")
-  
+
   es.max <- sctype_score(
     scRNAseqData = .sct_cluster[["SCT"]]@scale.data,
     scaled = TRUE,
     gs = gs_list$gs_positive,
     gs2 = gs_list$gs_negative
   )
-  
-  
+
+
   cL_results <- do.call(
     "rbind",
     lapply(
@@ -183,19 +183,19 @@ fn_sctype <- function(.sct_cluster, .res = 0.3, gs_list) {
       }
     )
   )
-  
-  sctype_scores <-  cL_results %>% 
-    dplyr::group_by(cluster) %>% 
-    dplyr::top_n(n = 1, wt = scores)  
-  
+
+  sctype_scores <-  cL_results %>%
+    dplyr::group_by(cluster) %>%
+    dplyr::top_n(n = 1, wt = scores)
+
   sctype_scores$type[as.numeric(as.character(sctype_scores$scores)) < sctype_scores$ncells/4] = "Unknown"
-  
+
   .sct_cluster@meta.data$sctype <- ""
   for(j in unique(sctype_scores$cluster)) {
     cl_type = sctype_scores[sctype_scores$cluster == j, ]
     .sct_cluster@meta.data$sctype[.sct_cluster@meta.data$seurat_clusters == j] = as.character(cl_type$type[1])
   }
-  
+
   .sct_cluster
 }
 
@@ -203,55 +203,55 @@ fn_plot_umap_tsne <- function(.x, .celltype="sctype", .reduction="umap") {
   # .x <- sc_sct_cluster
   # .celltype="sctype"
   # .reduction="tsne"
-  
-  
+
+
   .umap <- as.data.frame(.x@reductions[[.reduction]]@cell.embeddings)
   colnames(.umap) <- c("UMAP_1", "UMAP_2")
-  .xx <- .x@meta.data[, c("seurat_clusters", .celltype)] %>% 
+  .xx <- .x@meta.data[, c("seurat_clusters", .celltype)] %>%
     dplyr::rename(cluster = seurat_clusters, celltype =  .celltype)
   .xxx <- dplyr::bind_cols(.umap, .xx)
-  .xxx %>% 
-    dplyr::select(cluster, celltype) %>% 
+  .xxx %>%
+    dplyr::select(cluster, celltype) %>%
     dplyr::group_by(cluster, celltype) %>%
-    dplyr::count() %>% 
-    dplyr::arrange(-n) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::group_by(cluster) %>% 
-    dplyr::top_n(1) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::select(-n) %>% 
+    dplyr::count() %>%
+    dplyr::arrange(-n) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(cluster) %>%
+    dplyr::top_n(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-n) %>%
     dplyr::mutate(celltype = glue::glue("{cluster} {celltype}")) ->
     .xxx_celltype
-  
-  .xxx %>% 
-    dplyr::group_by(cluster) %>% 
+
+  .xxx %>%
+    dplyr::group_by(cluster) %>%
     tidyr::nest() %>%
     dplyr::mutate(u = purrr::map(.x = data, .f = function(.m) {
-      # d %>% 
-      #   dplyr::filter(cluster == 14) %>% 
-      #   dplyr::pull(data) %>% 
+      # d %>%
+      #   dplyr::filter(cluster == 14) %>%
+      #   dplyr::pull(data) %>%
       #   .[[1]] ->
       #   .m
-      
+
       .m %>%
         dplyr::summarise(u1 = mean(UMAP_1), u2 = mean(UMAP_2)) ->
         .mm
-      
+
       .m %>%
         dplyr::mutate(u1 = UMAP_1 > .mm$u1, u2 = UMAP_2 > .mm$u2) ->
         .mmd
-      
+
       .mmd %>%
         dplyr::group_by(u1, u2) %>%
         dplyr::count() %>%
         dplyr::ungroup() %>%
         dplyr::arrange(-n) ->
         .mmm
-      
+
       .fc <- .mmm$n[[1]] / .mmm$n[[2]] # 1.1
       .mmm
       .fc
-      
+
       if(.fc > 1.1) {
         .mmd %>%
           dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) %>%
@@ -261,22 +261,22 @@ fn_plot_umap_tsne <- function(.x, .celltype="sctype", .reduction="umap") {
           # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) %>%
           dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
       }
-      
-    })) %>% 
-    dplyr::ungroup() %>% 
-    tidyr::unnest(cols = u) %>% 
-    dplyr::select(-data) %>% 
-    dplyr::left_join(.xxx_celltype, by = "cluster") %>% 
+
+    })) %>%
+    dplyr::ungroup() %>%
+    tidyr::unnest(cols = u) %>%
+    dplyr::select(-data) %>%
+    dplyr::left_join(.xxx_celltype, by = "cluster") %>%
     dplyr::arrange(cluster) ->
     .xxx_label
-  
-  # .xxx %>% 
-  #   dplyr::group_by(cluster) %>% 
-  #   dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2)) %>% 
+
+  # .xxx %>%
+  #   dplyr::group_by(cluster) %>%
+  #   dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2)) %>%
   #   dplyr::left_join(.xxx_celltype, by = "cluster")
-  #   
-  
-  
+  #
+
+
   .labs <- if (.reduction == "umap") {
     labs(
       x = "UMAP1",
@@ -288,7 +288,7 @@ fn_plot_umap_tsne <- function(.x, .celltype="sctype", .reduction="umap") {
       y = "tSNE2"
     )
   }
-  
+
   ggplot() +
     geom_point(
       data = .xxx,
@@ -333,8 +333,8 @@ fn_plot_umap_tsne <- function(.x, .celltype="sctype", .reduction="umap") {
       axis.ticks = element_blank(),
       axis.text = element_blank(),
       axis.title = element_text(
-        size = 12, 
-        face = "bold", 
+        size = 12,
+        face = "bold",
         hjust = 0.05
       ),
       legend.background = element_blank(),
@@ -355,7 +355,7 @@ fn_find_all_markers <- function(.sct_cluster, .res = 0.3) {
   .snn_res <- glue::glue("integrated_snn_res.{.res}")
   .sct_cluster$seurat_clusters <- .sct_cluster[[.snn_res]]
   .sct_cluster <- SetIdent(.sct_cluster, value = "seurat_clusters")
-  
+
   Seurat::FindAllMarkers(
     object = .sct_cluster,
     assay = "SCT",
@@ -363,44 +363,44 @@ fn_find_all_markers <- function(.sct_cluster, .res = 0.3) {
     min.pct = 0.25,
     logfc.threshold = 0.25
   )
-  
+
 
 }
 
 fn_gene_dotplot <- function(.sct_cluster, .marker, .n = 3) {
-  
-  .marker %>% 
-    dplyr::group_by(cluster) %>% 
-    dplyr::slice_max(n = .n, order_by = avg_log2FC) %>% 
+
+  .marker %>%
+    dplyr::group_by(cluster) %>%
+    dplyr::slice_max(n = .n, order_by = avg_log2FC) %>%
     print(n = Inf) ->
     .marker_head
-  
+
   DefaultAssay(.sct_cluster) <- "SCT"
-  
+
   DotPlot(
-    .sct_cluster, 
-    features = unique(.marker_head$gene), 
-    cols = c("blue", "red"), 
+    .sct_cluster,
+    features = unique(.marker_head$gene),
+    cols = c("blue", "red"),
     dot.scale = 8
   ) +
     RotatedAxis()
 }
 
 fn_gene_dotplot_new <- function(.sct_cluster, .marker) {
-  .marker %>% 
-    dplyr::pull(markers) %>% 
-    stringr::str_split(pattern = ",") %>% 
+  .marker %>%
+    dplyr::pull(markers) %>%
+    stringr::str_split(pattern = ",") %>%
     unlist() ->
     .m
   .mm <- intersect(.m, rownames(.sct_cluster))
   DefaultAssay(.sct_cluster) <- "SCT"
 
   Idents(.sct_cluster) <-  "celltype"
-  
+
   DotPlot(
-    .sct_cluster, 
-    features = unique(.mm), 
-    cols = c("blue", "red"), 
+    .sct_cluster,
+    features = unique(.mm),
+    cols = c("blue", "red"),
     dot.scale = 8
   ) +
     RotatedAxis() +
@@ -414,15 +414,15 @@ fn_gene_dotplot_new <- function(.sct_cluster, .marker) {
 fn_qc <- function(.region, .sct) {
   # .sct
   Seurat::VlnPlot(
-    object = .sct, 
-    features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), 
+    object = .sct,
+    features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"),
     cols = viridis::viridis_pal()(2),
     ncol = 2,
     group.by = "case",
     pt.size = 0
   )  ->
     .vlnplot #;.vlnplot
-  
+
   .plot1 <- Seurat::FeatureScatter(
         object = .sct,
         feature1 = "nCount_RNA",
@@ -456,15 +456,15 @@ fn_qc <- function(.region, .sct) {
   #     plot_layout(ncol = 1)) &
   #   theme_bw()
 
-  
+
   .vlnplot / .plot3 / (.plot1 | .plot2)  +
     plot_annotation(
-      title = glue::glue("Quality control {.region}"),  
+      title = glue::glue("Quality control {.region}"),
       tag_levels = "A"
     ) +
     plot_layout(guides='collect') &
     theme(legend.position='bottom') -> .qc; .qc
-  
+
   ggsave(
     filename = glue::glue("quality_control_{.region}.pdf"),
     plot = .qc,
@@ -472,7 +472,7 @@ fn_qc <- function(.region, .sct) {
     path = "data/result/01-qc",
     width = 9,
     height = 15
-    
+
   )
 
 }
@@ -488,7 +488,7 @@ brain_meninge_skull_sct_list <- tibble::tibble(
 )
 
 
-brain_meninge_skull_sct_list %>% 
+brain_meninge_skull_sct_list %>%
   dplyr::mutate(
     sct = purrr::map2(
       .x = region,
@@ -497,7 +497,7 @@ brain_meninge_skull_sct_list %>%
         fn_sct_integrate(.sct_list = .y)
       }
     )
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     sct_cluster = purrr::map2(
       .x = region,
@@ -524,7 +524,7 @@ readr::write_rds(
 # Metrics -----------------------------------------------------------------
 
 
-brain_meninge_skull_sct_cluster %>% 
+brain_meninge_skull_sct_cluster %>%
   dplyr::mutate(
     qc = purrr::map2(
       .x = region,
@@ -532,7 +532,7 @@ brain_meninge_skull_sct_cluster %>%
       .f = fn_qc
     )
   )
-  
+
 
 #
 
@@ -541,7 +541,7 @@ brain_meninge_skull_sct_cluster %>%
 
 gs_list <- fn_gs_list()
 
-brain_meninge_skull_sct_cluster %>% 
+brain_meninge_skull_sct_cluster %>%
   dplyr::mutate(
     sct_cluster_sctype = purrr::map(
       .x = sct_cluster,
@@ -549,7 +549,7 @@ brain_meninge_skull_sct_cluster %>%
       .res = 0.1,
       gs_list = gs_list
     )
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     sct_cluster_sctype_umap = purrr::map(
       .x = sct_cluster_sctype,
@@ -557,7 +557,7 @@ brain_meninge_skull_sct_cluster %>%
       .celltype = "sctype",
       .reduction = "umap"
     )
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     sct_cluster_sctype_tsne = purrr::map(
       .x = sct_cluster_sctype,
@@ -571,14 +571,14 @@ brain_meninge_skull_sct_cluster %>%
 
 # Marker genes ------------------------------------------------------------
 
-brain_meninge_skull_sct_cluster_sctype %>% 
+brain_meninge_skull_sct_cluster_sctype %>%
   dplyr::mutate(
     marker_genes = purrr::map(
       .x = sct_cluster_sctype,
       .f = fn_find_all_markers,
       .res = 0.1
     )
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     gene_dotplot = purrr::map2(
       .x = sct_cluster_sctype,
@@ -614,7 +614,7 @@ list(
     fullname = "microglia",
     shortname = "Microglia"
   ),
-  
+
   `2` = list(
     markers = c("Acat2", "Myl9"),
     fullname = "vascular smooth muscle cells",
@@ -655,7 +655,7 @@ list(
     fullname = "Neutrophil",
     shortname = "Neutrophil"
   ),
-  
+
   `10` = list(
     markers = c("Dcn", "Apod"),
     fullname = "perivascular fibroblast-like cells",
@@ -671,24 +671,24 @@ list(
     fullname = "Ciliated ependymal cell",
     shortname = "CEC"
   )
-) %>% 
-  tibble::enframe() %>% 
+) %>%
+  tibble::enframe() %>%
   dplyr::mutate(
     a = purrr::map(
       .x = value,
       .f = function(.x) {
         .x$markers <- paste0(.x$markers, collapse = ",")
-        .x %>% 
-          tibble::enframe() %>%  
-          tidyr::unnest(cols = value) %>% 
+        .x %>%
+          tibble::enframe() %>%
+          tidyr::unnest(cols = value) %>%
           tidyr::spread(key = name, value = value)
       }
     )
-  ) %>% 
-  dplyr::select(-value) %>% 
-  tidyr::unnest(cols = a) %>% 
+  ) %>%
+  dplyr::select(-value) %>%
+  tidyr::unnest(cols = a) %>%
   dplyr::rename(cluster = name) ->
-  brain_marker_celltype 
+  brain_marker_celltype
 
 # Meninge -----------------------------------------------------------------
 
@@ -769,24 +769,24 @@ list(
     fullname = "Endothelial cell",
     shortname = "Endothelial cell"
   )
-) %>% 
-  tibble::enframe() %>% 
+) %>%
+  tibble::enframe() %>%
   dplyr::mutate(
     a = purrr::map(
       .x = value,
       .f = function(.x) {
         .x$markers <- paste0(.x$markers, collapse = ",")
-        .x %>% 
-          tibble::enframe() %>%  
-          tidyr::unnest(cols = value) %>% 
+        .x %>%
+          tibble::enframe() %>%
+          tidyr::unnest(cols = value) %>%
           tidyr::spread(key = name, value = value)
       }
     )
-  ) %>% 
-  dplyr::select(-value) %>% 
-  tidyr::unnest(cols = a) %>% 
+  ) %>%
+  dplyr::select(-value) %>%
+  tidyr::unnest(cols = a) %>%
   dplyr::rename(cluster = name) ->
-  meninge_marker_celltype 
+  meninge_marker_celltype
 
 # Skull cell --------------------------------------------------------------
 
@@ -846,38 +846,38 @@ list(
     fullname = "Fibroblast Col3a1",
     shortname = "Fibroblast Col3a1"
   )
-) %>% 
-  tibble::enframe() %>% 
+) %>%
+  tibble::enframe() %>%
   dplyr::mutate(
     a = purrr::map(
       .x = value,
       .f = function(.x) {
         .x$markers <- paste0(.x$markers, collapse = ",")
-        .x %>% 
-          tibble::enframe() %>%  
-          tidyr::unnest(cols = value) %>% 
+        .x %>%
+          tibble::enframe() %>%
+          tidyr::unnest(cols = value) %>%
           tidyr::spread(key = name, value = value)
       }
     )
-  ) %>% 
-  dplyr::select(-value) %>% 
-  tidyr::unnest(cols = a) %>% 
+  ) %>%
+  dplyr::select(-value) %>%
+  tidyr::unnest(cols = a) %>%
   dplyr::rename(cluster = name) ->
-  skull_marker_celltype 
+  skull_marker_celltype
 
 # {
 #   b <- brain_meninge_skull_sct_cluster_sctype_marker$sct_cluster_sctype[[3]]
-#   d <- brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[3]] 
-#   
+#   d <- brain_meninge_skull_sct_cluster_sctype_marker$marker_genes[[3]]
+#
 #   DefaultAssay(b) <- "SCT"
-#   
-#   d %>% 
-#     dplyr::filter(!grepl("^mt-", gene)) %>% 
+#
+#   d %>%
+#     dplyr::filter(!grepl("^mt-", gene)) %>%
 #     dplyr::group_by(cluster) %>%
 #     dplyr::slice_max(n = 7, order_by = avg_log2FC) %>%
-#     # dplyr::filter(avg_log2FC > 3) %>% 
-#     dplyr::filter(cluster == 10) 
-#   
+#     # dplyr::filter(avg_log2FC > 3) %>%
+#     dplyr::filter(cluster == 10)
+#
 #   FeaturePlot(
 #     object = b,
 #     features = "Mpo",
@@ -888,7 +888,7 @@ list(
 #   )
 # }
 
-  
+
 
 
 
@@ -898,25 +898,25 @@ list(
 # manual  cell types ------------------------------------------------------
 
 
-brain_meninge_skull_sct_cluster_sctype_marker %>% 
+brain_meninge_skull_sct_cluster_sctype_marker %>%
   dplyr::mutate(
     marker_celltype = list(
-      brain_marker_celltype, 
-      meninge_marker_celltype, 
+      brain_marker_celltype,
+      meninge_marker_celltype,
       skull_marker_celltype
     )
-  )  %>% 
+  )  %>%
   dplyr::mutate(
     sct_cluster_celltype = purrr::map2(
       .x = sct_cluster_sctype,
       .y = marker_celltype,
       .f = function(.x, .y) {
         .x@meta.data
-        .y %>% 
-          dplyr::select(cluster, shortname) %>% 
+        .y %>%
+          dplyr::select(cluster, shortname) %>%
           tibble::deframe() ->
           .yy
-        .x@meta.data %>% 
+        .x@meta.data %>%
           dplyr::mutate(celltype = plyr::revalue(
             seurat_clusters,
             .yy
@@ -936,7 +936,7 @@ readr::write_rds(
 
 
 
-brain_meninge_skull_sct_cluster_sctype_marker_celltype %>% 
+brain_meninge_skull_sct_cluster_sctype_marker_celltype %>%
   dplyr::mutate(
     sct_cluster_celltype_umap = purrr::map(
       .x = sct_cluster_celltype,
@@ -944,7 +944,7 @@ brain_meninge_skull_sct_cluster_sctype_marker_celltype %>%
       .celltype = "celltype",
       .reduction = "umap"
     )
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     sct_cluster_celltype_tsne = purrr::map(
       .x = sct_cluster_celltype,
@@ -952,7 +952,7 @@ brain_meninge_skull_sct_cluster_sctype_marker_celltype %>%
       .celltype = "celltype",
       .reduction = "tsne"
     )
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     gene_dotplot_new = purrr::map2(
       .x = sct_cluster_celltype,
@@ -983,16 +983,16 @@ ggsave(
 )
 
 
-brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot %>% 
-  dplyr::select(sct_cluster_celltype ) %>% 
+brain_meninge_skull_sct_cluster_sctype_marker_celltype_plot %>%
+  dplyr::select(sct_cluster_celltype ) %>%
   dplyr::mutate(a = purrr::map(.x = sct_cluster_celltype, .f = function(.x) {
     .x@meta.data
-  })) %>% 
-  dplyr::select(-sct_cluster_celltype) %>% 
+  })) %>%
+  dplyr::select(-sct_cluster_celltype) %>%
   tidyr::unnest(cols = a) ->
   region_composition
 
-region_composition %>% 
+region_composition %>%
   ggplot(aes(x = region, fill = celltype)) +
   geom_bar(position="fill") +
   scale_fill_manual(values = pcc$color, name = "Cell type") +
