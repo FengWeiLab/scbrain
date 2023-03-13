@@ -391,6 +391,50 @@ fn_find_all_markers <- function(.sct_cluster, .res = 0.3) {
   
 }
 
+fn_gene_dotplot <- function(.sct_cluster, .marker, .n = 3) {
+  
+  .marker %>%
+    dplyr::group_by(cluster) %>%
+    dplyr::slice_max(n = .n, order_by = avg_log2FC) %>%
+    print(n = Inf) ->
+    .marker_head
+  
+  DefaultAssay(.sct_cluster) <- "SCT"
+  
+  DotPlot(
+    .sct_cluster,
+    features = unique(.marker_head$gene),
+    cols = c("blue", "red"),
+    dot.scale = 8
+  ) +
+    RotatedAxis()
+}
+
+fn_gene_dotplot_new <- function(.sct_cluster, .marker) {
+  .marker %>%
+    dplyr::pull(markers) %>%
+    stringr::str_split(pattern = ",") %>%
+    unlist() ->
+    .m
+  .mm <- intersect(.m, rownames(.sct_cluster))
+  DefaultAssay(.sct_cluster) <- "SCT"
+  
+  Idents(.sct_cluster) <-  "celltype"
+  
+  DotPlot(
+    .sct_cluster,
+    features = unique(.mm),
+    cols = c("blue", "red"),
+    dot.scale = 8
+  ) +
+    RotatedAxis() +
+    labs(
+      x = "Genes",
+      y = "Cell types"
+    )
+}
+
+
 # load data ---------------------------------------------------------------
 regions <- c(
   "UVB" = "Brain",
@@ -508,7 +552,20 @@ brain_meninge_skull_sct_cluster %>%
       .res = 0.3,
       gs_list = gs_list
     )
-  ) %>%
+  ) ->
+  brain_meninge_skull_sct_cluster_annotation
+
+readr::write_rds(
+  x = brain_meninge_skull_sct_cluster_annotation,
+  file = "data/scuvrda/brain_meninge_skull_sct_cluster_annotation.rds.gz"
+)
+
+
+# tsne and umap plot ------------------------------------------------------
+
+
+
+brain_meninge_skull_sct_cluster_annotation |> 
   dplyr::mutate(
     sct_cluster_sctype_umap = purrr::map(
       .x = sct_cluster_sctype,
@@ -614,7 +671,10 @@ brain_meninge_skull_sct_cluster_sctype %>%
       .f = fn_find_all_markers,
       .res = 0.3
     )
-  ) %>%
+  ) ->
+  brain_meninge_skull_sct_cluster_sctype_allmarkers
+
+brain_meninge_skull_sct_cluster_sctype_allmarkers |> 
   dplyr::mutate(
     gene_dotplot = purrr::map2(
       .x = sct_cluster_sctype,
@@ -641,3 +701,5 @@ readr::write_rds(
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
+
+save.image(file = "data/scuvrda/09-region-annotation.rda.gz")

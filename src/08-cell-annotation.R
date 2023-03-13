@@ -67,7 +67,7 @@ sc_sham_mcao_uv_scn_integrated %>%
 
 readr::write_rds(
   x = sc_cluster,
-  file = "data/scuvrda/sc_cluster.rds.gz"
+  file = "data/scuvrda/sc_cluster_integrated.rds.gz"
 )
 
 # sc_cluster <- readr::read_rds(file = "data/scuvrda/sc_cluster.rds.gz")
