@@ -683,11 +683,11 @@ brain_meninge_skull_sct_cluster_sctype_allmarkers |>
       .n = 2
     )
   ) ->
-  brain_meninge_skull_sct_cluster_sctype_marker
+  brain_meninge_skull_sct_cluster_sctype_allmarkers_dotplot
 
 readr::write_rds(
-  x = brain_meninge_skull_sct_cluster_sctype_marker,
-  file = "data/scuvrda/brain_meninge_skull_sct_cluster_sctype_marker.rds.gz"
+  x = brain_meninge_skull_sct_cluster_sctype_allmarkers,
+  file = "data/scuvrda/brain_meninge_skull_sct_cluster_sctype_allmarkers.rds.gz"
 )
 
 # body --------------------------------------------------------------------
