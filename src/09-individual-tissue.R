@@ -175,6 +175,14 @@ project_sct_region_cluster_allmarkers |>
 
 
 
+# annotation --------------------------------------------------------------
+
+a <- project_sct_region_cluster_allmarkers$sct_cluster[[1]]
+
+
+a
+
+
 # footer ------------------------------------------------------------------
 
 future::plan(future::sequential)
