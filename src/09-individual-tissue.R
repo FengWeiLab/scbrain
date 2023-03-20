@@ -332,8 +332,7 @@ fn_gene_dotplot <- function(.sct_cluster, .marker, .n = 3) {
   
   .marker %>%
     dplyr::group_by(cluster) %>%
-    dplyr::slice_max(n = .n, order_by = avg_log2FC) %>%
-    print(n = Inf) ->
+    dplyr::slice_max(n = .n, order_by = avg_log2FC)  ->
     .marker_head
   
   DefaultAssay(.sct_cluster) <- "SCT"
@@ -497,7 +496,7 @@ project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne |>
       .x = sct_cluster_sctype,
       .y = allmarkers,
       .f = fn_gene_dotplot,
-      .n = 2
+      .n = 3
     )
   ) ->
   project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne_marker_dot
