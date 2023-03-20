@@ -502,10 +502,68 @@ project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne |>
   project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne_marker_dot
 
 
+
 readr::write_rds(
   x = project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne_marker_dot,
   file = "data/scuvrda/project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne_marker_dot.rds.gz"
 )
+
+
+
+# save plots --------------------------------------------------------------
+
+project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne_marker_dot |> 
+  dplyr::mutate(
+    a = purrr::pmap(
+      .l = list(
+        .region = region,
+        .case = case,
+        .heatmap10 = heatmap10,
+        .tsne = sct_cluster_sctype_tsne,
+        .umap = sct_cluster_sctype_umap,
+        .marker_dotplot = marker_dotplot
+      ),
+      .f = function(.region, .case, .heatmap10, .tsne, .umap, .marker_dotplot, .outdir) {
+        .filename <- glue::glue("{.region}_{.case}")
+        
+        ggsave(
+          filename = glue::glue("{.filename}_heatmap_top10.pdf"),
+          plot = .heatmap10,
+          device = "pdf",
+          path = .outdir,
+          width = 12,
+          height = 15
+        )
+        
+        ggsave(
+          filename = glue::glue("{.filename}_umap.pdf"),
+          plot = .umap,
+          device = "pdf",
+          path = .outdir,
+          width = 12,
+          height = 6
+        )
+        ggsave(
+          filename = glue::glue("{.filename}_tsne.pdf"),
+          plot = .tsne,
+          device = "pdf",
+          path = .outdir,
+          width = 12,
+          height = 6
+        )
+        ggsave(
+          filename = glue::glue("{.filename}_tsne.pdf"),
+          plot = .marker_dotplot,
+          device = "pdf",
+          path = .outdir,
+          width = 12,
+          height = 6
+        )
+      },
+      .outdir = "/home/liuc9/github/scbrain/data/scuvresult/05-indivivudal-tissue"
+    )
+  )
+
 
 # footer ------------------------------------------------------------------
 
