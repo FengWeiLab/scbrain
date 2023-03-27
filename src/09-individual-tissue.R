@@ -572,3 +572,4 @@ future::plan(future::sequential)
 # save image --------------------------------------------------------------
 
 save.image(file = "data/scuvrda/09-individual-tissue.rda.gz")
+load(file = "data/scuvrda/09-individual-tissue.rda.gz")
