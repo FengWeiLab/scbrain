@@ -552,7 +552,7 @@ project_sct_region_cluster_allmarkers_heatmap10_sctype_umap_tsne_marker_dot |>
           height = 6
         )
         ggsave(
-          filename = glue::glue("{.filename}_tsne.pdf"),
+          filename = glue::glue("{.filename}_marker_dot.pdf"),
           plot = .marker_dotplot,
           device = "pdf",
           path = .outdir,
