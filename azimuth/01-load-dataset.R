@@ -166,6 +166,10 @@ project_sc <- project_path %>%
     )
   ) 
 
+readr::write_rds(
+  x = project_sc,
+  file = "data/azimuth/project_sc.rds.gz"
+)
 
 
 
@@ -178,3 +182,6 @@ project_sc <- project_path %>%
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
+save.image(
+  file = "data/azimuth/01-load-dataset.rda"
+)
