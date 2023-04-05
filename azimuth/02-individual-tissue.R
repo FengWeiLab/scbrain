@@ -632,7 +632,7 @@ project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
           plot = .p,
           device = "pdf",
           path = .outdir,
-          width = 12,
+          width = 14,
           height = 8
         )
         
@@ -641,8 +641,76 @@ project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
     )
   )
 
-project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
-  dplyr::select(region, cas)
+
+
+# col plot ----------------------------------------------------------------
+
+celllevel |> 
+  names() |> 
+  purrr::map(
+    .f = function(.region) {
+      
+      project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
+        dplyr::select(region, case, cellnumber) |> 
+        tidyr::unnest(cols = cellnumber) |> 
+        dplyr::filter(region == .region) |> 
+        ggplot(aes(
+          x = case, 
+          y = ratio,
+          fill = forcats::fct_inorder(celltype)
+        )) +
+        geom_col(
+          width = 1,
+          color = 1,
+          size = 0.2
+        ) +
+        scale_x_discrete(
+          limits = c("Sham", "MCAO", "UV"),
+          expand = c(0, 0.01)
+        ) +
+        scale_y_continuous(
+          labels = scales::percent_format(),
+          expand = c(0, 0.01)
+        ) +
+        scale_fill_manual(
+          name = "Cell type",
+          values = pcc$color 
+        ) +
+        theme(
+          panel.background = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_line(),
+          axis.text = element_text(
+            size = 16,
+            color = "black",
+            face = "bold"
+          ),
+          legend.title = element_text(
+            size = 16,
+            color = "black",
+            face = "bold"
+          ),
+          legend.text = element_text(
+            size = 14,
+            color = "black",
+            face = "bold"
+          )
+        ) ->
+        .p
+      
+      ggsave(
+        filename = glue::glue("{.region}_celltype_proportion.pdf"),
+        plot = .p,
+        device = "pdf",
+        path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth",
+        width = 10,
+        height = 8
+      )
+      
+    }
+  )
+
+
 
 # footer ------------------------------------------------------------------
 
