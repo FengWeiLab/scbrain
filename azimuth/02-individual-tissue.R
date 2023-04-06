@@ -717,6 +717,7 @@ celllevel |>
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-
 save.image(file = "data/azimuth/02-individual-tissue.rda")
+
+
 load(file = "data/azimuth/02-individual-tissue.rda")
