@@ -33,10 +33,16 @@ project_sct <- readr::read_rds(
 
 # body --------------------------------------------------------------------
 
-project_sct |> View()
-
 project_sct |> 
-  dplyr::select()
+  dplyr::select(
+    project, region, case, 
+    unique_celltype, unique_celltype_union,
+    anno_cell, cellnumber
+  ) ->
+  project_sct_sel
+
+
+project_sct_sel
 
 # footer ------------------------------------------------------------------
 
