@@ -26,48 +26,48 @@ future::plan(future::multisession, workers = 10)
 fn_azimuth <- function(.sc, .ref) {
   # .sc <- project_sc$sc[[1]]
   # .ref <- project_sc$ref[[1]]
-  
+
   .sct <- RunAzimuth(
     query = .sc,
     reference = .ref
     # reference = "mousecortexref"
   )
-  
+
   .sct
-  
+
 }
 
 fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .facet = FALSE) {
-  
+
   # .x = project_sc_azimuth$anno[[3]]
   # .celltype = "predicted.celltype.l2"
   # .reduction = "ref.umap"
-  
-  
-  .x@meta.data[[.celltype]] |> 
-    unique() |> 
+
+
+  .x@meta.data[[.celltype]] |>
+    unique() |>
     as.factor() ->
     .celltype_u
   .replace <- as.numeric(.celltype_u) - 1
   names(.replace) <- .celltype_u
-  
-  
+
+
   .umap <- as.data.frame(.x@reductions[[.reduction]]@cell.embeddings)
   colnames(.umap) <- c("UMAP_1", "UMAP_2")
-  
-  .xx <- .x@meta.data[, c("case", "region", .celltype)] |> 
-    dplyr::rename(celltype = .celltype) |> 
+
+  .xx <- .x@meta.data[, c("case", "region", .celltype)] |>
+    dplyr::rename(celltype = .celltype) |>
     dplyr::mutate(cluster = plyr::revalue(
       x = celltype,
       replace = .replace
-    )) |> 
-    dplyr::mutate(cluster = as.numeric(cluster)) |> 
+    )) |>
+    dplyr::mutate(cluster = as.numeric(cluster)) |>
     dplyr::mutate(cluster = factor(cluster))
-  
+
   .xxx <- dplyr::bind_cols(.umap, .xx)
-  
+
   .xxx |>
-    dplyr::select(cluster, celltype)  |> 
+    dplyr::select(cluster, celltype)  |>
     dplyr::group_by(cluster, celltype) |>
     dplyr::count() |>
     dplyr::arrange(-n) |>
@@ -76,9 +76,9 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
     dplyr::top_n(1) |>
     dplyr::ungroup() |>
     dplyr::select(-n) |>
-    dplyr::mutate(celltype = glue::glue("{cluster} {celltype}")) -> 
+    dplyr::mutate(celltype = glue::glue("{cluster} {celltype}")) ->
     .xxx_celltype
-  
+
   .xxx |>
     dplyr::group_by(cluster) |>
     tidyr::nest() |>
@@ -88,33 +88,33 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
       #   dplyr::pull(data) |>
       #   .[[1]] ->
       #   .m
-      
+
       .m |>
         dplyr::summarise(u1 = mean(UMAP_1), u2 = mean(UMAP_2)) ->
         .mm
-      
+
       .m |>
         dplyr::mutate(u1 = UMAP_1 > .mm$u1, u2 = UMAP_2 > .mm$u2) ->
         .mmd
-      
+
       .mmd |>
         dplyr::group_by(u1, u2) |>
         dplyr::count() |>
         dplyr::ungroup() |>
         dplyr::arrange(-n) ->
         .mmm
-      
+
       if(nrow(.mmm) == 1) {
         return(
           .mmd |>
             # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
             dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
         )
-        
+
       }
-      
+
       .fc <- .mmm$n[[1]] / .mmm$n[[2]] # 1.1
-      
+
       if(.fc > 1.1) {
         .mmd |>
           dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
@@ -124,7 +124,7 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
           # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
           dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
       }
-      
+
     })) |>
     dplyr::ungroup() |>
     tidyr::unnest(cols = u) |>
@@ -132,7 +132,7 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
     dplyr::left_join(.xxx_celltype, by = "cluster") |>
     dplyr::arrange(cluster) ->
     .xxx_label
-  
+
   .labs <- switch(
     EXPR = .reduction,
     "umap" = {
@@ -154,14 +154,14 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
       )
     }
   )
-  
+
   .split <- if(.facet) {
     facet_wrap(~case, nrow = 1)
   } else {
     theme()
   }
-  
-  
+
+
   ggplot() +
     geom_point(
       data = .xxx,
@@ -222,79 +222,79 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
       ratio = 1,
     ) +
     .split +
-    .labs 
+    .labs
 }
 
 fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap", .facet = FALSE) {
   # .x = project_sc_azimuth_refumap_unique_celltype_union_anno_cell$anno_cell[[1]]
   # .celltype = "celltype"
   # .reduction = "ref.umap"
-  
-  
+
+
   # .x@
-  
-  # .x@meta.data[[.celltype]] |> 
-  #   unique() |> 
+
+  # .x@meta.data[[.celltype]] |>
+  #   unique() |>
   #   as.factor() ->
   #   .celltype_u
   # .replace <- as.numeric(.celltype_u) - 1
   # names(.replace) <- .celltype_u
-  
-  
+
+
   .umap <- as.data.frame(.x@reductions[[.reduction]]@cell.embeddings)
   colnames(.umap) <- c("UMAP_1", "UMAP_2")
-  
-  .x@meta.data |> 
-    dplyr::select(case, region, tidyselect::all_of(.celltype), cluster, cluster_celltype) |> 
+
+  .x@meta.data |>
+    dplyr::select(case, region, tidyselect::all_of(.celltype), cluster, cluster_celltype) |>
     dplyr::rename(celltype = .celltype) ->
     .xx
-  
+
   .xxx <- dplyr::bind_cols(.umap, .xx)
-  
+
   .xxx |>
-    dplyr::select(cluster, celltype = cluster_celltype) |> 
-    dplyr::group_by(cluster, celltype) |> 
-    dplyr::count() |> 
-    dplyr::ungroup() |> 
+    dplyr::select(cluster, celltype = cluster_celltype) |>
+    dplyr::group_by(cluster, celltype) |>
+    dplyr::count() |>
+    dplyr::ungroup() |>
     dplyr::mutate(ratio = n / sum(n)) ->
     .xxx_celltype
-  
+
   .xxx |>
     dplyr::group_by(cluster) |>
-    tidyr::nest() |> 
+    tidyr::nest() |>
     dplyr::mutate(u = purrr::map(.x = data, .f = function(.m) {
       # d |>
       #   dplyr::filter(cluster == 14) |>
       #   dplyr::pull(data) |>
       #   .[[1]] ->
       #   .m
-      
+
       .m |>
         dplyr::summarise(u1 = mean(UMAP_1), u2 = mean(UMAP_2)) ->
         .mm
-      
+
       .m |>
         dplyr::mutate(u1 = UMAP_1 > .mm$u1, u2 = UMAP_2 > .mm$u2) ->
         .mmd
-      
+
       .mmd |>
         dplyr::group_by(u1, u2) |>
         dplyr::count() |>
         dplyr::ungroup() |>
         dplyr::arrange(-n) ->
         .mmm
-      
+
       if(nrow(.mmm) == 1) {
         return(
           .mmd |>
             # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
             dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
         )
-        
+
       }
-      
+
       .fc <- .mmm$n[[1]] / .mmm$n[[2]] # 1.1
-      
+
       if(.fc > 1.1) {
         .mmd |>
           dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
@@ -304,15 +304,15 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
           # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
           dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
       }
-      
+
     })) |>
     dplyr::ungroup() |>
-    tidyr::unnest(cols = u) |> 
-    dplyr::select(-data) |> 
+    tidyr::unnest(cols = u) |>
+    dplyr::select(-data) |>
     dplyr::left_join(.xxx_celltype, by = "cluster") |>
     dplyr::arrange(cluster) ->
     .xxx_label
-  
+
   .labs <- switch(
     EXPR = .reduction,
     "umap" = {
@@ -334,14 +334,14 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
       )
     }
   )
-  
+
   .split <- if(.facet) {
     facet_wrap(~case, nrow = 1)
   } else {
     theme()
   }
-  
-  
+
+
   ggplot() +
     geom_point(
       data = .xxx,
@@ -404,7 +404,7 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
     .split +
     .labs  ->
     .p
-  
+
   tibble::tibble(
     new_p = list(.p),
     cellnumber = list(.xxx_label)
@@ -427,7 +427,7 @@ refs <- c(
 )
 
 
-project_sc |> 
+project_sc |>
   dplyr::mutate(
     anno = purrr::map2(
       .x = sc,
@@ -444,13 +444,13 @@ celllevel <- c(
   "Skull" = "predicted.celltype.l2"
 )
 
-project_sc_azimuth |> 
+project_sc_azimuth |>
   dplyr::mutate(
     celllevel = plyr::revalue(
       x = region,
       replace = celllevel
     )
-  ) |> 
+  ) |>
   dplyr::mutate(
     p = purrr::map2(
       .x = anno,
@@ -473,7 +473,7 @@ readr::write_rds(
 
 
 
-project_sc_azimuth_refumap |> 
+project_sc_azimuth_refumap |>
   dplyr::mutate(
     a = purrr::pmap(
       .l = list(
@@ -483,8 +483,8 @@ project_sc_azimuth_refumap |>
       ),
       .f = function(.region, .case, .p, .outdir) {
         .filename <- glue::glue("{.region}_{.case}")
-        
-        
+
+
         ggsave(
           filename = glue::glue("{.filename}_umap.pdf"),
           plot = .p,
@@ -493,7 +493,7 @@ project_sc_azimuth_refumap |>
           width = 12,
           height = 6
         )
-        
+
       },
       .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth"
     )
@@ -503,14 +503,14 @@ project_sc_azimuth_refumap |>
 
 # merge annotation --------------------------------------------------------
 
-project_sc_azimuth_refumap |> 
+project_sc_azimuth_refumap |>
   dplyr::mutate(
     unique_celltype = purrr::map2(
       .x = anno,
       .y = celllevel,
       .f = function(.anno, .celllevel) {
-        .anno@meta.data[[.celllevel]] |> 
-          unique() |> 
+        .anno@meta.data[[.celllevel]] |>
+          unique() |>
           sort()
       }
     )
@@ -518,35 +518,35 @@ project_sc_azimuth_refumap |>
   project_sc_azimuth_refumap_unique_celltype
 
 
-project_sc_azimuth_refumap_unique_celltype |> 
-  dplyr::filter(region == "Brain") |> 
-  dplyr::pull(unique_celltype) |> 
-  purrr::reduce(.f = union) |> 
-  tibble::enframe(name = "cluster", value = "celltype") |> 
-  dplyr::mutate(cluster = factor(cluster)) |> 
+project_sc_azimuth_refumap_unique_celltype |>
+  dplyr::filter(region == "Brain") |>
+  dplyr::pull(unique_celltype) |>
+  purrr::reduce(.f = union) |>
+  tibble::enframe(name = "cluster", value = "celltype") |>
+  dplyr::mutate(cluster = factor(cluster)) |>
   dplyr::mutate(cluster_celltype = glue::glue("{cluster} {celltype}")) ->
   brain_celltype
 
-project_sc_azimuth_refumap_unique_celltype |> 
-  dplyr::filter(region == "Meninge") |> 
-  dplyr::pull(unique_celltype) |> 
-  purrr::reduce(.f = union) |> 
-  tibble::enframe(name = "cluster", value = "celltype") |> 
-  dplyr::mutate(cluster = factor(cluster)) |> 
+project_sc_azimuth_refumap_unique_celltype |>
+  dplyr::filter(region == "Meninge") |>
+  dplyr::pull(unique_celltype) |>
+  purrr::reduce(.f = union) |>
+  tibble::enframe(name = "cluster", value = "celltype") |>
+  dplyr::mutate(cluster = factor(cluster)) |>
   dplyr::mutate(cluster_celltype = glue::glue("{cluster} {celltype}")) ->
   meninge_celltype
 
-project_sc_azimuth_refumap_unique_celltype |> 
-  dplyr::filter(region == "Skull") |> 
-  dplyr::pull(unique_celltype) |> 
-  purrr::reduce(.f = union) |> 
-  tibble::enframe(name = "cluster", value = "celltype") |> 
-  dplyr::mutate(cluster = factor(cluster)) |> 
+project_sc_azimuth_refumap_unique_celltype |>
+  dplyr::filter(region == "Skull") |>
+  dplyr::pull(unique_celltype) |>
+  purrr::reduce(.f = union) |>
+  tibble::enframe(name = "cluster", value = "celltype") |>
+  dplyr::mutate(cluster = factor(cluster)) |>
   dplyr::mutate(cluster_celltype = glue::glue("{cluster} {celltype}")) ->
   skull_celltype
 
 
-project_sc_azimuth_refumap_unique_celltype |> 
+project_sc_azimuth_refumap_unique_celltype |>
   dplyr::mutate(
     unique_celltype_union = purrr::map(
       .x = region,
@@ -562,7 +562,7 @@ project_sc_azimuth_refumap_unique_celltype |>
   ) ->
   project_sc_azimuth_refumap_unique_celltype_union
 
-project_sc_azimuth_refumap_unique_celltype_union |> 
+project_sc_azimuth_refumap_unique_celltype_union |>
   dplyr::mutate(
     anno_cell = purrr::pmap(
       .l = list(
@@ -572,18 +572,18 @@ project_sc_azimuth_refumap_unique_celltype_union |>
       ),
       .f = function(.anno, .celllevel, .unique_celltype_union) {
         .anno_cell <- .anno
-        
-          
-        .anno_cell@meta.data |> 
+
+
+        .anno_cell@meta.data |>
           dplyr::mutate(
             celltype = .anno@meta.data[, .celllevel]
-          ) |> 
+          ) |>
           dplyr::left_join(
             .unique_celltype_union,
             by = "celltype"
           ) ->
           .metadata
-        
+
         .anno_cell@meta.data <- .metadata
         .anno_cell
       }
@@ -595,13 +595,13 @@ project_sc_azimuth_refumap_unique_celltype_union |>
 # plot --------------------------------------------------------------------
 
 
-project_sc_azimuth_refumap_unique_celltype_union_anno_cell |> 
+project_sc_azimuth_refumap_unique_celltype_union_anno_cell |>
   dplyr::mutate(
     a = purrr::map(
       .x = anno_cell,
       .f = fn_plot_refumap
     )
-  ) |> 
+  ) |>
   tidyr::unnest(cols = a) ->
   project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp
 
@@ -615,7 +615,7 @@ readr::write_rds(
 # save plot ---------------------------------------------------------------
 
 
-project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |> 
+project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
   dplyr::mutate(
     a = purrr::pmap(
       .l = list(
@@ -625,8 +625,8 @@ project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
       ),
       .f = function(.region, .case, .p, .outdir) {
         .filename <- glue::glue("{.region}_{.case}")
-        
-        
+
+
         ggsave(
           filename = glue::glue("{.filename}_umap_new.pdf"),
           plot = .p,
@@ -635,7 +635,7 @@ project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
           width = 14,
           height = 8
         )
-        
+
       },
       .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth"
     )
@@ -645,17 +645,17 @@ project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
 
 # col plot ----------------------------------------------------------------
 
-celllevel |> 
-  names() |> 
+celllevel |>
+  names() |>
   purrr::map(
     .f = function(.region) {
-      
+
       project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
-        dplyr::select(region, case, cellnumber) |> 
-        tidyr::unnest(cols = cellnumber) |> 
-        dplyr::filter(region == .region) |> 
+        dplyr::select(region, case, cellnumber) |>
+        tidyr::unnest(cols = cellnumber) |>
+        dplyr::filter(region == .region) |>
         ggplot(aes(
-          x = case, 
+          x = case,
           y = ratio,
           fill = forcats::fct_inorder(celltype)
         )) +
@@ -674,7 +674,7 @@ celllevel |>
         ) +
         scale_fill_manual(
           name = "Cell type",
-          values = pcc$color 
+          values = pcc$color
         ) +
         theme(
           panel.background = element_blank(),
@@ -697,7 +697,7 @@ celllevel |>
           )
         ) ->
         .p
-      
+
       ggsave(
         filename = glue::glue("{.region}_celltype_proportion.pdf"),
         plot = .p,
@@ -706,7 +706,7 @@ celllevel |>
         width = 10,
         height = 8
       )
-      
+
     }
   )
 
