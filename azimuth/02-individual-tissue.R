@@ -15,7 +15,8 @@ library(Seurat)
 library(Azimuth)
 
 # src ---------------------------------------------------------------------
-pcc <- readr::read_tsv(file = "https://raw.githubusercontent.com/chunjie-sam-liu/chunjie-sam-liu.life/master/public/data/pcc.tsv")
+pcc <- readr::read_tsv(file = "https://raw.githubusercontent.com/chunjie-sam-liu/chunjie-sam-liu.life/master/public/data/pcc.tsv") |>
+  dplyr::arrange(dplyr::desc(cancer_types))
 
 # header ------------------------------------------------------------------
 
@@ -229,6 +230,7 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
   # .x = project_sc_azimuth_refumap_unique_celltype_union_anno_cell$anno_cell[[1]]
   # .celltype = "celltype"
   # .reduction = "ref.umap"
+  # .facet = FALSE
 
 
   # .x@
@@ -256,7 +258,8 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
     dplyr::group_by(cluster, celltype) |>
     dplyr::count() |>
     dplyr::ungroup() |>
-    dplyr::mutate(ratio = n / sum(n)) ->
+    dplyr::mutate(ratio = n / sum(n)) |>
+    dplyr::mutate(celltype_ratio = glue::glue("{celltype}, {round(ratio * 100, 2)}%")) ->
     .xxx_celltype
 
   .xxx |>
@@ -366,7 +369,7 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
     scale_colour_manual(
       name = NULL,
       values = pcc$color,
-      labels = .xxx_label$celltype,
+      labels = .xxx_label$celltype_ratio,
       guide = guide_legend(
         ncol = 1,
         override.aes = list(size=4)
@@ -417,14 +420,19 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
 project_sc <- readr::read_rds(file = "data/azimuth/project_sc.rds.gz")
 
 
-# body --------------------------------------------------------------------
-
-
 refs <- c(
   "Brain" = "mousecortexref",
   "Meninge" = "pbmcref",
   "Skull" = "bonemarrowref"
 )
+
+celllevel <- c(
+  "Brain" = "predicted.cluster",
+  "Meninge" = "predicted.celltype.l2",
+  "Skull" = "predicted.celltype.l2"
+)
+
+# body --------------------------------------------------------------------
 
 
 project_sc |>
@@ -438,27 +446,21 @@ project_sc |>
   project_sc_azimuth
 
 
-celllevel <- c(
-  "Brain" = "predicted.cluster",
-  "Meninge" = "predicted.celltype.l2",
-  "Skull" = "predicted.celltype.l2"
-)
-
 project_sc_azimuth |>
   dplyr::mutate(
     celllevel = plyr::revalue(
       x = region,
       replace = celllevel
     )
-  ) |>
-  dplyr::mutate(
-    p = purrr::map2(
-      .x = anno,
-      .y = celllevel,
-      .f = fn_plot_umap_tsne,
-      .reduction = "ref.umap"
-    )
   ) ->
+  # dplyr::mutate(
+  #   p = purrr::map2(
+  #     .x = anno,
+  #     .y = celllevel,
+  #     .f = fn_plot_umap_tsne,
+  #     .reduction = "ref.umap"
+  #   )
+  # ) ->
   project_sc_azimuth_refumap
 
 
@@ -473,31 +475,31 @@ readr::write_rds(
 
 
 
-project_sc_azimuth_refumap |>
-  dplyr::mutate(
-    a = purrr::pmap(
-      .l = list(
-        .region = region,
-        .case = case,
-        .p = p
-      ),
-      .f = function(.region, .case, .p, .outdir) {
-        .filename <- glue::glue("{.region}_{.case}")
-
-
-        ggsave(
-          filename = glue::glue("{.filename}_umap.pdf"),
-          plot = .p,
-          device = "pdf",
-          path = .outdir,
-          width = 12,
-          height = 6
-        )
-
-      },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth"
-    )
-  )
+# project_sc_azimuth_refumap |>
+#   dplyr::mutate(
+#     a = purrr::pmap(
+#       .l = list(
+#         .region = region,
+#         .case = case,
+#         .p = p
+#       ),
+#       .f = function(.region, .case, .p, .outdir) {
+#         .filename <- glue::glue("{.region}_{.case}")
+#
+#
+#         ggsave(
+#           filename = glue::glue("{.filename}_umap.pdf"),
+#           plot = .p,
+#           device = "pdf",
+#           path = .outdir,
+#           width = 12,
+#           height = 6
+#         )
+#
+#       },
+#       .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth"
+#     )
+#   )
 
 
 
@@ -510,8 +512,13 @@ project_sc_azimuth_refumap |>
       .y = celllevel,
       .f = function(.anno, .celllevel) {
         .anno@meta.data[[.celllevel]] |>
-          unique() |>
-          sort()
+          tibble::enframe() |>
+          dplyr::select(celltype = value) |>
+          dplyr::group_by(celltype) |>
+          dplyr::count() |>
+          dplyr::ungroup() |>
+          dplyr::arrange(celltype) |>
+          dplyr::mutate(ratio = n / sum(n))
       }
     )
   ) ->
@@ -521,28 +528,37 @@ project_sc_azimuth_refumap |>
 project_sc_azimuth_refumap_unique_celltype |>
   dplyr::filter(region == "Brain") |>
   dplyr::pull(unique_celltype) |>
-  purrr::reduce(.f = union) |>
+  dplyr::bind_rows() |>
+  dplyr::pull(celltype) |>
+  unique() |>
+  sort() |>
   tibble::enframe(name = "cluster", value = "celltype") |>
   dplyr::mutate(cluster = factor(cluster)) |>
-  dplyr::mutate(cluster_celltype = glue::glue("{cluster} {celltype}")) ->
+  dplyr::mutate(cluster_celltype = glue::glue("{cluster}, {celltype}")) ->
   brain_celltype
 
 project_sc_azimuth_refumap_unique_celltype |>
   dplyr::filter(region == "Meninge") |>
   dplyr::pull(unique_celltype) |>
-  purrr::reduce(.f = union) |>
+  dplyr::bind_rows() |>
+  dplyr::pull(celltype) |>
+  unique() |>
+  sort() |>
   tibble::enframe(name = "cluster", value = "celltype") |>
   dplyr::mutate(cluster = factor(cluster)) |>
-  dplyr::mutate(cluster_celltype = glue::glue("{cluster} {celltype}")) ->
+  dplyr::mutate(cluster_celltype = glue::glue("{cluster}, {celltype}")) ->
   meninge_celltype
 
 project_sc_azimuth_refumap_unique_celltype |>
   dplyr::filter(region == "Skull") |>
   dplyr::pull(unique_celltype) |>
-  purrr::reduce(.f = union) |>
+  dplyr::bind_rows() |>
+  dplyr::pull(celltype) |>
+  unique() |>
+  sort() |>
   tibble::enframe(name = "cluster", value = "celltype") |>
   dplyr::mutate(cluster = factor(cluster)) |>
-  dplyr::mutate(cluster_celltype = glue::glue("{cluster} {celltype}")) ->
+  dplyr::mutate(cluster_celltype = glue::glue("{cluster}, {celltype}")) ->
   skull_celltype
 
 
@@ -652,21 +668,30 @@ celllevel |>
 
       project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
         dplyr::select(region, case, cellnumber) |>
-        tidyr::unnest(cols = cellnumber) |>
         dplyr::filter(region == .region) |>
+        tidyr::unnest(cols = cellnumber) ->
+        p_d
+
+      p_d |>
+        dplyr::select(cluster, celltype) |>
+        dplyr::distinct() |>
+        dplyr::arrange(cluster) ->
+        p_d_fill
+
+      p_d |>
         ggplot(aes(
           x = case,
           y = ratio,
-          fill = forcats::fct_inorder(celltype)
+          fill = cluster
         )) +
         geom_col(
           width = 1,
           color = 1,
-          size = 0.2
+          size = 0.05
         ) +
         scale_x_discrete(
           limits = c("Sham", "MCAO", "UV"),
-          expand = c(0, 0.01)
+          expand = c(0, 0)
         ) +
         scale_y_continuous(
           labels = scales::percent_format(),
@@ -674,6 +699,8 @@ celllevel |>
         ) +
         scale_fill_manual(
           name = "Cell type",
+          limits = p_d_fill$cluster,
+          labels = p_d_fill$celltype,
           values = pcc$color
         ) +
         theme(
@@ -696,7 +723,7 @@ celllevel |>
             face = "bold"
           )
         ) ->
-        .p
+        .p;.p
 
       ggsave(
         filename = glue::glue("{.region}_celltype_proportion.pdf"),
@@ -707,8 +734,21 @@ celllevel |>
         height = 8
       )
 
+      p_d |>
+        dplyr::select(
+          -c(UMAP_1, UMAP_2, celltype_ratio)
+        ) |>
+        dplyr::mutate(ratio = round(ratio * 100, 2))
+
     }
-  )
+  ) ->
+  celltype_ratio
+
+names(celltype_ratio) <- c("Brain", "Meninge", "Skull")
+writexl::write_xlsx(
+  celltype_ratio,
+  path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth/celltype_ratio.xlsx"
+)
 
 
 
@@ -720,4 +760,4 @@ future::plan(future::sequential)
 save.image(file = "data/azimuth/02-individual-tissue.rda")
 
 
-load(file = "data/azimuth/02-individual-tissue.rda")
+# load(file = "data/azimuth/02-individual-tissue.rda")
