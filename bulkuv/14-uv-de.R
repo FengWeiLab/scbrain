@@ -499,6 +499,10 @@ se_group_de_volcano_n %>%
     name = "Regulations",
     label = c("Down", "Up")
   ) +
+  scale_y_continuous(
+    breaks = c(-5000, -2500, 0, 2500, 5000),
+    labels = c(5000, 2500, 0, 2500, 5000)
+  ) +
   theme(
     plot.background = element_blank(),
     panel.background = element_blank(),
@@ -675,7 +679,7 @@ ggvenn::ggvenn(
   venn_plot2
 
 ggsave(
-  filename = "Number-of-DEG-venn0.pdf",
+  filename = "Number-of-DEG-venn-0.pdf",
   plot = venn_plot2,
   device = "pdf",
   path = "data/uvresult/01-de",
@@ -796,7 +800,12 @@ inter_up_down %>%
     fontface = "bold",
     show.legend = F
   ) +
-  scale_y_continuous(expand = c(0, 0.02)) +
+  scale_y_continuous(
+    limits = c(-5, 5),
+    breaks = c(-5, -2.5, 0, 2.5, 5),
+    labels = c(5, 2.5, 0, 2.5, 5),
+    expand = c(0, 0.02)
+  ) +
   labs(y = "-log10(Adj. P value)") +
   scale_fill_manual(
     name = "Regulation",
@@ -804,7 +813,7 @@ inter_up_down %>%
   ) +
   geom_hline(yintercept = 0) +
   coord_flip() +
-  ylim(-5, 5) +
+  # ylim(-5, 5) +
   theme(
     panel.background = element_rect(fill = NA),
     panel.grid = element_blank(),
