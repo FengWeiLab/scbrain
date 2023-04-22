@@ -22,41 +22,41 @@ UV_data <- readr::read_rds(
     "data/uvrda",
     "all_expr_count_matrix_uv.rds.gz"
   )
-) %>% 
+) %>%
   dplyr::select(
-    1, 
+    1,
     dplyr::contains(match = "BC"),
     dplyr::contains(match = "UVB0"),
-    dplyr::contains(match = "UVB1"),
+    # dplyr::contains(match = "UVB1"),
     dplyr::contains(match = "SC"),
     dplyr::contains(match = "UVS0"),
-    dplyr::contains(match = "UVS1")
+    # dplyr::contains(match = "UVS1")
   )
 
 
 tibble::tibble(
   barcode = colnames(UV_data)[-1]
-) %>% 
+) %>%
   dplyr::mutate(
     group = gsub(pattern = "_\\d", replacement = "", x = barcode)
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     seq = ifelse(grepl(pattern = "B", x = group), "Brain", "Skull")
-  ) %>% 
+  ) %>%
   dplyr::mutate(
     case = ifelse(group == "BC", "Brain Control", group)
-  ) %>% 
+  ) %>%
   dplyr::mutate(case = ifelse(case == "SC", "Skull Control", case)) ->
   barcode_group
 
 
-UV_data %>% 
-  tibble::column_to_rownames("GeneName") %>% 
+UV_data %>%
+  tibble::column_to_rownames("GeneName") %>%
   as.matrix() ->
   UV_data.matrix
 
-barcode_group %>% 
-  dplyr::mutate(new_barcode = barcode) %>% 
+barcode_group %>%
+  dplyr::mutate(new_barcode = barcode) %>%
   tibble::column_to_rownames("new_barcode") ->
   UV_data.matrix.meta
 
@@ -74,7 +74,7 @@ PCAtools::biplot(
   shape = "case",
   shapeLegendTitle = "Case",
   legendPosition = "right",
-  encircle = TRUE, 
+  encircle = TRUE,
   encircleFill = TRUE,
   lab = NULL
 ) ->
@@ -110,3 +110,4 @@ ss <- c("SC", "UVS0", "UVS1")
 # save image --------------------------------------------------------------
 
 save.image(file = "data/uvrda/13-uv-count-se.rda")
+load(file = "data/uvrda/13-uv-count-se.rda")
