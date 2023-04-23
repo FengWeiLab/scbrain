@@ -467,7 +467,39 @@ ggsave(
 #   )
 # )
 
+# buble plot --------------------------------------------------------------
+
+UVS |>
+  dplyr::group_by(cell_type) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    a = purrr::map(
+      .x = data,
+      .f = function(.x) {
+        .x |>
+          dplyr::mutate(group = factor(group, levels = c("UVS0", "SC"))) ->
+          .xx
+
+        t.test(
+          formula = score ~ group,
+          data = .xx
+        ) |>
+          broom::tidy() |>
+          dplyr::select(
+            df = estimate,
+            UVS0 = estimate1,
+            SC = estimate2,
+            p_val = p.value
+          )
+      }
+    )
+  ) |>
+  dplyr::select(-data) |>
+  tidyr::unnest(cols = a)
+
 # save image --------------------------------------------------------------
 
 
 save.image(file = "data/uvrda/15-uv-immune.rda")
+load(file = "data/uvrda/15-uv-immune.rda")
