@@ -449,7 +449,7 @@ se_group_de_volcano %>%
         dplyr::group_by(color) %>%
         dplyr::count() %>%
         dplyr::ungroup() %>%
-        dplyr::filter(color != "grey") %>%
+        # dplyr::filter(color != "grey") %>%
         tidyr::spread(key = color, value = n)
     }
   )) %>%
@@ -471,6 +471,7 @@ xlabels <- gsub(pattern = "_vs_", replacement = " vs. ", x = xlimits)
 
 
 se_group_de_volcano_n %>%
+  dplyr::filter(color != "grey") |>
   dplyr::mutate(n = ifelse(color == "green", -n, n)) %>%
   dplyr::mutate(vjust = ifelse(color == "green", 1.5, -0.5)) %>%
   ggplot(aes(
@@ -532,7 +533,68 @@ ggsave(
   height = 7
 )
 
+se_group_de_volcano_n |>
+  dplyr::group_by(vs) |>
+  dplyr::summarise(a = sum(n))
 
+b0 <- 21841 - 145 - 52
+
+se_group_de_volcano_n$n[[3]] <- b0
+
+se_group_de_volcano_n |>
+  dplyr::arrange(vs, color) |>
+  dplyr::mutate(
+    vs = factor(vs, levels = c("UVS0_vs_SC", "UVB0_vs_BC")),
+    # color = factor(color, levels = c("grey","green", "red"))
+  ) |>
+  dplyr::group_by(vs) |>
+  dplyr::mutate(csum = rev(cumsum(rev(n)))) %>%
+  dplyr::mutate(pos = n/2 + dplyr::lead(csum, 1)) %>%
+  dplyr::mutate(pos = dplyr::if_else(is.na(pos), n/2, pos)) %>%
+  dplyr::mutate(percentage = n/sum(n)) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(up_down = plyr::revalue(
+    x = color,
+    replace = c("green" = "Down", "grey" = "Not sig.", "red" = "Up")
+  )) |>
+  dplyr::mutate(label = gsub(pattern = "0_vs_BC|0_vs_SC", replacement = "", x = vs)) |>
+  dplyr::mutate(label = glue::glue("{label} {up_down}")) |>
+  ggplot(
+    aes(
+      x = vs,
+      y = n,
+      fill = color,
+      label = glue::glue("{label}\n{n} ({scales::percent(percentage)})"),
+    )
+  ) +
+  geom_col(
+    width = 1,
+    color = "white",
+    show.legend = FALSE,
+  ) +
+  ggrepel::geom_label_repel(
+    aes(y = pos),
+    color = "white",
+    size = 6,
+    nudge_x = 0.5,
+    show.legend = FALSE,
+  ) +
+  geom_col(aes(x = 0.5, y = 0), show.legend = FALSE) +
+  scale_fill_manual(
+    values = c("#377EB8", "gray", "#E41A1C")
+  ) +
+  coord_polar(theta = "y") +
+  theme_void() ->
+  p_pie;p_pie
+
+ggsave(
+  filename = "Number-of-DEG-pei-0.pdf",
+  plot = p_pie,
+  device = "pdf",
+  path = "data/uvresult/01-de",
+  width = 7,
+  height = 7
+)
 
 
 # Intersection ------------------------------------------------------------
@@ -836,6 +898,78 @@ ggsave(
   width = 9,
   height = 7
 )
+
+inter_up_down |>
+  dplyr::mutate(adjp = abs(adjp)) |>
+  dplyr::select(Description, adjp, type) |>
+  dplyr::mutate(adjp = abs(adjp)) |>
+  tidyr::pivot_wider(
+    names_from = Description,
+    values_from = adjp
+  )  ->
+  for_radar
+
+# ggradar::ggradar(for_radar)
+
+inter_up_down |>
+  dplyr::mutate(adjp = abs(adjp)) |>
+  dplyr::select(Description, adjp, type) |>
+  dplyr::mutate(Min = 0, Max = 6) |>
+  dplyr::mutate(Description = gsub(
+    pattern = "\\n",
+    replacement = " ",
+    x = Description
+  )) ->
+  for_radar
+
+for_radar |>
+  dplyr::select(-c(Min, Max)) |>
+  tidyr::pivot_wider(
+    names_from = Description,
+    values_from = adjp
+  ) |>
+  dplyr::mutate_all(
+    .funs = tidyr::replace_na,
+    replace = 0
+  ) |>
+  dplyr::bind_rows(
+    for_radar |>
+      dplyr::select(-c(type, adjp)) |>
+      tidyr::pivot_longer(
+        cols = Min:Max,
+        names_to = "type",
+        values_to = "adjp"
+      ) |>
+      tidyr::pivot_wider(
+        names_from = Description,
+        values_from = adjp
+      )
+  ) |>
+  as.data.frame() |>
+  tibble::column_to_rownames(var = "type") |>
+  dplyr::slice(
+    4, 3,2,1
+  ) ->
+  rd
+
+
+
+
+pdf(file = "data/uvresult/01-de/INTER-GOBP-GO_UP_DOWN_radar.pdf", width = 20, height = 10)
+fmsb::radarchart(
+  df = rd,
+  axistype = 0,
+  pcol = c("#112a13", "#AE1700"),
+  pfcol = scales::alpha(c("#112a13", "#AE1700"), 0.2),
+  plwd = 2,
+  plty = 1,
+  cglcol = "grey",
+  cglty = 1,
+  cglwd = 0.8,
+  axislabcol = "grey",
+)
+dev.off()
+
 # save image --------------------------------------------------------------
 
 
