@@ -564,6 +564,124 @@ ggsave(
   height = 9
 )
 
+
+
+
+dd$go_up[[2]] |>
+  tibble::as_tibble() |>
+  dplyr::mutate(
+    Description = stringr::str_wrap(
+      stringr::str_to_sentence(string = Description),
+      width = 60
+    )
+  ) %>%
+  dplyr::mutate(adjp = -log10(p.adjust)) %>%
+  dplyr::select(ID, Description, adjp, Count) |>
+  head(20) |>
+  dplyr::arrange(-adjp, Count) |>
+  dplyr::mutate(type = "Up") ->
+  s_up_go
+
+dd$go_down[[2]]|>
+  tibble::as_tibble() |>
+  dplyr::mutate(
+    Description = stringr::str_wrap(
+      stringr::str_to_sentence(string = Description),
+      width = 60
+    )
+  ) %>%
+  dplyr::mutate(adjp = -log10(p.adjust)) %>%
+  dplyr::select(ID, Description, adjp, Count) |>
+  head(20) |>
+  dplyr::arrange(adjp, Count) |>
+  dplyr::mutate(adjp = - adjp) |>
+  dplyr::mutate(type = "Down") ->
+  s_down_go
+
+dplyr::bind_rows(
+  s_up_go,
+  s_down_go
+) |>
+  dplyr::mutate(
+    Description = factor(Description, levels = Description)
+  ) |>
+  dplyr::mutate(color = ifelse(adjp > 0,"#112a13",  "#AE1700")) |>
+  dplyr::mutate(hjust = ifelse(adjp > 0, 1, 0)) |>
+  dplyr::mutate(y_label = ifelse(adjp > 0, adjp - 10, adjp + 10)) ->
+  s_up_down
+
+
+
+s_up_down |>
+  dplyr::mutate(adjp = abs(adjp)) |>
+  dplyr::select(Description, adjp, type) |>
+  dplyr::mutate(Min = 0, Max = 52) |>
+  dplyr::mutate(Description = gsub(
+    pattern = "\\n",
+    replacement = " ",
+    x = Description
+  )) ->
+  s_for_radar
+
+s_for_radar |>
+  dplyr::select(-c(Min, Max)) |>
+  tidyr::pivot_wider(
+    names_from = Description,
+    values_from = adjp
+  ) |>
+  dplyr::mutate_all(
+    .funs = tidyr::replace_na,
+    replace = 0
+  ) |>
+  dplyr::bind_rows(
+    s_for_radar |>
+      dplyr::select(-c(type, adjp)) |>
+      tidyr::pivot_longer(
+        cols = Min:Max,
+        names_to = "type",
+        values_to = "adjp"
+      ) |>
+      tidyr::pivot_wider(
+        names_from = Description,
+        values_from = adjp
+      )
+  ) |>
+  as.data.frame() |>
+  tibble::column_to_rownames(var = "type") |>
+  dplyr::slice(
+    4, 3,2,1
+  ) ->
+  s_rd
+
+fmsb::radarchart(
+  df = s_rd,
+  axistype = 0,
+  pcol = c("#112a13", "#AE1700"),
+  pfcol = scales::alpha(c("#112a13", "#AE1700"), 0.2),
+  plwd = 2,
+  plty = 1,
+  cglcol = "grey",
+  cglty = 1,
+  cglwd = 0.8,
+  axislabcol = "grey",
+)
+
+
+pdf(file = "data/uvresult/01-de/SKULL-GOBP-GO_UP_DOWN-radar.pdf", width = 20, height = 10)
+fmsb::radarchart(
+  df = s_rd,
+  axistype = 0,
+  pcol = c("#112a13", "#AE1700"),
+  pfcol = scales::alpha(c("#112a13", "#AE1700"), 0.5),
+  plwd = 2,
+  plty = 1,
+  cglcol = "grey",
+  cglty = 1,
+  cglwd = 0.8,
+  axislabcol = "grey",
+)
+dev.off()
+
 # footer ------------------------------------------------------------------
 
 future::plan(future::sequential)
