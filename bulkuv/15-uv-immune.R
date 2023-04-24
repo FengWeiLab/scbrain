@@ -488,15 +488,119 @@ UVS |>
           broom::tidy() |>
           dplyr::select(
             df = estimate,
-            UVS0 = estimate1,
-            SC = estimate2,
+            case = estimate1,
+            control = estimate2,
             p_val = p.value
           )
       }
     )
   ) |>
   dplyr::select(-data) |>
-  tidyr::unnest(cols = a)
+  tidyr::unnest(cols = a) |>
+  dplyr::mutate(type = "UVS") ->
+  UVS_1
+
+
+UVB |>
+  dplyr::group_by(cell_type) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    a = purrr::map(
+      .x = data,
+      .f = function(.x) {
+        .x |>
+          dplyr::mutate(group = factor(group, levels = c("UVB0", "BC"))) ->
+          .xx
+
+        t.test(
+          formula = score ~ group,
+          data = .xx
+        ) |>
+          broom::tidy() |>
+          dplyr::select(
+            df = estimate,
+            case = estimate1,
+            control = estimate2,
+            p_val = p.value
+          )
+      }
+    )
+  ) |>
+  dplyr::select(-data) |>
+  tidyr::unnest(cols = a) |>
+  dplyr::mutate(type = "UVB") ->
+  UVB_1
+
+dplyr::bind_rows(
+  UVS_1, UVB_1
+) |>
+  dplyr::filter(
+    case < 0.0001 | control < 0.0001
+  ) ->
+  unexpected_cells
+
+dplyr::bind_rows(
+  UVS_1, UVB_1
+) |>
+  dplyr::filter(
+    !cell_type %in% unexpected_cells$cell_type
+  ) |>
+  dplyr::arrange(cell_type) |>
+  dplyr::mutate(
+    cell_type = gsub(
+      pattern = "_",
+      replacement = " ",
+      x = cell_type
+    )
+  ) |>
+  dplyr::mutate(p_val_log = -log10(p_val)) ->
+  uvsb_forplot
+
+uvsb_forplot |>
+  ggplot(aes(
+    x = cell_type,
+    y = type,
+    fill = df,
+  )) +
+  geom_tile() +
+  scale_fill_gradient2(
+    low = "blue",
+    mid = "white",
+    high = "red",
+    midpoint = 0,
+    na.value = "white",
+    breaks = c(-0.05, -0.03, 0, 0.02, 0.03),
+    labels = c("-0.05", "-0.03", "0", "0.01", "0.03"),
+    name = "Diff"
+  ) +
+  scale_x_discrete(position = "top") +
+  geom_point(
+    data = uvsb_forplot |> dplyr::filter(p_val < 0.1),
+    shape = "asterisk"
+  ) +
+  coord_fixed() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 0, hjust = 0),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(vjust = 0.8),
+    legend.key.width = unit(30, units = "points"),
+    legend.key.height = unit(12, units = "points"),
+    axis.title = element_blank(),
+    axis.text = element_text(size = 12, color = "black", face = "bold"),
+    axis.ticks = element_blank(),
+  ) ->
+  p_tile;p_tile
+
+
+ggsave(
+  filename = "UVBS-immune-cell-distribution-0.pdf",
+  plot = p_tile,
+  path = "data/uvresult/01-de",
+  width = 12, height = 4
+)
 
 # save image --------------------------------------------------------------
 
