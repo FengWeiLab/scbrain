@@ -577,7 +577,7 @@ dd$go_up[[2]] |>
   ) %>%
   dplyr::mutate(adjp = -log10(p.adjust)) %>%
   dplyr::select(ID, Description, adjp, Count) |>
-  head(20) |>
+  head(15) |>
   dplyr::arrange(-adjp, Count) |>
   dplyr::mutate(type = "Up") ->
   s_up_go
@@ -592,7 +592,7 @@ dd$go_down[[2]]|>
   ) %>%
   dplyr::mutate(adjp = -log10(p.adjust)) %>%
   dplyr::select(ID, Description, adjp, Count) |>
-  head(20) |>
+  head(15) |>
   dplyr::arrange(adjp, Count) |>
   dplyr::mutate(adjp = - adjp) |>
   dplyr::mutate(type = "Down") ->
@@ -655,31 +655,54 @@ s_for_radar |>
 
 fmsb::radarchart(
   df = s_rd,
-  axistype = 0,
+  axistype = 1,
+  seg = 4,
+  # pty = 6,
   pcol = c("#112a13", "#AE1700"),
-  pfcol = scales::alpha(c("#112a13", "#AE1700"), 0.2),
-  plwd = 2,
   plty = 1,
-  cglcol = "grey",
-  cglty = 1,
-  cglwd = 0.8,
-  axislabcol = "grey",
+  plwd = 3,
+  # pdensity = 2,
+  # pangle = 30,
+  pfcol = scales::alpha(c("#112a13", "#AE1700"), 0.7),
+  cglty = 3,
+  cglwd = 2,
+  cglcol = "black",
+  axislabcol = "black",
+  title = "UVS vs. SC",
+  # vlcex = 0.9,
+  # vlabels = 1:5,
+  # caxislabels
+  # vlcex = 1,
+  calcex = 1.5,
+  caxislabels = seq(0, 52, length.out = 5)
 )
 
 
 pdf(file = "data/uvresult/01-de/SKULL-GOBP-GO_UP_DOWN-radar.pdf", width = 20, height = 10)
 fmsb::radarchart(
   df = s_rd,
-  axistype = 0,
+  axistype = 1,
+  seg = 4,
+  # pty = 6,
   pcol = c("#112a13", "#AE1700"),
-  pfcol = scales::alpha(c("#112a13", "#AE1700"), 0.5),
-  plwd = 2,
   plty = 1,
-  cglcol = "grey",
-  cglty = 1,
-  cglwd = 0.8,
-  axislabcol = "grey",
+  plwd = 3,
+  # pdensity = 2,
+  # pangle = 30,
+  pfcol = scales::alpha(c("#112a13", "#AE1700"), 0.7),
+  cglty = 3,
+  cglwd = 2,
+  cglcol = "black",
+  axislabcol = "black",
+  title = "UVS vs. SC",
+  # vlcex = 0.9,
+  # vlabels = 1:5,
+  # caxislabels
+  # vlcex = 1,
+  calcex = 1.5,
+  caxislabels = seq(0, 52, length.out = 5)
 )
+
 dev.off()
 
 # footer ------------------------------------------------------------------

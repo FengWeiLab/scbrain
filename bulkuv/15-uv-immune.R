@@ -558,6 +558,12 @@ dplyr::bind_rows(
   uvsb_forplot
 
 uvsb_forplot |>
+  dplyr::group_by(cell_type) |>
+  dplyr::summarise(r = sum(df)) |>
+  dplyr::arrange(-r) ->
+  rank_celltype
+
+uvsb_forplot |>
   ggplot(aes(
     x = cell_type,
     y = type,
@@ -574,7 +580,11 @@ uvsb_forplot |>
     labels = c("-0.05", "-0.03", "0", "0.01", "0.03"),
     name = "Diff"
   ) +
-  scale_x_discrete(position = "top") +
+  scale_x_discrete(
+    limits = rank_celltype$cell_type,
+    position = "top",
+    expand = expansion(add = c(0, 2))
+  ) +
   geom_point(
     data = uvsb_forplot |> dplyr::filter(p_val < 0.1),
     shape = "asterisk"
