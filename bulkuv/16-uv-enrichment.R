@@ -479,7 +479,7 @@ dd$go_up[[2]] |>
   ) %>%
   dplyr::mutate(adjp = -log10(p.adjust)) %>%
   dplyr::select(ID, Description, adjp, Count) |>
-  head(10) |>
+  head(15) |>
   dplyr::arrange(-adjp, Count) |>
   dplyr::mutate(type = "Up") ->
   s_up_go
@@ -494,7 +494,7 @@ dd$go_down[[2]]|>
   ) %>%
   dplyr::mutate(adjp = -log10(p.adjust)) %>%
   dplyr::select(ID, Description, adjp, Count) |>
-  head(10) |>
+  head(15) |>
   dplyr::arrange(adjp, Count) |>
   dplyr::mutate(adjp = - adjp) |>
   dplyr::mutate(type = "Down") ->
