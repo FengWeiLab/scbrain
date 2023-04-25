@@ -652,7 +652,7 @@ se_group_de_volcano_n |>
     # width = 1,
     # color = "white",
     # show.legend = FALSE,
-    width = 1,
+    # width = 0.7,
     color = 1,
     size = 0.05
   ) +
@@ -664,11 +664,11 @@ se_group_de_volcano_n |>
   scale_x_discrete(
     limits = c("UVS0_vs_SC", "UVB0_vs_BC"),
     labels = c("UVS", "UVB"),
-    expand = expansion(mult = 0.52, add = 0)
+    # expand = expansion(mult = 0.52, add = 0)
   ) +
   scale_y_continuous(
     # labels = scales::percent_format(),
-    expand = expansion(mult = 0.01, add = 0)
+    expand = expansion(mult = 0, add = 0)
   ) +
   theme(
     panel.background = element_blank(),
@@ -680,22 +680,25 @@ se_group_de_volcano_n |>
     ),
     axis.title.x = element_blank(),
     axis.line = element_line(),
+    axis.line.x = element_blank(),
+    axis.ticks.x = element_blank(),
     axis.text = element_text(
       size = 14,
       color = "black",
       face = "bold"
     ),
     legend.title = element_text(
-      size = 16,
+      size = 12,
       color = "black",
       face = "bold"
     ),
     legend.text = element_text(
-      size = 14,
+      size = 10,
       color = "black",
       face = "bold"
     ),
-    legend.position = "top"
+    # legend.position = "top",
+    # plot.title = element_text(hjust = -1)
   ) +
   labs(
     y = "Number of genes"
@@ -707,8 +710,8 @@ ggsave(
   plot = p_bar_number,
   device = "pdf",
   path = "data/uvresult/01-de",
-  width = 6,
-  height = 7
+  width = 4,
+  height = 6
 )
 
 
