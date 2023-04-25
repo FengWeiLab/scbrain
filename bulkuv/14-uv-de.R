@@ -533,6 +533,31 @@ ggsave(
   height = 7
 )
 
+
+se_group_de_volcano %>%
+  dplyr::select(vs, des_color) %>%
+  dplyr::mutate(n = purrr::map(
+    .x = des_color,
+    .f = function(.x) {
+      .x %>%
+        dplyr::group_by(color) %>%
+        dplyr::count() %>%
+        dplyr::ungroup() %>%
+        # dplyr::filter(color != "grey") %>%
+        tidyr::spread(key = color, value = n)
+    }
+  )) %>%
+  dplyr::select(-des_color) %>%
+  tidyr::unnest(cols = n) %>%
+  tidyr::gather(
+    key = color,
+    value = n,
+    -vs
+  ) |>
+  dplyr::filter(!grepl("B1", x = vs)) |>
+  dplyr::filter(!grepl("S1", x = vs)) ->
+  se_group_de_volcano_n
+
 se_group_de_volcano_n |>
   dplyr::group_by(vs) |>
   dplyr::summarise(a = sum(n))
@@ -596,6 +621,113 @@ ggsave(
   height = 7
 )
 
+
+se_group_de_volcano_n |>
+  dplyr::arrange(vs, color) |>
+  dplyr::mutate(
+    vs = factor(vs, levels = c("UVS0_vs_SC", "UVB0_vs_BC")),
+    # color = factor(color, levels = c("grey","green", "red"))
+  ) |>
+  dplyr::group_by(vs) |>
+  dplyr::mutate(csum = rev(cumsum(rev(n)))) %>%
+  dplyr::mutate(pos = n/2 + dplyr::lead(csum, 1)) %>%
+  dplyr::mutate(pos = dplyr::if_else(is.na(pos), n/2, pos)) %>%
+  dplyr::mutate(percentage = n/sum(n)) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(up_down = plyr::revalue(
+    x = color,
+    replace = c("green" = "Down", "grey" = "Not sig.", "red" = "Up")
+  )) |>
+  dplyr::mutate(label = gsub(pattern = "0_vs_BC|0_vs_SC", replacement = "", x = vs)) |>
+  dplyr::mutate(label = glue::glue("{label} {up_down}")) |>
+  dplyr::mutate(color = factor(x = color, levels = c("red", "green", "grey"))) |>
+  ggplot(
+    aes(
+      x = vs,
+      y = n,
+      fill = color,
+    )
+  ) +
+  geom_col(
+    # width = 1,
+    # color = "white",
+    # show.legend = FALSE,
+    width = 1,
+    color = 1,
+    size = 0.05
+  ) +
+  scale_fill_manual(
+    name = "Regulation",
+    labels = c("Up", "Down", "Not sig."),
+    values = c("#E41A1C", "#377EB8", "gray" )
+  ) +
+  scale_x_discrete(
+    limits = c("UVS0_vs_SC", "UVB0_vs_BC"),
+    labels = c("UVS", "UVB"),
+    expand = expansion(mult = 0.52, add = 0)
+  ) +
+  scale_y_continuous(
+    # labels = scales::percent_format(),
+    expand = expansion(mult = 0.01, add = 0)
+  ) +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.title = element_text(
+      size = 18,
+      color = "black",
+      face = "bold"
+    ),
+    axis.title.x = element_blank(),
+    axis.line = element_line(),
+    axis.text = element_text(
+      size = 14,
+      color = "black",
+      face = "bold"
+    ),
+    legend.title = element_text(
+      size = 16,
+      color = "black",
+      face = "bold"
+    ),
+    legend.text = element_text(
+      size = 14,
+      color = "black",
+      face = "bold"
+    ),
+    legend.position = "top"
+  ) +
+  labs(
+    y = "Number of genes"
+  ) ->
+  p_bar_number;p_bar_number
+
+ggsave(
+  filename = "Number-of-DEG-number-0.pdf",
+  plot = p_bar_number,
+  device = "pdf",
+  path = "data/uvresult/01-de",
+  width = 6,
+  height = 7
+)
+
+
+  # ggrepel::geom_label_repel(
+  #   aes(
+  #     y = pos,
+  #     label = glue::glue("{label}\n{n} ({scales::percent(percentage)})"),
+  #   ),
+  #   color = "white",
+  #   size = 6,
+  #   # nudge_x = 0.5,
+  #   show.legend = FALSE,
+  #
+  # )
+  # geom_col(aes(x = 0.5, y = 0), show.legend = FALSE) +
+  # theme_void()
+  # coord_polar(theta = "y") +
+  # theme_void()
+  # p_pie;p_pie
 
 # Intersection ------------------------------------------------------------
 
