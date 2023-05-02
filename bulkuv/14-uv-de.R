@@ -364,6 +364,22 @@ unlist(se_group_de$de) %>%
 # volcano plot ------------------------------------------------------------
 
 
+# se_group_de$de[[1]]$UVS0_vs_SC[[1]] |>
+#   as.data.frame() |>
+#   tibble::rownames_to_column(var = "gene") |>
+#   tibble::as_tibble() |>
+#   dplyr::filter(grepl(pattern = "Gab", x = gene)) |>
+#   dplyr::arrange(padj) |>
+#   print(n = Inf)
+
+se_group_de$de[[4]]$UVS0_vs_SC[[1]] |>
+  as.data.frame() |>
+  tibble::rownames_to_column(var = "gene") |>
+  tibble::as_tibble() |>
+  dplyr::filter(grepl(pattern = "Gab", x = gene)) |>
+  dplyr::arrange(padj) |>
+  print(n = Inf)
+
 se_group_de %>%
   dplyr::mutate(
     volcano_plot = purrr::map2(
