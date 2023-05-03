@@ -427,7 +427,7 @@ refs <- c(
 )
 
 celllevel <- c(
-  "Brain" = "predicted.cluster",
+  "Brain" = "predicted.sublcass",
   "Meninge" = "predicted.celltype.l2",
   "Skull" = "predicted.celltype.l2"
 )

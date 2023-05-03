@@ -471,37 +471,6 @@ readr::write_rds(
 )
 
 
-# save plot --------------------------------------------------------------
-
-
-
-# project_sc_azimuth_refumap |>
-#   dplyr::mutate(
-#     a = purrr::pmap(
-#       .l = list(
-#         .region = region,
-#         .case = case,
-#         .p = p
-#       ),
-#       .f = function(.region, .case, .p, .outdir) {
-#         .filename <- glue::glue("{.region}_{.case}")
-#
-#
-#         ggsave(
-#           filename = glue::glue("{.filename}_umap.pdf"),
-#           plot = .p,
-#           device = "pdf",
-#           path = .outdir,
-#           width = 12,
-#           height = 6
-#         )
-#
-#       },
-#       .outdir = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/06-azimuth-celllevel"
-#     )
-#   )
-
-
 
 # merge annotation --------------------------------------------------------
 
@@ -757,7 +726,7 @@ writexl::write_xlsx(
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-# save.image(file = "data/azimuth/02-individual-tissue.rda")
+save.image(file = "data/azimuth/02-individual-tissue-celltype-level.rda")
 
 
 # load(file = "data/azimuth/02-individual-tissue.rda")
