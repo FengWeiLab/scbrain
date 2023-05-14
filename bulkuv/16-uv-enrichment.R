@@ -484,6 +484,34 @@ dd$go_up[[2]] |>
   dplyr::mutate(type = "Up") ->
   s_up_go
 
+dd$go_down[[2]] |>
+  tibble::as_tibble() |>
+  dplyr::arrange(p.adjust) |>
+  head(15) |>
+  dplyr::pull(geneID) |>
+  purrr::map(
+    .f = strsplit,
+    split = "/"
+  ) |>
+  unlist() |>
+  unique() ->
+  synap
+
+
+se_group_de$de[[4]]$UVS0_vs_SC[[1]] |>
+  as.data.frame() |>
+  tibble::rownames_to_column(var = "geneID") |>
+  dplyr::filter(geneID == "Gls")
+  dplyr::filter(geneID %in% synap) |>
+  dplyr::filter(padj < 0.05, abs(log2FoldChange) > 2) |>
+  dplyr::arrange(-baseMean, padj, -abs(log2FoldChange)) ->
+  synap_SIG
+
+readr::write_rds(
+  synap_SIG,
+  file = "/home/liuc9/github/scbrain/data/azimuth/synap_SIG.rds"
+)
+
 dd$go_down[[2]]|>
   tibble::as_tibble() |>
   dplyr::mutate(
@@ -499,6 +527,10 @@ dd$go_down[[2]]|>
   dplyr::mutate(adjp = - adjp) |>
   dplyr::mutate(type = "Down") ->
   s_down_go
+
+
+s_down_go
+
 
 dplyr::bind_rows(
   s_up_go,

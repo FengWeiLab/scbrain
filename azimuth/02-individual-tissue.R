@@ -25,8 +25,9 @@ future::plan(future::multisession, workers = 10)
 # function ----------------------------------------------------------------
 
 fn_azimuth <- function(.sc, .ref) {
-  # .sc <- project_sc$sc[[1]]
+  # .sc <- project_sc$sc[[2]]
   # .ref <- project_sc$ref[[1]]
+  # .ref <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
 
   .sct <- RunAzimuth(
     query = .sc,
@@ -422,14 +423,22 @@ project_sc <- readr::read_rds(file = "data/azimuth/project_sc.rds.gz")
 
 refs <- c(
   "Brain" = "mousecortexref",
-  "Meninge" = "pbmcref",
+  # "Meninge" = "pbmcref",
+  "Meninge" = "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura",
   "Skull" = "bonemarrowref"
 )
 
 celllevel <- c(
-  "Brain" = "predicted.sublcass",
-  "Meninge" = "predicted.celltype.l2",
+  "Brain" = "predicted.cluster",
+  "Meninge" = "predicted.annotation.l1",
   "Skull" = "predicted.celltype.l2"
+)
+
+refcelllevel <- tibble::tibble(
+  region = c("Brain", "Meninge", "Skull"),
+  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "bonemarrowref"),
+  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.celltype.l2"),
+  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.celltype.l1")
 )
 
 # body --------------------------------------------------------------------
@@ -445,6 +454,10 @@ project_sc |>
   ) ->
   project_sc_azimuth
 
+readr::write_rds(
+  x = project_sc_azimuth,
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
+)
 
 project_sc_azimuth |>
   dplyr::mutate(
@@ -453,14 +466,6 @@ project_sc_azimuth |>
       replace = celllevel
     )
   ) ->
-  # dplyr::mutate(
-  #   p = purrr::map2(
-  #     .x = anno,
-  #     .y = celllevel,
-  #     .f = fn_plot_umap_tsne,
-  #     .reduction = "ref.umap"
-  #   )
-  # ) ->
   project_sc_azimuth_refumap
 
 
@@ -469,37 +474,6 @@ readr::write_rds(
   x = project_sc_azimuth_refumap,
   file = "data/azimuth/project_sc_azimuth_refumap.rds.gz"
 )
-
-
-# save plot --------------------------------------------------------------
-
-
-
-# project_sc_azimuth_refumap |>
-#   dplyr::mutate(
-#     a = purrr::pmap(
-#       .l = list(
-#         .region = region,
-#         .case = case,
-#         .p = p
-#       ),
-#       .f = function(.region, .case, .p, .outdir) {
-#         .filename <- glue::glue("{.region}_{.case}")
-#
-#
-#         ggsave(
-#           filename = glue::glue("{.filename}_umap.pdf"),
-#           plot = .p,
-#           device = "pdf",
-#           path = .outdir,
-#           width = 12,
-#           height = 6
-#         )
-#
-#       },
-#       .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth"
-#     )
-#   )
 
 
 
