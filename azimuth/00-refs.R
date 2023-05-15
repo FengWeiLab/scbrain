@@ -11,10 +11,10 @@ library(ggplot2)
 # Dura --------------------------------------------------------------------
 
 
-# countdir <- "/home/liuc9/data/refdata/brainimmuneatlas/filtered_gene_bc_matrices_dura/mm10"
-# anno_dura_file <- "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/annot_dura.csv"
-# ref.dir <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
-#
+countdir <- "/home/liuc9/data/refdata/brainimmuneatlas/filtered_gene_bc_matrices_dura/mm10"
+anno_dura_file <- "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/annot_dura.csv"
+ref.dir <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
+
 
 # enrSDM --------------------------------------------------------------------
 
@@ -26,10 +26,10 @@ library(ggplot2)
 
 # wholeBrain -------------------------------------------------------------------
 
-countdir <- "/home/liuc9/data/refdata/brainimmuneatlas/filtered_gene_bc_matrices_wholeBrain/mm10"
-anno_dura_file <- "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/annot_wholeBrain.csv"
-ref.dir <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_wholeBrain"
-
+# countdir <- "/home/liuc9/data/refdata/brainimmuneatlas/filtered_gene_bc_matrices_wholeBrain/mm10"
+# anno_dura_file <- "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/annot_wholeBrain.csv"
+# ref.dir <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_wholeBrain"
+#
 
 annotations <- readr::read_csv(
   file = anno_dura_file

@@ -25,16 +25,24 @@ future::plan(future::multisession, workers = 10)
 # function ----------------------------------------------------------------
 
 fn_azimuth <- function(.sc, .ref) {
-  # .sc <- project_sc$sc[[2]]
-  # .ref <- project_sc$ref[[1]]
-  # .ref <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
+  .sc <- project_sc$sc[[2]]
+  .ref <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
 
   .sct <- RunAzimuth(
     query = .sc,
     reference = .ref
     # reference = "mousecortexref"
   )
+  p1 <- DimPlot(.sct, group.by = "predicted.annotation.l1", label = TRUE, label.size = 3)
+  ggsave(
+    filename = "meninge.pdf",
+    plot = p1,
+    device = "pdf",
+    path = "/home/liuc9/github/scbrain/scuvresult",
+    width = 9,
+    height = 8
 
+  )
   .sct
 
 }
@@ -445,10 +453,14 @@ refcelllevel <- tibble::tibble(
 
 
 project_sc |>
+  dplyr::left_join(
+    refcelllevel,
+    by = "region"
+  ) |>
   dplyr::mutate(
     anno = purrr::map2(
       .x = sc,
-      .y = ref,
+      .y = refs,
       .f = fn_azimuth
     )
   ) ->
