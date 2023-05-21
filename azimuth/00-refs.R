@@ -71,6 +71,20 @@ cells_anno <- factor(cells_anno)
 
 Idents(object = sctu) <- cells_anno
 
+# sctu
+
+sctu <- RenameCells(
+  object = sctu,
+  new.names = unname(obj = sapply(
+    X = Seurat::Cells(x = sctu),
+    FUN = function(.s) {
+      paste0("DURALCJ", .s)
+    }
+
+  ))
+)
+
+
 ref <- sctu
 
 if ("remove" %in% levels(x = ref)) {
@@ -99,3 +113,5 @@ ref <- AzimuthReference(
 SaveAnnoyIndex(object = ref[["refdr.annoy.neighbors"]], file = file.path(ref.dir, "idx.annoy"))
 saveRDS(object = ref, file = file.path(ref.dir, "ref.Rds"))
 saveRDS(object = full.ref, file = file.path(ref.dir, "fullref.Rds"))
+
+
