@@ -37,6 +37,12 @@ refcelllevel <- tibble::tibble(
   celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.celltype.l2"),
   supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.celltype.l1"),
 )
+refcelllevel <- tibble::tibble(
+  region = c("Brain", "Meninge", "Skull"),
+  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "bonemarrowref"),
+  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.celltype.l2"),
+  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.celltype.l1")
+)
 
 project_sc_azimuth <- readr::read_rds(
   # file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth.rds"
@@ -46,11 +52,7 @@ project_sc_azimuth <- readr::read_rds(
 # body --------------------------------------------------------------------
 
 project_sc_azimuth |>
-  dplyr::select(-ref) |>
-  dplyr::left_join(
-    refcelllevel,
-    by = "region"
-  ) ->
+  dplyr::select(-ref) ->
   project_sc_azimuth_ref
 
 
@@ -65,9 +67,9 @@ project_sc_azimuth_ref |>
         .supercelllevel = supercelllevel
       ),
       .f = function(.anno, .celllevel, .supercelllevel ) {
-        # .anno <- project_sc_azimuth_ref$anno[[1]]
-        # .celllevel <- project_sc_azimuth_ref$celllevel[[1]]
-        # .supercelllevel <- project_sc_azimuth_ref$supercelllevel[[1]]
+        # .anno <- project_sc_azimuth_ref$anno[[2]]
+        # .celllevel <- project_sc_azimuth_ref$celllevel[[2]]
+        # .supercelllevel <- project_sc_azimuth_ref$supercelllevel[[2]]
 
         .anno@meta.data |>
           dplyr::select(lowres = .supercelllevel, highres = .celllevel) |>
@@ -88,23 +90,6 @@ project_sc_azimuth_ref |>
             # fill_by_n = TRUE,
             # sort_by_n = TRUE
           )
-        #
-        #         .anno@meta.data |>
-        #           # dplyr::count(predicted.celltype.l1, predicted.celltype.l2) |>
-        #           dplyr::count(predicted.subclass, predicted.cluster) |>
-        #           plotme::count_to_sunburst(
-        #             sort_by_n = TRUE
-        #           ) ->
-        #           .p
-
-        # reticulate::py_run_string("import sys")
-        # plotly::save_image(
-        #   p = .p,
-        #   file = "my_plot.pdf",
-        #   width = 800,
-        #   height = 600,
-        #   device = "pdf"
-        # )
       }
     )
   ) ->
@@ -124,6 +109,10 @@ project_sc_azimuth_ref_sunburst |>
         .p = sunburst
       ),
       .f = function(.region, .case, .p, .outdir) {
+        # .region <- project_sc_azimuth_ref_sunburst$region[[1]]
+        # .case <- project_sc_azimuth_ref_sunburst$case[[1]]
+        # .p <- project_sc_azimuth_ref_sunburst$sunburst[[1]]
+
         reticulate::py_run_string("import sys")
 
         .filename <- glue::glue("Sunburst_{.region}_{.case}")
@@ -147,13 +136,15 @@ project_sc_azimuth_ref_sunburst |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel2"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel4"
     )
   )
 
 
 
-# Update cell label -------------------------------------------------------
+
+# ref sunburst ------------------------------------------------------------
+
 
 SeuratData::LoadData(ds = "mousecortexref", type = "azimuth") -> mousecortexref
 mousecortexref$plot@meta.data |>
@@ -205,7 +196,7 @@ bonemarrowref_cell |>
 
 
 project_sc_azimuth |>
-  dplyr::select(-ref) |>
+  dplyr::select(-ref, -refs, -celllevel, -supercelllevel) |>
   dplyr::left_join(
     refcelllevel |>
       dplyr::mutate(
@@ -232,12 +223,21 @@ project_sc_azimuth_ref_realcell |>
         # .region <- project_sc_azimuth_ref_realcell$region[[2]]
 
 
-        .anno@meta.data |>
-          dplyr::left_join(
-            .realcell,
-            by = .celllevel
-          ) ->
-          .d
+
+        .d <- if (.region == "Meninge") {
+          .anno@meta.data |>
+            dplyr::mutate(
+              celltype.l1 = predicted.annotation.l1,
+              celltype.l2 = predicted.annotation.l1
+            )
+
+        } else {
+          .anno@meta.data |>
+            dplyr::left_join(
+              .realcell,
+              by = .celllevel
+            )
+        }
 
         .dd <- if(.region == "Brain") {
           .d |>
@@ -325,7 +325,7 @@ project_sc_azimuth_ref_realcell_sunburst |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel3"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel5"
     )
   )
 
