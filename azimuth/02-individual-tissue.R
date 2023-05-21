@@ -24,31 +24,23 @@ future::plan(future::multisession, workers = 10)
 
 # function ----------------------------------------------------------------
 
+
 fn_azimuth <- function(.sc, .ref) {
-  .sc <- project_sc$sc[[2]]
-  .ref <- "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
+  # .sc <- d$sc[[5]]
+  # .ref <- d$refs[[5]]
 
   .sct <- RunAzimuth(
     query = .sc,
     reference = .ref
-    # reference = "mousecortexref"
   )
-  p1 <- DimPlot(.sct, group.by = "predicted.annotation.l1", label = TRUE, label.size = 3)
-  ggsave(
-    filename = "meninge.pdf",
-    plot = p1,
-    device = "pdf",
-    path = "/home/liuc9/github/scbrain/scuvresult",
-    width = 9,
-    height = 8
 
-  )
+  # p1 <- DimPlot(.sct, group.by = "predicted.annotation.l1", label = TRUE, label.size = 3)
+  # p1
+
   .sct
-
 }
 
 fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .facet = FALSE) {
-
   # .x = project_sc_azimuth$anno[[3]]
   # .celltype = "predicted.celltype.l2"
   # .reduction = "ref.umap"
@@ -77,7 +69,7 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
   .xxx <- dplyr::bind_cols(.umap, .xx)
 
   .xxx |>
-    dplyr::select(cluster, celltype)  |>
+    dplyr::select(cluster, celltype) |>
     dplyr::group_by(cluster, celltype) |>
     dplyr::count() |>
     dplyr::arrange(-n) |>
@@ -114,27 +106,25 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
         dplyr::arrange(-n) ->
         .mmm
 
-      if(nrow(.mmm) == 1) {
+      if (nrow(.mmm) == 1) {
         return(
           .mmd |>
             # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
-            dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+            dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
         )
-
       }
 
       .fc <- .mmm$n[[1]] / .mmm$n[[2]] # 1.1
 
-      if(.fc > 1.1) {
+      if (.fc > 1.1) {
         .mmd |>
           dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
-          dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+          dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
       } else {
         .mmd |>
           # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
-          dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+          dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
       }
-
     })) |>
     dplyr::ungroup() |>
     tidyr::unnest(cols = u) |>
@@ -165,7 +155,7 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
     }
   )
 
-  .split <- if(.facet) {
+  .split <- if (.facet) {
     facet_wrap(~case, nrow = 1)
   } else {
     theme()
@@ -199,7 +189,7 @@ fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .face
       labels = .xxx_label$celltype,
       guide = guide_legend(
         ncol = 1,
-        override.aes = list(size=4)
+        override.aes = list(size = 4)
       )
     ) +
     theme(
@@ -296,27 +286,25 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
         dplyr::arrange(-n) ->
         .mmm
 
-      if(nrow(.mmm) == 1) {
+      if (nrow(.mmm) == 1) {
         return(
           .mmd |>
             # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
-            dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+            dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
         )
-
       }
 
       .fc <- .mmm$n[[1]] / .mmm$n[[2]] # 1.1
 
-      if(.fc > 1.1) {
+      if (.fc > 1.1) {
         .mmd |>
           dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
-          dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+          dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
       } else {
         .mmd |>
           # dplyr::filter(u1 == .mmm$u1[[1]], u2 == .mmm$u2[[1]]) |>
-          dplyr::summarise(UMAP_1  = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
+          dplyr::summarise(UMAP_1 = mean(UMAP_1), UMAP_2 = mean(UMAP_2))
       }
-
     })) |>
     dplyr::ungroup() |>
     tidyr::unnest(cols = u) |>
@@ -347,7 +335,7 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
     }
   )
 
-  .split <- if(.facet) {
+  .split <- if (.facet) {
     facet_wrap(~case, nrow = 1)
   } else {
     theme()
@@ -381,7 +369,7 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
       labels = .xxx_label$celltype_ratio,
       guide = guide_legend(
         ncol = 1,
-        override.aes = list(size=4)
+        override.aes = list(size = 4)
       )
     ) +
     theme(
@@ -414,7 +402,7 @@ fn_plot_refumap <- function(.x, .celltype = "celltype", .reduction = "ref.umap",
       ratio = 1,
     ) +
     .split +
-    .labs  ->
+    .labs ->
     .p
 
   tibble::tibble(
@@ -637,7 +625,6 @@ project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
           width = 14,
           height = 8
         )
-
       },
       .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth"
     )
@@ -651,7 +638,6 @@ celllevel |>
   names() |>
   purrr::map(
     .f = function(.region) {
-
       project_sc_azimuth_refumap_unique_celltype_union_anno_cell_newp |>
         dplyr::select(region, case, cellnumber) |>
         dplyr::filter(region == .region) |>
@@ -709,7 +695,8 @@ celllevel |>
             face = "bold"
           )
         ) ->
-        .p;.p
+        .p
+      .p
 
       ggsave(
         filename = glue::glue("{.region}_celltype_proportion.pdf"),
@@ -725,7 +712,6 @@ celllevel |>
           -c(UMAP_1, UMAP_2, celltype_ratio)
         ) |>
         dplyr::mutate(ratio = round(ratio * 100, 2))
-
     }
   ) ->
   celltype_ratio
