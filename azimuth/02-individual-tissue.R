@@ -459,21 +459,21 @@ readr::write_rds(
   file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
 )
 
-project_sc_azimuth |>
-  dplyr::mutate(
-    celllevel = plyr::revalue(
-      x = region,
-      replace = celllevel
-    )
-  ) ->
-  project_sc_azimuth_refumap
-
-
-
-readr::write_rds(
-  x = project_sc_azimuth_refumap,
-  file = "data/azimuth/project_sc_azimuth_refumap.rds.gz"
-)
+# project_sc_azimuth |>
+#   dplyr::mutate(
+#     celllevel = plyr::revalue(
+#       x = region,
+#       replace = celllevel
+#     )
+#   ) ->
+#   project_sc_azimuth_refumap
+#
+#
+#
+# readr::write_rds(
+#   x = project_sc_azimuth_refumap,
+#   file = "data/azimuth/project_sc_azimuth_refumap.rds.gz"
+# )
 
 
 
