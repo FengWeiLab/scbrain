@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "venv/bin/python",
+  "python.defaultInterpreterPath": "~/tools/anaconda3/bin/python",
   "python.analysis.disabled": ["unresolved-import"],
   "python.analysis.completeFunctionParens": true,
   "python.languageServer": "Pylance",
