@@ -40,6 +40,15 @@ fn_azimuth <- function(.sc, .ref) {
   .sct
 }
 
+fn_azimuth_brain <- function(.sc) {
+  .sct <- RunAzimuth(
+    query = .sc,
+    reference = "pbmcref"
+    # reference = "bonemarrowref"
+  )
+  .sct
+}
+
 fn_plot_umap_tsne <- function(.x, .celltype = "", .reduction = "ref.umap", .facet = FALSE) {
   # .x = project_sc_azimuth$anno[[3]]
   # .celltype = "predicted.celltype.l2"
@@ -458,6 +467,265 @@ readr::write_rds(
   x = project_sc_azimuth,
   file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
 )
+
+project_sc_azimuth <- readr::read_rds(
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
+)
+
+
+# Brain -------------------------------------------------------------------
+
+
+SeuratData::LoadData(ds = "mousecortexref", type = "azimuth") -> mousecortexref
+mousecortexref$plot@meta.data |>
+  dplyr::select(class, subclass, cluster,) |>
+  dplyr::arrange(class, subclass, cluster,) |>
+  dplyr::distinct() |>
+  tibble::as_tibble() |>
+  dplyr::mutate(
+    predicted.cluster = cluster
+  ) ->
+  mousecortexref_cell
+
+mousecortexref_cell |>
+  dplyr::count(class, subclass, cluster) |>
+  plotme::count_to_sunburst()
+
+
+SeuratData::LoadData(ds = "pbmcref", type = "azimuth") -> pbmcref
+pbmcref$plot@meta.data |>
+  dplyr::select(celltype.l1, celltype.l2, ) |>
+  dplyr::arrange(celltype.l1, celltype.l2, ) |>
+  dplyr::distinct() |>
+  tibble::as_tibble() |>
+  dplyr::mutate(
+    predicted.celltype.l2 = celltype.l2
+  ) ->
+  pbmcref_cell
+pbmcref_cell |>
+  dplyr::count(celltype.l1, celltype.l2, ) |>
+  plotme::count_to_sunburst()
+
+SeuratData::LoadData(ds = "bonemarrowref", type = "azimuth") -> bonemarrowref
+bonemarrowref$plot@meta.data |>
+  dplyr::select(celltype.l1, celltype.l2) |>
+  dplyr::arrange(celltype.l1, celltype.l2) |>
+  dplyr::distinct() |>
+  tibble::as_tibble() |>
+  dplyr::mutate(
+    predicted.celltype.l2 = celltype.l2
+  ) ->
+  bonemarrowref_cell
+
+bonemarrowref_cell |>
+  dplyr::count(celltype.l1, celltype.l2) |>
+  plotme::count_to_sunburst()
+
+project_sc_azimuth |>
+  dplyr::filter(region == "Brain") |>
+  dplyr::mutate(anno2 = purrr::map(
+    .x = sc,
+    .f = fn_azimuth_brain
+  )) ->
+  project_sc_azimuth_brain
+
+.anno <- project_sc_azimuth_brain$anno[[3]]
+.anno2 <- project_sc_azimuth_brain$anno2[[3]]
+
+
+project_sc_azimuth_brain |>
+  dplyr::mutate(
+    annno_new = purrr::map2(
+      .x = anno,
+      .y = anno2,
+      .f = function(.anno, .anno2) {
+        .anno
+        .anno2
+
+
+        .anno@meta.data |>
+          tibble::rownames_to_column(var = "barcode") |>
+          tibble::as_tibble() |>
+          dplyr::select(barcode, predicted.class, predicted.subclass, predicted.cluster, predicted.cluster.score) ->
+          a1_sel
+
+        .anno2@meta.data |>
+          tibble::rownames_to_column(var = "barcode") |>
+          tibble::as_tibble() |>
+          dplyr::select(barcode,  predicted.celltype.l1, predicted.celltype.l2, predicted.celltype.l2.score) ->
+          a2_sel
+        nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
+
+        a1_sel |>
+          dplyr::inner_join(a2_sel, by = "barcode") |>
+          dplyr::left_join(mousecortexref_cell, by = "predicted.cluster") |>
+          dplyr::left_join(pbmcref_cell, by = "predicted.celltype.l2") |>
+          dplyr::mutate(celltype2 = ifelse(
+            predicted.cluster %in% nnc,
+            predicted.celltype.l2,
+            predicted.cluster
+          )) |>
+          dplyr::mutate(
+            subclass = as.character(subclass),
+            celltype.l2 = as.character(celltype.l2)
+          ) |>
+          dplyr::mutate(
+            celltype = ifelse(
+              predicted.cluster %in% nnc,
+              celltype.l2,
+              subclass
+            )
+          ) |>
+          dplyr::select(barcode, celltype, celltype2)
+      }
+    )
+  ) ->
+  project_sc_azimuth_brain_new
+
+
+project_sc_azimuth_brain_new |>
+  dplyr::mutate(
+    a = purrr::pmap(
+      .l = list(
+        .region = region,
+        .case = case,
+        .anno_new = annno_new
+      ),
+      .f = function(.region, .case, .anno_new, .outdir) {
+
+        .anno_new |>
+          dplyr::count(celltype, celltype2) |>
+          dplyr::mutate(celltype2_r = n / sum(n)) |>
+          dplyr::group_by(celltype) |>
+          dplyr::mutate(celltype_r = sum(celltype2_r)) |>
+          dplyr::ungroup() |>
+          dplyr::mutate(
+            celltype = glue::glue("{celltype} {round(celltype_r * 100, 2)}%"),
+            celltype2 = glue::glue("{celltype2} {round(celltype2_r * 100, 2)}%"),
+          ) |>
+          dplyr::select(1,2,3) |>
+          plotme::count_to_sunburst() ->
+          .p
+
+        .filename <- glue::glue("Sunburst_{.region}_{.case}")
+
+        reticulate::py_run_string("import sys")
+        plotly::save_image(
+          p = .p,
+          file = file.path(
+            .outdir,
+            glue::glue("{.filename}.pdf")
+          ),
+          width = 800,
+          height = 800,
+          device = "pdf"
+        )
+
+        htmlwidgets::saveWidget(
+          .p,
+          file = file.path(
+            .outdir,
+            glue::glue("{.filename}.html")
+          )
+        )
+
+
+
+      },
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel7"
+    )
+  )
+
+
+project_sc_azimuth_brain_new |>
+  dplyr::mutate(
+    a = purrr::pmap(
+      .l = list(
+        .region = region,
+        .case = case,
+        .anno_new = annno_new
+      ),
+      .f = function(.region, .case, .anno_new, .outdir) {
+
+        .anno_new |>
+          dplyr::count(celltype, celltype2) |>
+          dplyr::mutate(celltype2_r = n / sum(n)) |>
+          dplyr::group_by(celltype) |>
+          dplyr::mutate(celltype_r = sum(celltype2_r)) |>
+          dplyr::ungroup() |>
+          dplyr::mutate(
+            celltype = glue::glue("{celltype} {round(celltype_r * 100, 2)}%"),
+            celltype2 = glue::glue("{celltype2} {round(celltype2_r * 100, 2)}%"),
+          ) ->
+          .dd
+
+        .dd
+
+
+
+
+      },
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel7"
+    )
+  ) |>
+  dplyr::select(
+    region, case, a
+  ) |>
+  tidyr::unnest(cols = a) |>
+  dplyr::select(case, cluster = celltype, ratio = celltype_r) |>
+  dplyr::distinct() |>
+  dplyr::mutate(cluster = gsub(
+    pattern = " .*$",
+    replacement = "",
+    x = cluster
+  )) |>
+  ggplot(aes(
+    x = case,
+    y = ratio,
+    fill = cluster
+  )) +
+  geom_col(
+    width = 1,
+    color = 1,
+    size = 0.05
+  ) +
+  scale_x_discrete(
+    limits = c("Sham", "MCAO", "UV"),
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = c(0, 0.01)
+  ) +
+  scale_fill_manual(
+    name = "Cell type",
+    values = pcc$color
+  )
+  # ggsci::scale_fill_npg(
+  #   name = "Cell type"
+  # ) +
+  theme(
+    panel.background = element_blank(),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.text = element_text(
+      size = 16,
+      color = "black",
+      face = "bold"
+    ),
+    legend.title = element_text(
+      size = 16,
+      color = "black",
+      face = "bold"
+    ),
+    legend.text = element_text(
+      size = 14,
+      color = "black",
+      face = "bold"
+    )
+  ) ->
+  .p;.p
+
 
 # project_sc_azimuth |>
 #   dplyr::mutate(

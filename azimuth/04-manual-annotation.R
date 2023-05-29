@@ -61,7 +61,9 @@ azimuth_ref |>
 
 
         .dd <- if(.region == "Brain") {
+          nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
           .d |>
+            dplyr::filter(!cluster %in% nnc) |>
             dplyr::count(class, subclass, cluster) |>
             dplyr::mutate(cluster_r = n / sum(n)) |>
             dplyr::group_by(subclass) |>
@@ -146,7 +148,7 @@ azimuth_ref_sunburst |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel6"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel9"
     )
   )
 
@@ -261,7 +263,7 @@ azimuth_ref_sunburst_sel_ratiop |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel6"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel9"
     )
   )
 
@@ -373,7 +375,7 @@ azimuth_ref_sunburst_sel_ratiop |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel6"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel9"
     )
   )
 # footer ------------------------------------------------------------------

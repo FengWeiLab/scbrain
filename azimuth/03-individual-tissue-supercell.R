@@ -241,7 +241,9 @@ project_sc_azimuth_ref_realcell |>
         }
 
         .dd <- if(.region == "Brain") {
+          nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
           .d |>
+            dplyr::filter(!cluster %in% nnc) |>
             dplyr::count(class, subclass, cluster) |>
             dplyr::mutate(cluster_r = n / sum(n)) |>
             dplyr::group_by(subclass) |>
@@ -326,7 +328,7 @@ project_sc_azimuth_ref_realcell_sunburst |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel5"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel8"
     )
   )
 
