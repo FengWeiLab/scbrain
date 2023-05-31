@@ -43,7 +43,8 @@ fn_azimuth <- function(.sc, .ref) {
 fn_azimuth_brain <- function(.sc) {
   .sct <- RunAzimuth(
     query = .sc,
-    reference = "pbmcref"
+    reference = "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
+    # reference = "pbmcref"
     # reference = "bonemarrowref"
   )
   .sct
@@ -528,9 +529,9 @@ project_sc_azimuth |>
     .f = fn_azimuth_brain
   )) ->
   project_sc_azimuth_brain
-
-.anno <- project_sc_azimuth_brain$anno[[3]]
-.anno2 <- project_sc_azimuth_brain$anno2[[3]]
+#
+# .anno <- project_sc_azimuth_brain$anno[[3]]
+# .anno2 <- project_sc_azimuth_brain$anno2[[3]]
 
 
 project_sc_azimuth_brain |>
@@ -552,27 +553,27 @@ project_sc_azimuth_brain |>
         .anno2@meta.data |>
           tibble::rownames_to_column(var = "barcode") |>
           tibble::as_tibble() |>
-          dplyr::select(barcode,  predicted.celltype.l1, predicted.celltype.l2, predicted.celltype.l2.score) ->
+          dplyr::select(barcode,  predicted.annotation.l1, predicted.annotation.l1.score) ->
           a2_sel
         nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
 
         a1_sel |>
           dplyr::inner_join(a2_sel, by = "barcode") |>
           dplyr::left_join(mousecortexref_cell, by = "predicted.cluster") |>
-          dplyr::left_join(pbmcref_cell, by = "predicted.celltype.l2") |>
+          # dplyr::left_join(pbmcref_cell, by = "predicted.celltype.l2") |>
           dplyr::mutate(celltype2 = ifelse(
             predicted.cluster %in% nnc,
-            predicted.celltype.l2,
+            predicted.annotation.l1,
             predicted.cluster
           )) |>
           dplyr::mutate(
             subclass = as.character(subclass),
-            celltype.l2 = as.character(celltype.l2)
+            predicted.annotation.l1 = as.character(predicted.annotation.l1)
           ) |>
           dplyr::mutate(
             celltype = ifelse(
               predicted.cluster %in% nnc,
-              celltype.l2,
+              predicted.annotation.l1,
               subclass
             )
           ) |>
@@ -675,7 +676,7 @@ project_sc_azimuth_brain_new |>
   dplyr::select(case, cluster = celltype, ratio = celltype_r) |>
   dplyr::distinct() |>
   dplyr::mutate(cluster = gsub(
-    pattern = " .*$",
+    pattern = " [0-9]*.[0-9]*%",
     replacement = "",
     x = cluster
   )) |>
@@ -700,7 +701,7 @@ project_sc_azimuth_brain_new |>
   scale_fill_manual(
     name = "Cell type",
     values = pcc$color
-  )
+  ) +
   # ggsci::scale_fill_npg(
   #   name = "Cell type"
   # ) +
@@ -726,6 +727,15 @@ project_sc_azimuth_brain_new |>
   ) ->
   .p;.p
 
+
+ggsave(
+  filename = "Propertion_Brain.pdf",
+  plot = .p,
+  device = "pdf",
+  path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel7",
+  width = 10,
+  height = 8
+)
 
 # project_sc_azimuth |>
 #   dplyr::mutate(
