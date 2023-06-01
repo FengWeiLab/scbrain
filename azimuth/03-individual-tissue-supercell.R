@@ -30,6 +30,9 @@ pcc <- readr::read_tsv(file = "https://raw.githubusercontent.com/chunjie-sam-liu
 # function ----------------------------------------------------------------
 
 
+
+
+
 # load data ---------------------------------------------------------------
 
 refcelllevel <- tibble::tibble(
@@ -48,6 +51,7 @@ refcelllevel <- tibble::tibble(
 project_sc_azimuth <- readr::read_rds(
   # file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth.rds"
   # file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_update.rds"
 
 )
 
