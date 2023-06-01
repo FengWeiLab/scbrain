@@ -464,14 +464,14 @@ project_sc |>
   ) ->
   project_sc_azimuth
 
-readr::write_rds(
-  x = project_sc_azimuth,
-  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
-)
-
-project_sc_azimuth <- readr::read_rds(
-  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
-)
+# readr::write_rds(
+#   x = project_sc_azimuth,
+#   file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
+# )
+#
+# project_sc_azimuth <- readr::read_rds(
+#   file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
+# )
 
 
 # Brain -------------------------------------------------------------------
@@ -522,6 +522,10 @@ bonemarrowref_cell |>
   dplyr::count(celltype.l1, celltype.l2) |>
   plotme::count_to_sunburst()
 
+project_sc_azimuth$anno[[1]]@meta.data |> dplyr::glimpse()
+project_sc_azimuth$anno[[2]]@meta.data |> dplyr::glimpse()
+project_sc_azimuth$anno[[3]]@meta.data |> dplyr::glimpse()
+
 project_sc_azimuth |>
   dplyr::filter(region == "Brain") |>
   dplyr::mutate(anno2 = purrr::map(
@@ -540,8 +544,8 @@ project_sc_azimuth_brain |>
       .x = anno,
       .y = anno2,
       .f = function(.anno, .anno2) {
-        .anno
-        .anno2
+        # .anno
+        # .anno2
 
 
         .anno@meta.data |>
@@ -577,10 +581,19 @@ project_sc_azimuth_brain |>
               subclass
             )
           ) |>
-          dplyr::select(barcode, celltype, celltype2)
+          dplyr::select(barcode, celltype, celltype2) ->
+          .d
+        .anno@meta.data$celltype1 <- .d$celltype
+        .anno@meta.data$celltype2 <- .d$celltype2
+        .d
+        tibble::tibble(
+          anno_new = list(.anno),
+          annno_new = list(.d)
+        )
       }
     )
-  ) ->
+  ) |>
+  tidyr::unnest(cols = annno_new) ->
   project_sc_azimuth_brain_new
 
 
@@ -735,6 +748,29 @@ ggsave(
   path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel7",
   width = 10,
   height = 8
+)
+
+
+# save image --------------------------------------------------------------
+project_sc_azimuth |> dplyr::glimpse()
+
+project_sc_azimuth_brain_new |> dplyr::glimpse()
+
+project_sc_azimuth |>
+  dplyr::filter(region != "Brain") |>
+  dplyr::bind_rows(
+    project_sc_azimuth_brain_new |>
+      dplyr::select(
+        dir_path, project, region, case, ref, sc,
+        refs, celllevel, supercelllevel, anno = anno_new
+      )
+  ) ->
+  project_sc_azimuth_update
+
+
+readr::write_rds(
+  x = project_sc_azimuth_update,
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_update.rds"
 )
 
 # project_sc_azimuth |>
