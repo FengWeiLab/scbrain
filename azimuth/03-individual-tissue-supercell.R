@@ -47,7 +47,8 @@ refcelllevel <- tibble::tibble(
 
 project_sc_azimuth <- readr::read_rds(
   # file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth.rds"
-  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
+  # file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth_newref.rds"
+
 )
 
 # body --------------------------------------------------------------------
@@ -346,4 +347,4 @@ readr::write_rds(
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/azimuth/02-individual-tissue-supercell.rda")
+save.image(file = "data/azimuth/03-individual-tissue-supercell.rda")
