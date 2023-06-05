@@ -19,7 +19,10 @@ library(Azimuth)
 
 pcc <- readr::read_tsv(file = "https://raw.githubusercontent.com/chunjie-sam-liu/chunjie-sam-liu.life/master/public/data/pcc.tsv") |>
   dplyr::arrange(dplyr::desc(cancer_types))
-
+gtex <- yaml::yaml.load_file(input = "https://raw.githubusercontent.com/chunjie-sam-liu/sqtl/main/colors/color_gtexv8_tissue.yaml?token=GHSAT0AAAAAACDDSCQTTVKGIEH55YAEUH7MZD5ECZQ") |>
+  tibble::enframe() |>
+  tidyr::spread(key = name, value = value) |>
+  tidyr::unnest()
 # src ---------------------------------------------------------------------
 
 
