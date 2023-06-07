@@ -173,6 +173,7 @@ mousecortexref_cell |>
 
 SeuratData::LoadData(ds = "pbmcref", type = "azimuth") -> pbmcref
 pbmcref$plot@meta.data |>
+  dplyr::count(celltype.l1)
   dplyr::select(celltype.l1, celltype.l2, ) |>
   dplyr::arrange(celltype.l1, celltype.l2, ) |>
   dplyr::distinct() |>
