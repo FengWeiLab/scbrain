@@ -610,7 +610,7 @@ azimuth_ref_sunburst_sel_ratiop |>
     a = purrr::map(
       .x = ratiop,
       .f = function(.x) {
-        .x$d_cell2
+        .x$d_cell1
       }
     )
   ) |>
@@ -695,10 +695,10 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
 
 
 ggsave(
-  filename = glue::glue("Pie_plot_cell2.pdf"),
+  filename = glue::glue("Pie_plot_cell1.pdf"),
   plot = p,
   device = "pdf",
-  path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel11",
+  path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12",
   width = 15,
   height = 15
 )
@@ -710,3 +710,4 @@ ggsave(
 # future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
+save.image(file = "data/azimuth/04-manual-annotation.rda")
