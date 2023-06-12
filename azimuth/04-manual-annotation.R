@@ -265,18 +265,18 @@ azimuth_ref |>
           .d
 
         .d |>
-          dplyr::count(cell2, cell1, celltype.l2) |>
-          dplyr::mutate(celltype.l2_r = n / sum(n)) |>
-          dplyr::group_by(cell1) |>
-          dplyr::mutate(cell1_r = sum(celltype.l2_r)) |>
-          dplyr::ungroup() |>
+          dplyr::count(cell1, cell2, cell3) |>
+          dplyr::mutate(cell3_r = n / sum(n)) |>
           dplyr::group_by(cell2) |>
-          dplyr::mutate(cell2_r = sum(celltype.l2_r)) |>
+          dplyr::mutate(cell2_r = sum(cell3_r)) |>
+          dplyr::ungroup() |>
+          dplyr::group_by(cell1) |>
+          dplyr::mutate(cell1_r = sum(cell3_r)) |>
           dplyr::ungroup() |>
           dplyr::mutate(
-            cell2 =  glue::glue("{cell2} {round(cell2_r * 100, 2)}%"),
-            cell1 = glue::glue("{cell1} {round(cell1_r * 100, 2)}%"),
-            celltype.l2 = glue::glue("{celltype.l2} {round(celltype.l2_r * 100, 2)}%"),
+            cell1 =  glue::glue("{cell1} {round(cell1_r * 100, 2)}%"),
+            cell2 = glue::glue("{cell2} {round(cell2_r * 100, 2)}%"),
+            cell3 = glue::glue("{cell3} {round(cell3_r * 100, 2)}%"),
           ) ->
           .dd
 
@@ -288,6 +288,7 @@ azimuth_ref |>
         .new_anno <- .anno
         .new_anno@meta.data$cell1 <- .d$cell1
         .new_anno@meta.data$cell2 <- .d$cell2
+        .new_anno@meta.data$cell3 <- .d$cell3
 
         tibble::tibble(
           sunburst = list(.p),
@@ -341,7 +342,7 @@ azimuth_ref_sunburst |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel11"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12"
     )
   )
 
@@ -385,6 +386,16 @@ azimuth_ref_sunburst_sel |>
             x = cluster
           )) ->
           .dd
+        .y |>
+          tidyr::unnest(cols = cellratio) |>
+          dplyr::select(case, cluster = cell3, ratio = cell3_r) |>
+          dplyr::distinct() |>
+          dplyr::mutate(cluster = gsub(
+            pattern = " [[0-9]]*.*%$",
+            replacement = "",
+            x = cluster
+          )) ->
+          .ddd
 
         .scale_fill <- if (.x == "Brain") {
           ggthemes::scale_fill_tableau(
@@ -492,11 +503,61 @@ azimuth_ref_sunburst_sel |>
           ) ->
           .pp
 
+        .ddd |>
+          ggplot(aes(
+            x = case,
+            y = ratio,
+            fill = cluster
+          )) +
+          geom_col(
+            width = 1,
+            color = 1,
+            size = 0.05
+          ) +
+          scale_x_discrete(
+            limits = c("Sham", "MCAO", "UV"),
+            expand = c(0, 0)
+          ) +
+          scale_y_continuous(
+            labels = scales::percent_format(),
+            expand = c(0, 0.01)
+          ) +
+          .scale_fill +
+          # ggthemes::scale_fill_tableau(
+          #   palette = "Tableau 20",
+          #   name = "Cell types",
+          #   direction = 1
+          # ) +
+          theme(
+            panel.background = element_blank(),
+            axis.title = element_blank(),
+            axis.line = element_line(),
+            axis.text = element_text(
+              size = 16,
+              color = "black",
+              face = "bold"
+            ),
+            legend.title = element_text(
+              size = 16,
+              color = "black",
+              face = "bold"
+            ),
+            legend.text = element_text(
+              size = 14,
+              color = "black",
+              face = "bold"
+            )
+          ) ->
+          .ppp
+
+
         list(
           p_cell1 = .p,
           p_cell2 = .pp,
+          p_cell3 = .ppp,
           d_cell1 = .d,
-          d_cell2 = .dd
+          d_cell2 = .dd,
+          d_cell3 = .ddd
         )
       }
     )
@@ -526,9 +587,17 @@ azimuth_ref_sunburst_sel_ratiop |>
           width = 10,
           height = 8
         )
+        ggsave(
+          filename = glue::glue("Propertion_{.region}_cell3.pdf"),
+          plot = .ratiop$p_cell3,
+          device = "pdf",
+          path = .outdir,
+          width = 10,
+          height = 8
+        )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel11"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12"
     )
   )
 
