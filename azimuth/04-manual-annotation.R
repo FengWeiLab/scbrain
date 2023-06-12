@@ -45,9 +45,156 @@ azimuth_ref$anno_new |>
   dplyr::distinct() ->
   celltypes
 
-recell1 <- c("NK cells" =  "NK cells", "D-BAM" = "Macrophage", "B cells" = "B cells", "T/NKT cells" = "T/NKT cells", "Neutrophils" = "Neutrophils", "cl. Monocytes" = "Monocytes", "MC" = "Monocytes", "Non-cl. monocytes" = "Monocytes", "pDC" = "DC", "cDC2" = "DC", "cDC1" = "DC", "MdC" = "Monocytes", "migDC" = "DC", "Memory B" = "B cells", "transitional B" = "B cells", "CD4 Naive" = "T cells", "CD14 Mono" = "Monocytes", "pre B" = "B cells", "CD16 Mono" = "Monocytes", "pre-mDC" = "DC", "CD8 Memory" = "T cells", "Stromal" = "other", "Late Eryth" = "Erythroid", "Naive B" = "B cells", "CD8 Effector_1" = "T cells", "Plasma" = "B cells", "CD4 Memory" = "T cells", "GMP" = "HSPC", "LMPP" = "HSPC", "BaEoMa" = "HSPC", "NK" = "NK cells", "Early Eryth" = "Erythroid", "pro B" = "B cells", "Prog Mk" = "HSPC", "Macrophage" = "Macrophage", "pre-pDC" = "DC", "ASDC" = "DC", "CLP" = "HSPC", "T Proliferating" = "T cells", "CD8 Effector_3" = "T cells", "Platelet" = "Platelet", "CD8 Effector_2" = "T cells", "Endo" = "Endothelial", "Micro" = "Microglia", "Astro Aqp4_Slc7a10" = "Astrocyte", "VLMC_6" = "VLMC", "Oligo Opalin_2" = "OLG", "Astro Aqp4_Gfap" = "Astrocyte", "PVM_1" = "Microglia", "VLMC_2" = "VLMC", "VLMC_3" = "VLMC", "Oligo Opalin_1" = "OLG", "Oligo Enpp6_2" = "OLG", "Oligo Opalin_4" = "OLG", "OPC Pdgfra" = "OPC")
+recell3 <- c(
+  # Myeloid
+
+  "Neutrophils" = "Neutrophils",
+
+  "cl. Monocytes" = "CD14 Monocytes",
+  "Non-cl. monocytes" = "CD16 Monocytes",
+  "MC" = "CD14 Monocytes",
+  "MdC" = "CD14 Monocytes",
+  "CD14 Mono" = "CD14 Monocytes",
+  "CD16 Mono" = "CD16 Monocytes",
+
+  "D-BAM" = "Macrophage",
+  "Macrophage" = "Macrophage",
+
+  "pDC" = "pDC",
+  "cDC2" = "mDC",
+  "cDC1" = "mDC",
+  "migDC" = "mDC",
+  "pre-mDC" = "mDC",
+  "pre-pDC" = "pDC",
+  "ASDC" = "mDC",
+
+  # Lymphoctyes
+  "B cells" = "Mature B cells",
+  "Memory B" = "Memory B cells",
+  "transitional B" = "Navie B cells",
+  "pre B" = "Pre-B cells",
+  "Naive B" = "Naive B cells",
+  "Plasma" = "Mature B cells",
+  "pro B" = "Pro-B cells",
+
+  "CD4 Naive" = "CD4 naive T cells",
+  "CD4 Memory" = "CD4 memory T cells",
+  "CD8 Memory" = "CD8 memory T cells",
+  "CD8 Effector_1" = "CD8 effector T cells",
+  "CD8 Effector_3" = "CD8 effector T cells",
+  "CD8 Effector_2" = "CD8 effector T cells",
+  "T Proliferating" = "T cells",
+
+  "NK" = "NK cells",
+  "NK cells" =  "NK cells",
+  "T/NKT cells" = "NK cells",
+
+  "Stromal" = "other",
+  "LMPP" = "HSPC",
+  "GMP" = "HSPC",
+  "BaEoMa" = "HSPC",
+  "Late Eryth" = "Erythroid",
+  "Early Eryth" = "Erythroid",
+  "Prog Mk" = "HSPC",
+  "CLP" = "HSPC",
+  "Platelet" = "Platelet",
+  "Endo" = "Endothelial",
+
+  "Micro" = "Microglia",
+  "PVM_1" = "Microglia",
+
+  "Astro Aqp4_Slc7a10" = "Astrocyte Aqp4_Slc7a10",
+  "Astro Aqp4_Gfap" = "Astrocyte Aqp4_Gfap",
+
+
+  "VLMC_6" = "VLMC",
+  "VLMC_2" = "VLMC",
+  "VLMC_3" = "VLMC",
+
+  "Oligo Opalin_1" = "OLG",
+  "Oligo Opalin_2" = "OLG",
+  "Oligo Enpp6_2" = "OLG",
+  "Oligo Opalin_4" = "OLG",
+
+  "OPC Pdgfra" = "OPC"
+  )
 
 recell2 <- c(
+  # Myeloid
+
+  "Neutrophils" = "Neutrophils",
+
+  "cl. Monocytes" = "Monocytes",
+  "Non-cl. monocytes" = "Monocytes",
+  "MC" = "Monocytes",
+  "MdC" = "Monocytes",
+  "CD14 Mono" = "Monocytes",
+  "CD16 Mono" = "Monocytes",
+
+  "D-BAM" = "Macrophage",
+  "Macrophage" = "Macrophage",
+
+  "pDC" = "DC",
+  "cDC2" = "DC",
+  "cDC1" = "DC",
+  "migDC" = "DC",
+  "pre-mDC" = "DC",
+  "pre-pDC" = "DC",
+  "ASDC" = "DC",
+
+  # Lymphoctyes
+  "B cells" = "B cells",
+  "Memory B" = "B cells",
+  "transitional B" = "B cells",
+  "pre B" = "B cells",
+  "Naive B" = "B cells",
+  "Plasma" = "B cells",
+  "pro B" = "B cells",
+
+  "CD4 Naive" = "CD4 T cells",
+  "CD4 Memory" = "CD4 T cells",
+  "CD8 Memory" = "CD8 T cells",
+  "CD8 Effector_1" = "CD8 T cells",
+  "CD8 Effector_3" = "CD8 T cells",
+  "CD8 Effector_2" = "CD8 T cells",
+  "T Proliferating" = "CD8 T cells",
+
+  "NK" = "NK cells",
+  "NK cells" =  "NK cells",
+  "T/NKT cells" = "NK cells",
+
+  "Stromal" = "other",
+  "LMPP" = "HSPC",
+  "GMP" = "HSPC",
+  "BaEoMa" = "HSPC",
+  "Late Eryth" = "Erythroid",
+  "Early Eryth" = "Erythroid",
+  "Prog Mk" = "HSPC",
+  "CLP" = "HSPC",
+  "Platelet" = "Platelet",
+  "Endo" = "Endothelial",
+
+  "Micro" = "Microglia",
+  "PVM_1" = "Microglia",
+
+  "Astro Aqp4_Slc7a10" = "Astrocyte",
+  "Astro Aqp4_Gfap" = "Astrocyte",
+
+
+  "VLMC_6" = "VLMC",
+  "VLMC_2" = "VLMC",
+  "VLMC_3" = "VLMC",
+
+  "Oligo Opalin_1" = "OLG",
+  "Oligo Opalin_2" = "OLG",
+  "Oligo Enpp6_2" = "OLG",
+  "Oligo Opalin_4" = "OLG",
+
+  "OPC Pdgfra" = "OPC"
+)
+
+
+recell1 <- c(
   "Astrocyte" = "Astrocyte",
   "B cells" = "Lymphoctyes",
   "DC" = "Myeloid cells",
@@ -57,13 +204,13 @@ recell2 <- c(
   "Macrophage" = "Myeloid cells",
   "Microglia" = "Microglia",
   "Monocytes" = "Myeloid cells",
-  "NK cells" = "Lymphoctyes",
   "Neutrophils" = "Myeloid cells",
   "OLG" = "OLG",
   "OPC" = "OPC",
   "Platelet" = "Erythroid",
-  "T cells" = "Lymphoctyes",
-  "T/NKT cells" = "Lymphoctyes",
+  "CD8 T cells" = "Lymphoctyes",
+  "CD4 T cells" = "Lymphoctyes",
+  "NK cells" = "Lymphoctyes",
   "VLMC" = "VLMC",
   "other" = "other"
 )
@@ -71,22 +218,29 @@ recell2 <- c(
 
 celltypes |>
   dplyr::mutate(
-    cell1 = plyr::revalue(
+    cell3 = plyr::revalue(
       x = celltype.l2,
-      replace = recell1
+      replace = recell3
     )
   ) |>
   dplyr::mutate(
     cell2 = plyr::revalue(
-      x = cell1,
+      x = celltype.l2,
       replace = recell2
+    )
+  ) |>
+  dplyr::mutate(
+    cell1 = plyr::revalue(
+      x = cell2,
+      replace = recell1
     )
   ) |>
   dplyr::select(-celltype.l1) |>
   dplyr::distinct() ->
   celltypes_recell
 
-
+celltypes_recell |>
+  print(n = Inf)
 
 # body --------------------------------------------------------------------
 
@@ -437,6 +591,7 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
       y = pos,
       label = glue::glue("{scales::percent(percentage, accuracy = 0.01)}"),
     ),
+    size = 8,
     nudge_x = 0.2,
     show.legend = FALSE,
   ) +
