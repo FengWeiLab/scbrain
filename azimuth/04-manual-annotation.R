@@ -71,7 +71,7 @@ recell3 <- c(
   # Lymphoctyes
   "B cells" = "Mature B cells",
   "Memory B" = "Memory B cells",
-  "transitional B" = "Navie B cells",
+  "transitional B" = "Naive B cells",
   "pre B" = "Pre-B cells",
   "Naive B" = "Naive B cells",
   "Plasma" = "Mature B cells",
@@ -83,11 +83,11 @@ recell3 <- c(
   "CD8 Effector_1" = "CD8 effector T cells",
   "CD8 Effector_3" = "CD8 effector T cells",
   "CD8 Effector_2" = "CD8 effector T cells",
-  "T Proliferating" = "T cells",
+  "T Proliferating" = "CD8 T cells",
 
   "NK" = "NK cells",
   "NK cells" =  "NK cells",
-  "T/NKT cells" = "NK cells",
+  "T/NKT cells" = "CD8 T cells",
 
   "Stromal" = "other",
   "LMPP" = "HSPC",
@@ -161,7 +161,7 @@ recell2 <- c(
 
   "NK" = "NK cells",
   "NK cells" =  "NK cells",
-  "T/NKT cells" = "NK cells",
+  "T/NKT cells" = "CD8 T cells",
 
   "Stromal" = "other",
   "LMPP" = "HSPC",
@@ -240,7 +240,181 @@ celltypes |>
   celltypes_recell
 
 celltypes_recell |>
-  print(n = Inf)
+  dplyr::select(cell1, cell2, cell3) |>
+  dplyr::arrange(cell1, cell2, cell3) |>
+  dplyr::distinct() ->
+  recells
+
+
+
+paletteer::palettes_d_names |>
+  dplyr::filter(grepl("material", palette)) |>
+  dplyr::mutate(
+    color_name = glue::glue("{package}::{palette}")
+  ) |>
+  dplyr::arrange(length) |>
+  dplyr::select(color_name) |>
+  dplyr::mutate(
+    color = purrr::map(
+      .x = color_name,
+      .f = paletteer::paletteer_d
+    )
+  ) ->
+  d
+
+d |>
+  tibble::deframe()
+
+
+recells |>
+  dplyr::count(cell1, cell2) |>
+  dplyr::arrange(cell1, -n) |>
+  dplyr::mutate(
+    color_name = c(
+      "ggsci::purple_material",
+      "ggsci::brown_material",
+      "ggsci::grey_material",
+      "ggsci::blue_grey_material",
+      "ggsci::deep_orange_material",
+      "ggsci::yellow_material",
+      "ggsci::red_material",
+      "ggsci::pink_material",
+      "ggsci::purple_material",
+      "ggsci::light_blue_material",
+      "ggsci::blue_material",
+      "ggsci::cyan_material",
+      "ggsci::teal_material",
+      "ggsci::green_material",
+      "ggsci::deep_purple_material",
+      "ggsci::deep_purple_material",
+      "ggsci::indigo_material",
+      "ggsci::blue_grey_material"
+    )
+  ) |>
+  dplyr::mutate(
+    color = purrr::map(
+      .x = color_name,
+      .f = paletteer::paletteer_d
+    )
+  ) |>
+  dplyr::mutate(
+    ns = c(
+      list(c(10, 9, 5)),
+      list(c(3)),
+      list(c(3)),
+      list(c(3)),
+      list(c(3)),
+      list(c(10, 9, 7, 5, 4,3)),
+      list(c(10, 7, 4, 2)),
+      list(c(10, 7, 4)),
+      list(c(10)),
+      list(c(10)),
+      list(c(10, 7, 5)),
+      list(c(10, 9, 5)),
+      list(c(10)),
+      list(c(10)),
+      list(c(7)),
+      list(c(6)),
+      list(c(5)),
+      list(c(1))
+    )
+  ) |>
+  dplyr::mutate(
+    color_select = purrr::map2(
+      .x = color,
+      .y = ns,
+      .f = function(.x, .y) {
+        .x[.y]
+      }
+    )
+  ) |>
+  # dplyr::mutate(
+  #   g = glue::glue("{cell2} {n}")
+  # ) |>
+  # dplyr::select(g, color_select)
+  dplyr::select(cell2, color_select) |>
+  dplyr::left_join(
+    recells,
+    by = "cell2"
+  ) |>
+  dplyr::mutate(
+    cell2_color = purrr::map(
+      .x = color_select,
+      .f = function(.x) {
+        .x[1]
+      }
+    )
+  ) |>
+  tidyr::unnest(cell2_color) ->
+  recell_color
+
+recell_color |>
+  dplyr::select(cell2, cell3, color_select) |>
+  dplyr::group_by(cell2) |>
+  dplyr::filter(dplyr::n() > 1) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    cell3_color = purrr::map(
+      .x = data,
+      .f = function(.x) {
+        .color <- .x$color_select[[1]][-1]
+        .x |>
+          dplyr::select(-color_select) |>
+          dplyr::mutate(cell3_color = .color)
+      }
+    )
+  ) |>
+  dplyr::select(cell3_color) |>
+  tidyr::unnest(cols = cell3_color) ->
+  recell_color_m
+
+
+recell_color |>
+  dplyr::left_join(
+    recell_color_m,
+    by = "cell3"
+  ) |>
+  dplyr::mutate(
+    cell3_color = ifelse(
+      cell3_color == "#FFFFFF00",
+      cell2_color,
+      cell3_color
+    )
+  ) |>
+  dplyr::mutate(
+    cell1_color = cell2_color
+  ) |>
+  dplyr::mutate(
+    cell1_color = ifelse(
+      cell1 == "Erythroid",
+      "#EEEEEEFF",
+      cell1_color
+    )
+  ) |>
+  dplyr::mutate(
+    cell1_color = ifelse(
+      cell1 == "Lymphoctyes",
+      "#B71C1CFF",
+      cell1_color
+    )
+  ) |>
+  dplyr::mutate(
+    cell1_color = ifelse(
+      cell1 == "Myeloid cells",
+      "#006064FF",
+      cell1_color
+    )
+  ) |>
+  dplyr::select(
+    cell1, cell2, cell3, cell1_color, cell2_color, cell3_color
+  ) ->
+  recell_color_final
+
+readr::write_rds(
+  x = recell_color_final,
+  file = "/home/liuc9/github/scbrain/data/azimuth/recell_color.rds"
+)
 
 # body --------------------------------------------------------------------
 
@@ -304,6 +478,10 @@ azimuth_ref |>
   tidyr::unnest(cols = sunburst) ->
   azimuth_ref_sunburst
 
+readr::write_rds(
+  x = azimuth_ref_sunburst,
+  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst.rds"
+)
 
 azimuth_ref_sunburst |>
   dplyr::mutate(
@@ -386,6 +564,7 @@ azimuth_ref_sunburst_sel |>
             x = cluster
           )) ->
           .dd
+
         .y |>
           tidyr::unnest(cols = cellratio) |>
           dplyr::select(case, cluster = cell3, ratio = cell3_r) |>
@@ -397,21 +576,27 @@ azimuth_ref_sunburst_sel |>
           )) ->
           .ddd
 
-        .scale_fill <- if (.x == "Brain") {
-          ggthemes::scale_fill_tableau(
-            palette = "Tableau 20",
-            name = "Cell types",
-            direction = 1
-          )
-        } else if(.x == "Meninge") {
-          ggsci::scale_fill_npg(
-            name = "Cell types"
-          )
-        } else {
-          ggsci::scale_fill_npg(
-            name = "Cell types"
-          )
-        }
+        # .scale_fill <- if (.x == "Brain") {
+        #   ggthemes::scale_fill_tableau(
+        #     palette = "Tableau 20",
+        #     name = "Cell types",
+        #     direction = 1
+        #   )
+        # } else if(.x == "Meninge") {
+        #   ggsci::scale_fill_npg(
+        #     name = "Cell types"
+        #   )
+        # } else {
+        #   ggsci::scale_fill_npg(
+        #     name = "Cell types"
+        #   )
+        # }
+        recell_color_final |>
+          dplyr::select(cell1, cell1_color) |>
+          dplyr::distinct() |>
+          dplyr::filter(cell1 %in% .d$cluster) |>
+          dplyr::arrange(cell1) ->
+          .cell1_color
 
         .d |>
           ggplot(aes(
@@ -432,7 +617,12 @@ azimuth_ref_sunburst_sel |>
             labels = scales::percent_format(),
             expand = c(0, 0.01)
           ) +
-          .scale_fill +
+          scale_fill_manual(
+            name = "Cell types",
+            limits = .cell1_color$cell1,
+            values =.cell1_color$cell1_color
+          ) +
+          # .scale_fill +
           # ggthemes::scale_fill_tableau(
           #   palette = "Tableau 20",
           #   name = "Cell types",
@@ -459,6 +649,14 @@ azimuth_ref_sunburst_sel |>
             )
           ) ->
           .p
+
+        recell_color_final |>
+          dplyr::select(cell2, cell2_color) |>
+          dplyr::distinct() |>
+          dplyr::filter(cell2 %in% .dd$cluster) |>
+          dplyr::arrange(cell2) ->
+          .cell2_color
+
         .dd |>
           ggplot(aes(
             x = case,
@@ -478,8 +676,10 @@ azimuth_ref_sunburst_sel |>
             labels = scales::percent_format(),
             expand = c(0, 0.01)
           ) +
-          ggsci::scale_fill_npg(
-            name = "Cell types"
+          scale_fill_manual(
+            name = "Cell types",
+            limits = .cell2_color$cell2,
+            values =.cell2_color$cell2_color
           ) +
           theme(
             panel.background = element_blank(),
@@ -503,6 +703,13 @@ azimuth_ref_sunburst_sel |>
           ) ->
           .pp
 
+        recell_color_final |>
+          dplyr::select(cell3, cell3_color) |>
+          dplyr::distinct() |>
+          dplyr::arrange(cell3) |>
+          dplyr::filter(cell3 %in% .ddd$cluster) ->
+          .cell3_color
+
         .ddd |>
           ggplot(aes(
             x = case,
@@ -522,7 +729,11 @@ azimuth_ref_sunburst_sel |>
             labels = scales::percent_format(),
             expand = c(0, 0.01)
           ) +
-          .scale_fill +
+          scale_fill_manual(
+            name = "Cell types",
+            limits = .cell3_color$cell3,
+            values =.cell3_color$cell3_color
+          ) +
           # ggthemes::scale_fill_tableau(
           #   palette = "Tableau 20",
           #   name = "Cell types",
@@ -621,6 +832,12 @@ azimuth_ref_sunburst_sel_ratiop |>
   ) ->
   azimuth_ref_sunburst_sel_ratiop_forplot
 
+recell_color_final |>
+  dplyr::select(cell1, cell1_color) |>
+  dplyr::distinct() |>
+  dplyr::arrange(cell1) ->
+  cell1_color
+
 azimuth_ref_sunburst_sel_ratiop_forplot |>
   dplyr::group_by(region, case) |>
   tidyr::nest() |>
@@ -665,10 +882,14 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
     show.legend = FALSE,
   ) +
   # ggsci::scale_fill_simpsons() +
-  paletteer::scale_fill_paletteer_d(
-    palette = "ggsci::category20c_d3",
-    direction = 1,
-    name = "Cell types"
+  # paletteer::scale_fill_paletteer_d(
+  #   palette = "ggsci::category20c_d3",
+  #   direction = 1,
+  #   name = "Cell types"
+  # ) +
+  scale_fill_manual(
+    limits = cell1_color$cell1,
+    values = cell1_color$cell1_color
   ) +
   facet_grid(
     rows = dplyr::vars(region),
@@ -704,6 +925,114 @@ ggsave(
 )
 
 
+azimuth_ref_sunburst_sel_ratiop |>
+  dplyr::mutate(
+    a = purrr::map(
+      .x = ratiop,
+      .f = function(.x) {
+        .x$d_cell2
+      }
+    )
+  ) |>
+  dplyr::select(region, a) |>
+  tidyr::unnest(cols = a) |>
+  dplyr::mutate(
+    case = factor(x = case, levels = c("Sham", "MCAO", "UV"))
+  ) ->
+  azimuth_ref_sunburst_sel_ratiop_forplot
+
+recell_color_final |>
+  dplyr::select(cell2, cell2_color) |>
+  dplyr::distinct() |>
+  dplyr::arrange(cell2) ->
+  cell2_color
+
+
+azimuth_ref_sunburst_sel_ratiop_forplot |>
+  dplyr::group_by(region, case) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    data = purrr::map(
+      .x = data,
+      .f = function(.x) {
+        .x |>
+          dplyr::ungroup() %>%
+          dplyr::mutate(csum = rev(cumsum(rev(ratio)))) %>%
+          dplyr::mutate(pos = ratio/2 + dplyr::lead(csum, 1)) %>%
+          dplyr::mutate(pos = dplyr::if_else(is.na(pos), ratio/2, pos)) %>%
+          dplyr::mutate(percentage = ratio/sum(ratio))
+      }
+    )
+  ) |>
+  tidyr::unnest(cols = data) |>
+  ggplot(aes(
+    x = 1,
+    y = percentage
+  )) +
+  geom_col(
+    aes(
+      fill = cluster
+    ),
+    width = 1,
+    color = "white"
+  ) +
+  geom_col(aes(x = 0, y = 0)) +
+  coord_polar(
+    theta = "y",
+    start = 0
+  ) +
+  ggrepel::geom_text_repel(
+    aes(
+      y = pos,
+      label = glue::glue("{scales::percent(percentage, accuracy = 0.01)}"),
+    ),
+    size = 8,
+    nudge_x = 0.2,
+    show.legend = FALSE,
+  ) +
+  # ggsci::scale_fill_simpsons() +
+  # paletteer::scale_fill_paletteer_d(
+  #   palette = "ggsci::category20c_d3",
+  #   direction = 1,
+  #   name = "Cell types"
+  # ) +
+  scale_fill_manual(
+    limits = cell2_color$cell2,
+    values = cell2_color$cell2_color
+  ) +
+  facet_grid(
+    rows = dplyr::vars(region),
+    cols = dplyr::vars(case),
+    switch = "y"
+  ) +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(
+      color = "black",
+      size = 20,
+      face = "bold"
+    ),
+    panel.margin = unit(0, "lines"),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    panel.background = element_rect(
+      color = "black",
+      fill = NA
+    ),
+  ) ->
+  p;p
+
+
+ggsave(
+  filename = glue::glue("Pie_plot_cell2.pdf"),
+  plot = p,
+  device = "pdf",
+  path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12",
+  width = 15,
+  height = 15
+)
 
 # footer ------------------------------------------------------------------
 
