@@ -313,8 +313,8 @@ recells |>
       list(c(10, 9, 5)),
       list(c(10)),
       list(c(10)),
-      list(c(7)),
       list(c(6)),
+      list(c(5)),
       list(c(5)),
       list(c(1))
     )
@@ -406,6 +406,9 @@ recell_color |>
       cell1_color
     )
   ) |>
+  # dplyr::mutate(
+  #   cell2_color = as.color
+  # )
   dplyr::select(
     cell1, cell2, cell3, cell1_color, cell2_color, cell3_color
   ) ->
@@ -415,6 +418,21 @@ readr::write_rds(
   x = recell_color_final,
   file = "/home/liuc9/github/scbrain/data/azimuth/recell_color.rds"
 )
+
+recell_color_final |>
+  dplyr::select(cell3, cell3_color) |>
+  dplyr::mutate(cell3_color = prismatic::color(cell3_color)) |>
+  tibble::deframe() |>
+  prismatic::clr_saturate(shift = 0.8) |>
+  # prismatic::clr_desaturate(shift = 0.4) |> |>
+  prismatic::clr_lighten(shift = 0.3) |>
+  # prismatic::clr_grayscale(method = "blue_channel") |>
+  # prismatic::clr_negate() |>
+  # prismatic::clr_tritan() |>
+  plot()
+  prismatic::color()
+  alpha(0.8) |>
+  scales::show_col()
 
 # body --------------------------------------------------------------------
 
@@ -607,7 +625,8 @@ azimuth_ref_sunburst_sel |>
           geom_col(
             width = 1,
             color = 1,
-            size = 0.05
+            size = 0.05,
+            alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
@@ -620,7 +639,10 @@ azimuth_ref_sunburst_sel |>
           scale_fill_manual(
             name = "Cell types",
             limits = .cell1_color$cell1,
-            values =.cell1_color$cell1_color
+            values =alpha(
+              .cell1_color$cell1_color,
+              # 0.7
+            )
           ) +
           # .scale_fill +
           # ggthemes::scale_fill_tableau(
@@ -648,7 +670,7 @@ azimuth_ref_sunburst_sel |>
               face = "bold"
             )
           ) ->
-          .p
+          .p;.p
 
         recell_color_final |>
           dplyr::select(cell2, cell2_color) |>
