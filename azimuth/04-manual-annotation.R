@@ -297,6 +297,8 @@ recells |>
       .f = paletteer::paletteer_d
     )
   ) |>
+  # dplyr::select(cell2, color) |>
+  # tibble::deframe()
   dplyr::mutate(
     ns = c(
       list(c(10, 9, 5)),
@@ -304,7 +306,7 @@ recells |>
       list(c(3)),
       list(c(3)),
       list(c(3)),
-      list(c(10, 9, 7, 5, 4,3)),
+      list(c(7, 9, 7, 5, 4,3)),
       list(c(10, 7, 4, 2)),
       list(c(10, 7, 4)),
       list(c(10)),
@@ -406,33 +408,101 @@ recell_color |>
       cell1_color
     )
   ) |>
-  # dplyr::mutate(
-  #   cell2_color = as.color
-  # )
+  dplyr::mutate(
+    cell1_color = prismatic::clr_lighten(
+      prismatic::clr_saturate(
+        cell1_color,
+        shift = 0.7
+      ),
+      shift = 0.4
+    ),
+    cell2_color = prismatic::clr_lighten(
+      prismatic::clr_saturate(
+        cell2_color,
+        shift = 0.8
+      ),
+      shift = 0.3
+    ),
+    cell3_color = prismatic::clr_lighten(
+      prismatic::clr_saturate(
+        cell3_color,
+        shift = 0.8
+      ),
+      shift = 0.3
+    )
+  ) |>
   dplyr::select(
     cell1, cell2, cell3, cell1_color, cell2_color, cell3_color
   ) ->
   recell_color_final
 
+recell_color_final |>
+  ggplot(aes(
+    x = cell1,
+    y = 1,
+    fill = as.character(cell1_color)
+  )) +
+  geom_tile() +
+  scale_fill_identity() +
+  theme_bw() +
+  theme(
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  ) ->
+  pc1
+
+recell_color_final |>
+  ggplot(aes(
+    x = cell2,
+    y = 1,
+    fill = as.character(cell2_color)
+  )) +
+  geom_tile() +
+  scale_fill_identity() +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(hjust = 1, vjust = 0.5, angle = 90),
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  ) ->
+  pc2
+
+recell_color_final |>
+  ggplot(aes(
+    x = cell3,
+    y = 1,
+    fill = as.character(cell3_color)
+  )) +
+  geom_tile() +
+  scale_fill_identity() +
+  # theme_bw() +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(hjust = 1, vjust = 0.5, angle = 90),
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  ) ->
+  pc3
+
+pc1 / pc2 / pc3 ->
+  pc123
+
+ggsave(
+  filename = "colors.pdf",
+  plot = pc123,
+  device = "pdf",
+  width = 10,
+  height = 8,
+  path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12"
+)
+
 readr::write_rds(
   x = recell_color_final,
   file = "/home/liuc9/github/scbrain/data/azimuth/recell_color.rds"
 )
-
-recell_color_final |>
-  dplyr::select(cell3, cell3_color) |>
-  dplyr::mutate(cell3_color = prismatic::color(cell3_color)) |>
-  tibble::deframe() |>
-  prismatic::clr_saturate(shift = 0.8) |>
-  # prismatic::clr_desaturate(shift = 0.4) |> |>
-  prismatic::clr_lighten(shift = 0.3) |>
-  # prismatic::clr_grayscale(method = "blue_channel") |>
-  # prismatic::clr_negate() |>
-  # prismatic::clr_tritan() |>
-  plot()
-  prismatic::color()
-  alpha(0.8) |>
-  scales::show_col()
 
 # body --------------------------------------------------------------------
 
@@ -451,7 +521,11 @@ azimuth_ref |>
 
         .anno@meta.data |>
           dplyr::left_join(
-            celltypes_recell,
+            celltypes_recell |>
+              dplyr::left_join(
+                recell_color_final,
+                by = c("cell3", "cell2", "cell1")
+              ),
             by = "celltype.l2"
           ) ->
           .d
@@ -481,6 +555,9 @@ azimuth_ref |>
         .new_anno@meta.data$cell1 <- .d$cell1
         .new_anno@meta.data$cell2 <- .d$cell2
         .new_anno@meta.data$cell3 <- .d$cell3
+        .new_anno@meta.data$cell1_color <- .d$cell1_color
+        .new_anno@meta.data$cell2_color <- .d$cell2_color
+        .new_anno@meta.data$cell3_color <- .d$cell3_color
 
         tibble::tibble(
           sunburst = list(.p),
@@ -626,7 +703,7 @@ azimuth_ref_sunburst_sel |>
             width = 1,
             color = 1,
             size = 0.05,
-            alpha = 0.8
+            # alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
@@ -723,7 +800,7 @@ azimuth_ref_sunburst_sel |>
               face = "bold"
             )
           ) ->
-          .pp
+          .pp;.pp
 
         recell_color_final |>
           dplyr::select(cell3, cell3_color) |>
@@ -781,7 +858,7 @@ azimuth_ref_sunburst_sel |>
               face = "bold"
             )
           ) ->
-          .ppp
+          .ppp;.ppp
 
 
         list(
