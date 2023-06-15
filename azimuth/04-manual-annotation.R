@@ -151,17 +151,17 @@ recell2 <- c(
   "Plasma" = "B cells",
   "pro B" = "B cells",
 
-  "CD4 Naive" = "CD4 T cells",
-  "CD4 Memory" = "CD4 T cells",
-  "CD8 Memory" = "CD8 T cells",
-  "CD8 Effector_1" = "CD8 T cells",
-  "CD8 Effector_3" = "CD8 T cells",
-  "CD8 Effector_2" = "CD8 T cells",
-  "T Proliferating" = "CD8 T cells",
+  "CD4 Naive" = "T cells",
+  "CD4 Memory" = "T cells",
+  "CD8 Memory" = "T cells",
+  "CD8 Effector_1" = "T cells",
+  "CD8 Effector_3" = "T cells",
+  "CD8 Effector_2" = "T cells",
+  "T Proliferating" = "T cells",
 
   "NK" = "NK cells",
   "NK cells" =  "NK cells",
-  "T/NKT cells" = "CD8 T cells",
+  "T/NKT cells" = "T cells",
 
   "Stromal" = "other",
   "LMPP" = "HSPC",
@@ -208,8 +208,7 @@ recell1 <- c(
   "OLG" = "OLG",
   "OPC" = "OPC",
   "Platelet" = "Erythroid",
-  "CD8 T cells" = "Lymphoctyes",
-  "CD4 T cells" = "Lymphoctyes",
+  "T cells" = "Lymphoctyes",
   "NK cells" = "Lymphoctyes",
   "VLMC" = "VLMC",
   "other" = "other"
@@ -278,7 +277,7 @@ recells |>
       "ggsci::deep_orange_material",
       "ggsci::yellow_material",
       "ggsci::red_material",
-      "ggsci::pink_material",
+      # "ggsci::pink_material",
       "ggsci::purple_material",
       "ggsci::light_blue_material",
       "ggsci::blue_material",
@@ -306,9 +305,9 @@ recells |>
       list(c(3)),
       list(c(3)),
       list(c(3)),
-      list(c(7, 9, 7, 5, 4,3)),
-      list(c(10, 7, 4, 2)),
-      list(c(10, 7, 4)),
+      list(c(7, 9, 7, 5, 4, 3)),
+      list(c(10, 9, 7, 5, 4, 2)),
+      # list(c(10, 7, 4)),
       list(c(10)),
       list(c(10)),
       list(c(10, 7, 5)),
@@ -488,7 +487,7 @@ recell_color_final |>
   pc3
 
 pc1 / pc2 / pc3 ->
-  pc123
+  pc123;pc123
 
 ggsave(
   filename = "colors.pdf",
@@ -505,6 +504,9 @@ readr::write_rds(
 )
 
 # body --------------------------------------------------------------------
+
+
+# Sunburst ----------------------------------------------------------------
 
 
 azimuth_ref |>
@@ -573,10 +575,7 @@ azimuth_ref |>
   tidyr::unnest(cols = sunburst) ->
   azimuth_ref_sunburst
 
-readr::write_rds(
-  x = azimuth_ref_sunburst,
-  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst.rds"
-)
+
 
 azimuth_ref_sunburst |>
   dplyr::mutate(
@@ -619,23 +618,97 @@ azimuth_ref_sunburst |>
     )
   )
 
+# Cell level --------------------------------------------------------------
+
 
 azimuth_ref_sunburst |>
   dplyr::select(region, case, cellratio) |>
   dplyr::group_by(region) |>
   tidyr::nest() |>
-  dplyr::ungroup() ->
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    cell_factor = purrr::map2(
+      .x = data,
+      .y = region,
+      .f = function(.x, .y) {
+        # .x <- ddd$data[[3]]
+        # .y <- ddd$region[[3]]
+
+        .x$cellratio |>
+          dplyr::bind_rows() |>
+          dplyr::select(cell1, cell2, cell3) |>
+          dplyr::mutate_all(
+            .funs = function(.s) {
+              gsub(
+                pattern = " [[0-9]]*.*%$",
+                replacement = "",
+                x = .s
+              )
+            }
+          ) |>
+          dplyr::distinct() ->
+          .xx
+
+        # .xx$cell1 |> unique()
+        # .xx$cell2 |> unique()
+        # .xx$cell3 |> unique()
+        # .y
+        if(.y == "Meninge") {
+          list(
+            cell1 = c("Lymphoctyes", "Myeloid cells"),
+            cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils"),
+            cell3 = c("CD8 T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "Neutrophils")
+          )
+        } else if(.y == "Skull") {
+          list(
+            cell1 = c("Lymphoctyes", "Myeloid cells", "HSPC", "Erythroid", "other"),
+            cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "HSPC", "Erythroid", "Platelet", "other"),
+            cell3 = c("CD4 memory T cells", "CD4 naive T cells", "CD8 T cells", "CD8 effector T cells", "CD8 memory T cells", "Mature B cells", "Memory B cells", "Naive B cells", "Pre-B cells", "Pro-B cells","NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "HSPC", "Erythroid", "Platelet", "other")
+          )
+        } else if(.y == "Brain") {
+          list(
+            cell1 = c("Lymphoctyes", "Myeloid cells", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial"),
+            cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial"),
+            cell3 = c("CD8 T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial" )
+          )
+        }
+
+      }
+    )
+  ) ->
   azimuth_ref_sunburst_sel
+
+azimuth_ref_sunburst |>
+  dplyr::left_join(
+    azimuth_ref_sunburst_sel |>
+      tidyr::unnest(cols = data) |>
+      dplyr::select(-cellratio),
+    by = c("region", "case")
+  ) ->
+  azimuth_ref_sunburst_cell
+
+readr::write_rds(
+  x = azimuth_ref_sunburst_cell,
+  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
+)
+
+
+# Col plot ----------------------------------------------------------------
+
 
 
 azimuth_ref_sunburst_sel |>
   dplyr::mutate(
-    ratiop = purrr::map2(
-      .x = region,
-      .y = data,
-      .f = function(.x, .y) {
-        # .x <- azimuth_ref_sunburst_sel$region[[3]]
-        # .y <- azimuth_ref_sunburst_sel$data[[3]]
+    ratiop = purrr::pmap(
+      .l = list(
+        .x = region,
+        .y = data,
+        .cell_factor = cell_factor
+      ),
+      .f = function(.x, .y, .cell_factor) {
+        # .x <- azimuth_ref_sunburst_sel$region[[1]]
+        # .y <- azimuth_ref_sunburst_sel$data[[1]]
+        # .cell_factor <- azimuth_ref_sunburst_sel$cell_factor[[1]]
 
 
         .y |>
@@ -646,7 +719,10 @@ azimuth_ref_sunburst_sel |>
             pattern = " [[0-9]]*.*%$",
             replacement = "",
             x = cluster
-          )) ->
+          )) |>
+          dplyr::mutate(
+            cluster = factor(x = cluster, levels = .cell_factor$cell1)
+          ) ->
           .d
 
         .y |>
@@ -657,7 +733,10 @@ azimuth_ref_sunburst_sel |>
             pattern = " [[0-9]]*.*%$",
             replacement = "",
             x = cluster
-          )) ->
+          )) |>
+          dplyr::mutate(
+            cluster = factor(x = cluster, levels = .cell_factor$cell2)
+          ) ->
           .dd
 
         .y |>
@@ -668,7 +747,10 @@ azimuth_ref_sunburst_sel |>
             pattern = " [[0-9]]*.*%$",
             replacement = "",
             x = cluster
-          )) ->
+          )) |>
+          dplyr::mutate(
+            cluster = factor(x = cluster, levels = .cell_factor$cell3)
+          ) ->
           .ddd
 
         # .scale_fill <- if (.x == "Brain") {
@@ -690,6 +772,12 @@ azimuth_ref_sunburst_sel |>
           dplyr::select(cell1, cell1_color) |>
           dplyr::distinct() |>
           dplyr::filter(cell1 %in% .d$cluster) |>
+          dplyr::mutate(
+            cell1 = factor(
+              x = cell1,
+              levels = .cell_factor$cell1
+            )
+          ) |>
           dplyr::arrange(cell1) ->
           .cell1_color
 
@@ -753,6 +841,12 @@ azimuth_ref_sunburst_sel |>
           dplyr::select(cell2, cell2_color) |>
           dplyr::distinct() |>
           dplyr::filter(cell2 %in% .dd$cluster) |>
+          dplyr::mutate(
+            cell2 = factor(
+              x = cell2,
+              levels = .cell_factor$cell2
+            )
+          ) |>
           dplyr::arrange(cell2) ->
           .cell2_color
 
@@ -805,8 +899,14 @@ azimuth_ref_sunburst_sel |>
         recell_color_final |>
           dplyr::select(cell3, cell3_color) |>
           dplyr::distinct() |>
-          dplyr::arrange(cell3) |>
-          dplyr::filter(cell3 %in% .ddd$cluster) ->
+          dplyr::filter(cell3 %in% .ddd$cluster) |>
+          dplyr::mutate(
+            cell3 = factor(
+              x = cell3,
+              levels = .cell_factor$cell3
+            )
+          ) |>
+          dplyr::arrange(cell3) ->
           .cell3_color
 
         .ddd |>
@@ -929,15 +1029,21 @@ azimuth_ref_sunburst_sel_ratiop |>
   dplyr::mutate(
     case = factor(x = case, levels = c("Sham", "MCAO", "UV"))
   ) ->
-  azimuth_ref_sunburst_sel_ratiop_forplot
+  azimuth_ref_sunburst_sel_ratiop_cell1_forplot
 
 recell_color_final |>
   dplyr::select(cell1, cell1_color) |>
   dplyr::distinct() |>
+  dplyr::mutate(
+    cell1 = factor(
+      x = cell1,
+      levels = levels(azimuth_ref_sunburst_sel_ratiop_cell1_forplot$cluster)
+    )
+  ) |>
   dplyr::arrange(cell1) ->
   cell1_color
 
-azimuth_ref_sunburst_sel_ratiop_forplot |>
+azimuth_ref_sunburst_sel_ratiop_cell1_forplot |>
   dplyr::group_by(region, case) |>
   tidyr::nest() |>
   dplyr::ungroup() |>
@@ -947,6 +1053,7 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
       .f = function(.x) {
         .x |>
           dplyr::ungroup() %>%
+          dplyr::arrange(cluster) |>
           dplyr::mutate(csum = rev(cumsum(rev(ratio)))) %>%
           dplyr::mutate(pos = ratio/2 + dplyr::lead(csum, 1)) %>%
           dplyr::mutate(pos = dplyr::if_else(is.na(pos), ratio/2, pos)) %>%
@@ -987,6 +1094,7 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
   #   name = "Cell types"
   # ) +
   scale_fill_manual(
+    name = "Cell types",
     limits = cell1_color$cell1,
     values = cell1_color$cell1_color
   ) +
@@ -1008,21 +1116,21 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
     axis.text = element_blank(),
     panel.background = element_rect(
       color = "black",
-      fill = NA
+      fill = NA,
+      linewidth = 0.5
     ),
   ) ->
-  p;p
+  p1;p1
 
 
 ggsave(
   filename = glue::glue("Pie_plot_cell1.pdf"),
-  plot = p,
+  plot = p1,
   device = "pdf",
   path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12",
   width = 15,
   height = 15
 )
-
 
 azimuth_ref_sunburst_sel_ratiop |>
   dplyr::mutate(
@@ -1038,16 +1146,22 @@ azimuth_ref_sunburst_sel_ratiop |>
   dplyr::mutate(
     case = factor(x = case, levels = c("Sham", "MCAO", "UV"))
   ) ->
-  azimuth_ref_sunburst_sel_ratiop_forplot
+  azimuth_ref_sunburst_sel_ratiop_cell2_forplot
 
 recell_color_final |>
   dplyr::select(cell2, cell2_color) |>
   dplyr::distinct() |>
+  dplyr::mutate(
+    cell2 = factor(
+      x = cell2,
+      levels = levels(azimuth_ref_sunburst_sel_ratiop_cell2_forplot$cluster)
+    )
+  ) |>
   dplyr::arrange(cell2) ->
   cell2_color
 
 
-azimuth_ref_sunburst_sel_ratiop_forplot |>
+azimuth_ref_sunburst_sel_ratiop_cell2_forplot |>
   dplyr::group_by(region, case) |>
   tidyr::nest() |>
   dplyr::ungroup() |>
@@ -1057,6 +1171,7 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
       .f = function(.x) {
         .x |>
           dplyr::ungroup() %>%
+          dplyr::arrange(cluster) |>
           dplyr::mutate(csum = rev(cumsum(rev(ratio)))) %>%
           dplyr::mutate(pos = ratio/2 + dplyr::lead(csum, 1)) %>%
           dplyr::mutate(pos = dplyr::if_else(is.na(pos), ratio/2, pos)) %>%
@@ -1086,7 +1201,7 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
       y = pos,
       label = glue::glue("{scales::percent(percentage, accuracy = 0.01)}"),
     ),
-    size = 8,
+    size = 6,
     nudge_x = 0.2,
     show.legend = FALSE,
   ) +
@@ -1097,6 +1212,7 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
   #   name = "Cell types"
   # ) +
   scale_fill_manual(
+    name = "Cell types",
     limits = cell2_color$cell2,
     values = cell2_color$cell2_color
   ) +
@@ -1121,16 +1237,16 @@ azimuth_ref_sunburst_sel_ratiop_forplot |>
       fill = NA
     ),
   ) ->
-  p;p
+  p2;p2
 
 
 ggsave(
   filename = glue::glue("Pie_plot_cell2.pdf"),
-  plot = p,
+  plot = p2,
   device = "pdf",
   path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12",
-  width = 15,
-  height = 15
+  width = 20,
+  height = 20
 )
 
 # footer ------------------------------------------------------------------
