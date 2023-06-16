@@ -788,14 +788,15 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 1,
+            width = 0.95,
             color = 1,
-            size = 0.05,
+            linewidth = 0.02,
             # alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
-            expand = c(0, 0)
+            labels = c("Sham", "tMCAO", "tMCAO+UVB"),
+            expand = expansion(mult= c(0.25, 0.25), add = 0)
           ) +
           scale_y_continuous(
             labels = scales::percent_format(),
@@ -857,13 +858,15 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 1,
+            width = 0.95,
             color = 1,
-            size = 0.05
+            linewidth = 0.02,
+            # alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
-            expand = c(0, 0)
+            labels = c("Sham", "tMCAO", "tMCAO+UVB"),
+            expand = expansion(mult= c(0.25, 0.25), add = 0)
           ) +
           scale_y_continuous(
             labels = scales::percent_format(),
@@ -916,13 +919,15 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 1,
+            width = 0.95,
             color = 1,
-            size = 0.05
+            linewidth = 0.02,
+            # alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
-            expand = c(0, 0)
+            labels = c("Sham", "tMCAO", "tMCAO+UVB"),
+            expand = expansion(mult= c(0.25, 0.25), add = 0)
           ) +
           scale_y_continuous(
             labels = scales::percent_format(),
@@ -1255,3 +1260,4 @@ ggsave(
 
 # save image --------------------------------------------------------------
 save.image(file = "data/azimuth/04-manual-annotation.rda")
+load(file = "data/azimuth/04-manual-annotation.rda")
