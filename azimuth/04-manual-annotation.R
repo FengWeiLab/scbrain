@@ -788,7 +788,7 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 0.95,
+            width = 0.98,
             color = 1,
             linewidth = 0.02,
             # alpha = 0.8
@@ -858,7 +858,7 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 0.95,
+            width = 0.98,
             color = 1,
             linewidth = 0.02,
             # alpha = 0.8
@@ -919,7 +919,7 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 0.95,
+            width = 0.98,
             color = 1,
             linewidth = 0.02,
             # alpha = 0.8
