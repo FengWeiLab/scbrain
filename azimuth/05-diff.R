@@ -32,12 +32,20 @@ project_sc_azimuth_ref_realcell_sunburst <- readr::read_rds(
   file = "/home/liuc9/github/scbrain/data/azimuth/project_sc_azimuth_ref_realcell_sunburst.rds"
 )
 
+recell_color_final <- readr::read_rds(
+  file = "/home/liuc9/github/scbrain/data/azimuth/recell_color.rds"
+)
+azimuth_ref_sunburst_cell <-  readr::read_rds(
+  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
+)
+
+
+# body --------------------------------------------------------------------
 synap_SIG <- readr::read_rds(
   file = "/home/liuc9/github/scbrain/data/azimuth/synap_SIG.rds"
 ) |>
   dplyr::mutate(geneID = stringr::str_to_upper(geneID))
 
-# body --------------------------------------------------------------------
 
 a3 <- project_sc_azimuth_ref_realcell_sunburst$anno_new[[2]]
 a6 <- project_sc_azimuth_ref_realcell_sunburst$anno_new[[5]]
