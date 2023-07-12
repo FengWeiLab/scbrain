@@ -57,8 +57,8 @@ azimuth_ref_sunburst_cell |>
       .x = region,
       .y = data,
       .f = function(.x, .y) {
-        .x <- .d$region[[1]]
-        .y <- .d$data[[1]]
+        # .x <- .d$region[[1]]
+        # .y <- .d$data[[1]]
 
         purrr::map(
           .y$anno_new_new,
