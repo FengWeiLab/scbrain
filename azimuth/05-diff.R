@@ -247,7 +247,7 @@ fn_plot_umap_tsne_new <- function(.x, .y) {
     labels = .xxx_label$celltype,
     guide = guide_legend(
       ncol = 1,
-      override.aes = list(size=4)
+      override.aes = list(size=2)
     )
   ) +
     theme(
@@ -293,14 +293,15 @@ fn_plot_umap_tsne_new <- function(.x, .y) {
       ),
       size = 0.7
     ) +
-    ggsci::scale_color_aaas(
+    scale_color_manual(
       name = "",
       limits = c("Sham", "MCAO", "UV"),
       labels = c("Sham", "tMCAO", "tMCAO+UVB"),
       guide = guide_legend(
         ncol = 1,
-        override.aes = list(size=4)
-      )
+        override.aes = list(size=2)
+      ),
+      values = c("#1B1919FF", "#0099B4FF", "#FDAF91FF")
     ) +
     theme(
       panel.background = element_blank(),
@@ -362,14 +363,14 @@ azimuth_ref_sunburst_cell_merge_norm_p |>
         ggsave(
           filename = "{.r}-case-cluster-tsne.pdf" |> glue::glue(),
           plot = .p2,
-          width = 8,
+          width = 10,
           height = 8,
           path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot"
         )
         ggsave(
           filename = "{.r}-celltype-cluster-tsne.pdf" |> glue::glue(),
           plot = .p1,
-          width = 8,
+          width = 10,
           height = 8,
           path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot"
         )
