@@ -411,16 +411,58 @@ azimuth_ref_sunburst_cell_merge_norm_p |>
 
 # Marker genes ------------------------------------------------------------
 
-azimuth_ref_sunburst_cell_merge_norm_p$norm[[1]] -> a
+
+fn_find_all_markers <- function(.norm) {
+
+  Idents(.norm) <- "cell3_cluster"
+  future::plan(future::multisession, workers = 10)
+  .allmarkers <- Seurat::FindAllMarkers(
+    object = .norm,
+    assay = "RNA",
+    only.pos = TRUE,
+    min.pct = 0.25,
+    logfc.threshold = 0.25
+  )
+  future::plan(future::sequential)
+  .allmarkers
+
+}
+
+azimuth_ref_sunburst_cell_merge_norm |>
+  dplyr::mutate(
+    allmarkers = purrr::map(
+      .x = norm,
+      .f = fn_find_all_markers
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_allmarkers
+
+
+
+
+azimuth_ref_sunburst_cell_merge_norm$norm[[1]] -> a
+
+
 
 
 a@meta.data |>
   dplyr::glimpse()
 
+Idents(a)
+levels(a)
+Idents(a) <- "cell3_cluster"
+Idents(a)
+levels(a)
+
 Seurat::FindMarkers(
   a, ident.1 = 2,
   min.pct = 0.2
-)
+) ->
+  cluster2.markers
+
+cluster2.markers |> head()
+
+
 
 # tmp ---------------------------------------------------------------------
 
