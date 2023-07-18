@@ -853,9 +853,121 @@ ggsave(
 
 # marker gene -------------------------------------------------------------
 
-azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot
+fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[1]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[1]]
+
+  .allmarkers %>%
+    dplyr::group_by(cluster) %>%
+    dplyr::slice_max(n = .n, order_by = avg_log2FC) |>
+    dplyr::left_join(
+      .norm@meta.data |>
+        dplyr::select(cell3, cell3_color, cell3_cluster) |>
+        dplyr::distinct() |>
+        dplyr::mutate(
+          cluster = cell3_cluster
+        ),
+      by = "cluster"
+    ) ->
+    .marker_head
+
+  .marker_head |>
+    dplyr::mutate(
+      fp = purrr::pmap(
+        .l = list(
+          .cluster = cluster,
+          .gene = gene,
+          .cell3 = cell3,
+          .cell3_color = cell3_color
+        ),
+        .f = function(.cluster, .gene, .cell3, .cell3_color) {
+          .title = glue::glue("{.gene}\n({.cell3})")
+          FeaturePlot(
+            object = .norm,
+            features = .gene,
+            cols = c("gold", "#F02415"),
+            # cols = c("gold", .cell3_color),
+            order = TRUE,
+            reduction = "tsne",
+            max.cutoff = 3
+          ) +
+            labs(title = .title) +
+            theme(
+              axis.line = element_blank(),
+              axis.ticks = element_blank(),
+              axis.text = element_blank(),
+              axis.title = element_blank()
+            ) +
+            plot_layout(guides = 'collect')
+        }
+      )
+    ) ->
+    m
+
+  m
 
 
+
+}
+
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
+  dplyr::mutate(
+    featuredot = purrr::map2(
+      .x = norm,
+      .y = allmarkers,
+      .f = fn_plot_dot_feature
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene
+
+
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
+      .y = featuredot,
+      .f = function(.x, .y) {
+        # .x <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene$region[[1]]
+        # .y <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene$featuredot[[1]]
+
+        dir.create(
+          path = file.path(
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
+            .x
+          ),
+          recursive = T,
+          showWarnings = F
+        )
+
+
+        .y |>
+          dplyr::mutate(
+            b = purrr::pmap(
+              .l = list(
+                .cluster = cluster,
+                .gene = gene,
+                .cell3 = cell3,
+                .fp = fp
+              ),
+              .f = function(.cluster, .gene, .cell3, .fp) {
+                .filename <- glue::glue("{.x}_{.cluster}_{.cell3}_{.gene}.pdf")
+                ggsave(
+                  filename = .filename,
+                  plot = .fp,
+                  device = "pdf",
+                  path = file.path(
+                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
+                    .x
+                  ),
+                  width = 4,
+                  height = 4
+                )
+              }
+            )
+          )
+      }
+    )
+  )
 
 # footer ------------------------------------------------------------------
 
