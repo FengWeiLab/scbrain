@@ -432,6 +432,20 @@ recell_color |>
   ) |>
   dplyr::select(
     cell1, cell2, cell3, cell1_color, cell2_color, cell3_color
+  ) |>
+  dplyr::mutate(
+    cell1 = ifelse(
+      cell2 == "Platelet",
+      "Platelet",
+      cell1
+    )
+  ) |>
+  dplyr::mutate(
+    cell1_color = ifelse(
+      cell2 == "Platelet",
+      "#A0DDFFFF",
+      cell1_color
+    )
   ) ->
   recell_color_final
 
@@ -524,6 +538,13 @@ azimuth_ref |>
         .anno@meta.data |>
           dplyr::left_join(
             celltypes_recell |>
+              dplyr::mutate(
+                cell1 = ifelse(
+                  cell2 == "Platelet",
+                  "Platelet",
+                  cell1
+                )
+              ) |>
               dplyr::left_join(
                 recell_color_final,
                 by = c("cell3", "cell2", "cell1")
@@ -661,7 +682,7 @@ azimuth_ref_sunburst |>
           )
         } else if(.y == "Skull") {
           list(
-            cell1 = c("Lymphoctyes", "Myeloid cells", "HSPC", "Erythroid", "other"),
+            cell1 = c("Lymphoctyes", "Myeloid cells", "HSPC", "Erythroid", "Platelet", "other"),
             cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "HSPC", "Erythroid", "Platelet", "other"),
             cell3 = c("CD4 memory T cells", "CD4 naive T cells", "CD8 T cells", "CD8 effector T cells", "CD8 memory T cells", "Mature B cells", "Memory B cells", "Naive B cells", "Pre-B cells", "Pro-B cells","NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "HSPC", "Erythroid", "Platelet", "other")
           )
@@ -1075,7 +1096,7 @@ azimuth_ref_sunburst_sel_ratiop_cell1_forplot |>
     aes(
       fill = cluster
     ),
-    width = 1,
+    width = 1.5,
     color = "white"
   ) +
   geom_col(aes(x = 0, y = 0)) +
@@ -1193,7 +1214,7 @@ azimuth_ref_sunburst_sel_ratiop_cell2_forplot |>
     aes(
       fill = cluster
     ),
-    width = 1,
+    width = 1.5,
     color = "white"
   ) +
   geom_col(aes(x = 0, y = 0)) +
