@@ -466,6 +466,21 @@ fn_heatmap <- function(.norm,.region, .allmarkers, .topn=5){
 }
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers |>
+  # dplyr::mutate(
+  #   allmarkers = purrr::map(
+  #     .x = allmarkers,
+  #     .f = function(.x) {
+  #
+  #       .x |>
+  #         dplyr::filter(gene != "Pisd") ->
+  #         .xx
+  #
+  #       .xx$gene <- rownames(.xx) |> stringr::str_to_sentence()
+  #       rownames(.xx) <- .xx$gene
+  #       .xx
+  #     }
+  #   )
+  # ) |>
   dplyr::mutate(
     heatmap10 = purrr::pmap(
       .l = list(
@@ -752,7 +767,7 @@ scale = TRUE, scale.by = "radius", scale.min = NA, scale.max = NA) {
       name = "Average Expression"
     ) +
     scale_x_discrete(
-      position = "top"
+      position = "top",
     ) +
     theme(
       axis.title.x = element_blank(),
@@ -791,8 +806,8 @@ scale = TRUE, scale.by = "radius", scale.min = NA, scale.max = NA) {
 
 
 fn_gene_dotplot <- function(.norm, .allmarkers, .n = 2) {
-  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[1]]
-  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[1]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[2]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[2]]
 
   .allmarkers %>%
     dplyr::group_by(cluster) %>%
@@ -843,7 +858,6 @@ ggsave(
 
 ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[3]]}-markergenes-dot.pdf"),
-  plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[3]],
   device = "pdf",
   path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
   width = 9,
@@ -881,7 +895,7 @@ fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
           .cell3_color = cell3_color
         ),
         .f = function(.cluster, .gene, .cell3, .cell3_color) {
-          .title = glue::glue("{.gene}\n({.cell3})")
+          .title = glue::glue("{stringr::str_to_title(.gene)}\n({.cell3})")
           FeaturePlot(
             object = .norm,
             features = .gene,
@@ -905,9 +919,6 @@ fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
     m
 
   m
-
-
-
 }
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
@@ -919,6 +930,10 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
     )
   ) ->
   azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene
+
+
+# Save marker gene --------------------------------------------------------
+
 
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |>
@@ -949,25 +964,57 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
                 .cell3 = cell3,
                 .fp = fp
               ),
-              .f = function(.cluster, .gene, .cell3, .fp) {
-                .filename <- glue::glue("{.x}_{.cluster}_{.cell3}_{.gene}.pdf")
-                ggsave(
-                  filename = .filename,
-                  plot = .fp,
-                  device = "pdf",
-                  path = file.path(
-                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
-                    .x
-                  ),
-                  width = 4,
-                  height = 4
-                )
-              }
+                .f = function(.cluster, .gene, .cell3, .fp) {
+                  .filename <- glue::glue("{.x}_{.cluster}_{.cell3}_{stringr::str_to_sentence(.gene)}.pdf")
+                  ggsave(
+                    filename = .filename,
+                    plot = .fp,
+                    device = "pdf",
+                    path = file.path(
+                      "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
+                      .x
+                    ),
+                    width = 5,
+                    height = 5
+                  )
+                }
+              )
             )
-          )
-      }
+            }
     )
   )
+
+
+# write xlsx --------------------------------------------------------------
+
+
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
+      .y = allmarkers,
+      .f = function(.x, .y) {
+        dir.create(
+          path = file.path(
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
+            .x
+          ),
+          recursive = T,
+          showWarnings = F
+        )
+
+        writexl::write_xlsx(
+          .y |>
+            dplyr::mutate(gene = stringr::str_to_title(gene)),
+          path = file.path(
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
+            .x,
+            "{.x}-all-marker-genes.xlsx" |> glue::glue()
+          )
+        )
+      }
+    )
+ )
 
 # footer ------------------------------------------------------------------
 
