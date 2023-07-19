@@ -31,8 +31,9 @@ future::plan(future::multisession, workers = 10)
 # load data ---------------------------------------------------------------
 azimuth_ref_sunburst_cell_merge_norm <-
   readr::read_rds(
-    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene.rds.gz"
+    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene_integration.rds.gz"
   )
+
 
 # body --------------------------------------------------------------------
 
