@@ -1016,6 +1016,11 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
     )
  )
 
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |>
+  readr::write_rds(
+    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene.rds.gz"
+  )
+
 # footer ------------------------------------------------------------------
 
 future::plan(future::sequential)
