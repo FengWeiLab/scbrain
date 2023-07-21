@@ -820,6 +820,7 @@ ggsave(
 
 ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[3]]}-markergenes-dot.pdf"),
+  plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[3]],
   device = "pdf",
   path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-2",
   width = 9,
@@ -830,8 +831,8 @@ ggsave(
 # marker gene -------------------------------------------------------------
 
 fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
-  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[1]]
-  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[1]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[2]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[2]]
 
   .allmarkers %>%
     dplyr::group_by(cluster) %>%
@@ -881,7 +882,8 @@ fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
     ) ->
     m
 
-  m
+  m |>
+    dplyr::ungroup()
 }
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
@@ -985,3 +987,4 @@ future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
 save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
