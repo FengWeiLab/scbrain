@@ -58,10 +58,39 @@ fn_case_de <- function(.x) {
             .x,
             cell3 == .c
           )
-          .cc_avg <- AverageExpression(.cc, verbose = FALSE)$RNA |> as.data.frame()
-          .mcao_vs_sham <- FindMarkers(.cc, ident.1 = "MCAO", ident.2 = "Sham")
-          .uv_vs_sham <-  FindMarkers(.cc, ident.1 = "UV", ident.2 = "Sham")
-          .uv_vs_mcao <- FindMarkers(.cc, ident.1 = "UV", ident.2 = "MCAO")
+          .cc_avg <-
+            tryCatch(
+              expr = {
+                  AverageExpression(.cc, verbose = FALSE)$RNA |> as.data.frame()
+                },
+              error = function(e) {
+                NULL
+              }
+            )
+          .mcao_vs_sham <- tryCatch(
+            expr = {
+              FindMarkers(.cc, ident.1 = "MCAO", ident.2 = "Sham")
+            },
+            error = function(e) {
+              NULL
+            }
+          )
+          .uv_vs_sham <-  tryCatch(
+            expr = {
+              FindMarkers(.cc, ident.1 = "UV", ident.2 = "Sham")
+            },
+            error = function(e) {
+              NULL
+            }
+          )
+          .uv_vs_mcao <- tryCatch(
+            expr = {
+              FindMarkers(.cc, ident.1 = "UV", ident.2 = "MCAO")
+            },
+            error = function(e) {
+              NULL
+            }
+          )
           tibble::tibble(
             mcao_vs_sham = list(.mcao_vs_sham),
             uv_vs_sham = list(.uv_vs_sham),
@@ -102,51 +131,271 @@ azimuth_ref_sunburst_cell_merge_norm |>
   ) ->
   azimuth_ref_sunburst_cell_merge_norm_de
 
-azimuth_ref_sunburst_cell_merge_norm_de |>
-  readr::write_rds(
-    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de.rds.gz"
-  )
+# azimuth_ref_sunburst_cell_merge_norm_de |>
+#   readr::write_rds(
+#     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de.rds.gz"
+#   )
 
-# tmp ---------------------------------------------------------------------
+# New load ----------------------------------------------------------------
 
-DefaultAssay(a)
-
-a <- azimuth_ref_sunburst_cell_merge_norm$norm[[3]]
-
-a@meta.data |> dplyr::glimpse()
-
-Idents(a) <- "case"
-Idents(a)
-future::plan(future::multisession, workers = 10)
-m <- FindMarkers(a, ident.1 = "MCAO", ident.2 = "Sham")
-future::plan(future::sequential)
-
-m |>
-  dplyr::arrange(
-    p_val_adj,
-    -avg_log2FC
-  ) |> head()
-
-FeaturePlot(
-  a,
-  features = c("Lyz"),
-  split.by = "case"
+azimuth_ref_sunburst_cell_merge_norm_de <- readr::read_rds(
+  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de.rds.gz"
 )
 
 
+# Prop changes ------------------------------------------------------------
+
+fn_plot_prop_bulb <- function(.norm) {
+  .norm@meta.data |>
+    dplyr::select(case, cell3, cell3_color) |>
+    dplyr::filter(cell3 != "Platelet") |>
+    dplyr::count(case, cell3, cell3_color) |>
+    dplyr::group_by(case) |>
+    dplyr::mutate(prop = n / sum(n)) |>
+    dplyr::ungroup() |>
+    dplyr::select(-n) |>
+    tidyr::spread(key = case, value = prop) |>
+    tidyr::replace_na(
+      replace = list(
+        MCAO = 0,
+        Sham = 0,
+        UV = 0
+      )
+    ) |>
+    dplyr::mutate(mcao_vs_sham = MCAO / Sham) |>
+    dplyr::mutate(
+      mcao_vs_sham = dplyr::case_when(
+        mcao_vs_sham >= 16 ~ 16,
+        mcao_vs_sham <= 1/16 ~ 1/16,
+        is.nan(mcao_vs_sham) ~ 1,
+        TRUE ~ mcao_vs_sham
+      )
+    ) |>
+    dplyr::mutate(mcao_vs_sham_log2 = log2(mcao_vs_sham)) |>
+    dplyr::mutate(mcao_vs_sham_m = (MCAO + Sham) / 2) |>
+    dplyr::mutate(uv_vs_mcao = UV / MCAO) |>
+    dplyr::mutate(
+      uv_vs_mcao = dplyr::case_when(
+        uv_vs_mcao >= 16 ~ 16,
+        uv_vs_mcao <= 1/16 ~ 1/16,
+        is.nan(uv_vs_mcao) ~ 1,
+        TRUE ~ uv_vs_mcao
+      )
+    ) |>
+    dplyr::mutate(uv_vs_mcao_log2 = log2(uv_vs_mcao)) |>
+    dplyr::mutate(uv_vs_mcao_m = (UV + MCAO) / 2) ->
+    .prop
 
 
-azimuth_ref_sunburst_cell_merge_norm
+  .prop |>
+    ggplot(
+      aes(
+        x = mcao_vs_sham_log2,
+        y = forcats::fct_reorder(cell3, mcao_vs_sham_log2) ,
+        size = mcao_vs_sham_m,
+        color = cell3_color
+      )
+    ) +
+    geom_point() +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+    scale_color_identity() +
+    scale_size(name = "Mean Prop of tMCAO and Sham") +
+    theme(
+      panel.background = element_blank(),
+      panel.grid = element_line(
+        colour = "grey",
+        linetype = "dashed"
+      ),
+      panel.grid.major = element_line(
+        colour = "grey",
+        linetype = "dashed",
+        linewidth = 0.2
+      ),
+      axis.line = element_line(color = "black"),
+      axis.ticks = element_line(color = "black"),
+      axis.text = element_text(
+        color = "black",
+        size = 12,
+      ),
+      axis.title = element_text(
+        color = "black",
+        size = 14,
+      ),
+      axis.title.y = element_blank(),
+      legend.position = "top",
+      legend.key = element_blank()
+    ) +
+    labs(
+      x = "log2 fold change of tMCAO vs. Sham",
+    ) ->
+    p_tmca_vs_sham
 
-a <- azimuth_ref_sunburst_cell_merge_norm$norm[[3]]
+  .prop |>
+    ggplot(
+      aes(
+        x = uv_vs_mcao_log2,
+        y = forcats::fct_reorder(cell3, uv_vs_mcao_log2) ,
+        size = uv_vs_mcao_m,
+        color = cell3_color
+      )
+    ) +
+    geom_point() +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+    scale_color_identity() +
+    scale_size(name = "Mean Prop of UVB+tMCAO and tMCAO") +
+    theme(
+      panel.background = element_blank(),
+      panel.grid = element_line(
+        colour = "grey",
+        linetype = "dashed"
+      ),
+      panel.grid.major = element_line(
+        colour = "grey",
+        linetype = "dashed",
+        linewidth = 0.2
+      ),
+      axis.line = element_line(color = "black"),
+      axis.ticks = element_line(color = "black"),
+      axis.text = element_text(
+        color = "black",
+        size = 12,
+      ),
+      axis.title = element_text(
+        color = "black",
+        size = 14,
+      ),
+      axis.title.y = element_blank(),
+      legend.position = "top",
+      legend.key = element_blank()
+    ) +
+    labs(
+      x = "log2 fold change of UVB+tMCAO and tMCAO",
+    ) ->
+    p_uv_vs_mcao
 
-a@meta.data |> dplyr::glimpse()
-b <- subset(a, subset = cell2 == "Astrocyte")
-Idents(b) <- "case"
-avg.b <- log1p(AverageExpression(b, verbose = FALSE)$RNA) |> as.data.frame()
-avg.b$gene <- rownames(avg.b)
+  list(
+    p_tmca_vs_sham = p_tmca_vs_sham,
+    p_uv_vs_mcao = p_uv_vs_mcao
+  )
 
-ggplot(avg.b, aes(MCAO, UV)) + geom_point()
+}
+
+azimuth_ref_sunburst_cell_merge_norm_de |>
+  dplyr::mutate(
+    prop_p = purrr::map(
+      .x = norm,
+      .f = fn_plot_prop_bulb
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_de_prop
+
+azimuth_ref_sunburst_cell_merge_norm_de_prop |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
+      .y = prop_p,
+      .f = function(.x, .y) {
+
+        ggsave(
+          filename = glue::glue("{.x}-prop-ratio-tmcao-vs-sham.pdf"),
+          plot = .y$p_tmca_vs_sham,
+          device = "pdf",
+          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio",
+          width = 8,
+          height = 5
+        )
+
+        ggsave(
+          filename = glue::glue("{.x}-prop-ratio-uvb-vs-tmcao.pdf"),
+          plot = .y$p_uv_vs_mcao,
+          device = "pdf",
+          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio",
+          width = 8,
+          height = 5
+        )
+
+      }
+    )
+  )
+
+
+# tmp ---------------------------------------------------------------------
+a <- azimuth_ref_sunburst_cell_merge_norm_de$norm[[1]]
+
+a@meta.data |>
+  data.table::as.data.table() |>
+  dplyr::select(case, region, cell1, cell2, cell3, cell1_color, cell2_color, cell3_color) ->
+  aa
+
+aa |>
+  dplyr::select(case, cell3, cell3_color) |>
+  dplyr::count(case, cell3, cell3_color) |>
+  dplyr::group_by(case) |>
+  dplyr::mutate(prop = n / sum(n)) |>
+  dplyr::ungroup() |>
+  dplyr::select(-n) |>
+  tidyr::spread(key = case, value = prop) |>
+  dplyr::mutate(mcao_vs_sham = MCAO / Sham) |>
+  dplyr::mutate(mcao_vs_sham_log2 = log2(mcao_vs_sham)) |>
+  dplyr::mutate(mcao_vs_sham_m = (MCAO + Sham) / 2) |>
+  dplyr::mutate(uv_vs_mcao = UV / MCAO) |>
+  dplyr::mutate(uv_vs_mcao_log2 = log2(uv_vs_mcao)) |>
+  dplyr::mutate(uv_vs_mcao_m = (UV + MCAO) / 2) ->
+  aaa
+
+aaa |>
+  ggplot(
+    aes(
+      x = mcao_vs_sham_log2,
+      y = forcats::fct_reorder(cell3, mcao_vs_sham_log2) ,
+      size = mcao_vs_sham_m,
+      color = cell3_color
+    )
+  ) +
+  geom_point() +
+  geom_vline(xintercept = 1, color = "red", linetype = "dashed") +
+  scale_color_identity() +
+  scale_size(name = "Mean Prop of tMCAO and Sham") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_line(
+      colour = "grey",
+      linetype = "dashed"
+    ),
+    panel.grid.major = element_line(
+      colour = "grey",
+      linetype = "dashed",
+      linewidth = 0.2
+    ),
+    axis.line = element_line(color = "black"),
+    axis.ticks = element_line(color = "black"),
+    axis.text = element_text(
+      color = "black",
+      size = 12
+    ),
+    axis.title = element_text(
+      color = "black",
+      size = 14
+    ),
+    axis.title.y = element_blank(),
+    legend.position = "top",
+    legend.key = element_blank()
+  ) +
+  labs(
+    x = "log2 fold change of tMCAO vs. Sham",
+  )
+
+aaa |>
+  ggplot(
+    aes(
+      x = uv_vs_mcao_log2,
+      y = forcats::fct_reorder(cell3, uv_vs_mcao_log2),
+      size = uv_vs_mcao_m,
+      color = cell3_color
+    )
+  ) +
+  geom_point() +
+  scale_color_identity()
 
 
 # footer ------------------------------------------------------------------
