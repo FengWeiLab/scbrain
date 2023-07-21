@@ -858,6 +858,7 @@ ggsave(
 
 ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[3]]}-markergenes-dot.pdf"),
+  plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[3]],
   device = "pdf",
   path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
   width = 9,
