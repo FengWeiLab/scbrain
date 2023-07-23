@@ -246,6 +246,7 @@ fn_plot_prop_bulb <- function(.norm) {
     ) ->
     p_tmca_vs_sham
 
+
   .prop |>
     ggplot(
       aes(
@@ -289,9 +290,106 @@ fn_plot_prop_bulb <- function(.norm) {
     ) ->
     p_uv_vs_mcao
 
+  .prop |>
+    dplyr::select(cell3, cell3_color, mcao_vs_sham_log2, uv_vs_mcao_log2, mcao_vs_sham_m, uv_vs_mcao_m) ->
+    .prop_forp
+
+  .prop_forp |>
+    dplyr::select(-c(mcao_vs_sham_m, uv_vs_mcao_m)) |>
+    tidyr::pivot_longer(
+      cols = -c(cell3, cell3_color),
+      names_to = "vs",
+      values_to = "v"
+    ) |>
+    dplyr::mutate(
+      vs_l = gsub(
+        pattern = "_log2$",
+        replacement = "",
+        x = vs
+      )
+    ) |>
+    dplyr::left_join(
+      .prop_forp |>
+        dplyr::select(1, 5, 6) |>
+        tidyr::pivot_longer(
+          cols = -cell3,
+          names_to = "vs_l",
+          values_to = "m"
+        ) |>
+        dplyr::mutate(
+          vs_l = gsub(
+            pattern = "_m$",
+            replacement = "",
+            x = vs_l
+          )
+        ),
+      by = c("cell3", "vs_l")
+    ) |>
+    ggplot(aes(
+      x = v,
+      y = cell3,
+    )) +
+    geom_segment(
+      data = .prop_forp,
+      aes(
+        x = mcao_vs_sham_log2,
+        y = cell3,
+        xend = uv_vs_mcao_log2,
+        yend = cell3,
+      ),
+      arrow = arrow(length = unit(12, "points")),
+      # linetype = "dotted"
+      linewidth = 0.3
+    ) +
+    geom_point(
+      aes(
+        color = vs,
+        size = m
+      )
+    ) +
+    scale_color_manual(
+      name = "VS",
+      limits = c("mcao_vs_sham_log2", "uv_vs_mcao_log2"),
+      label = c("tMCAO vs Sham", "UVB+tMCAO vs tMCAO"),
+      values = c("blue", "red")
+    ) +
+    geom_vline(xintercept = 0, color = "red", linetype = "dotted") +
+    scale_size(name = "Mean prop") +
+    theme(
+      panel.background = element_blank(),
+      panel.grid = element_line(
+        colour = "grey",
+        linetype = "dashed"
+      ),
+      panel.grid.major = element_line(
+        colour = "grey",
+        linetype = "dashed",
+        linewidth = 0.2
+      ),
+      axis.line = element_line(color = "black"),
+      axis.ticks = element_line(color = "black"),
+      axis.text = element_text(
+        color = "black",
+        size = 12,
+      ),
+      axis.title = element_text(
+        color = "black",
+        size = 14,
+      ),
+      axis.title.y = element_blank(),
+      legend.position = "top",
+      legend.key = element_blank()
+    ) +
+    labs(
+      x = "log2 Fold Change",
+    ) ->
+    p_merge
+
+
   list(
     p_tmca_vs_sham = p_tmca_vs_sham,
     p_uv_vs_mcao = p_uv_vs_mcao,
+    p_merge = p_merge,
     prop = .prop,
     prop_n = .d_n_prop_n
   )
@@ -326,6 +424,15 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
         ggsave(
           filename = glue::glue("{.x}-prop-ratio-uvb-vs-tmcao.pdf"),
           plot = .y$p_uv_vs_mcao,
+          device = "pdf",
+          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio",
+          width = 8,
+          height = 5
+        )
+
+        ggsave(
+          filename = glue::glue("{.x}-prop-ratio-uvb-merge.pdf"),
+          plot = .y$p_merge,
           device = "pdf",
           path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio",
           width = 8,
@@ -374,25 +481,10 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
   )
 
 
-# Marker gene table -------------------------------------------------------
+# n DEG -------------------------------------------------------------------
 
-# azimuth_ref_sunburst_cell_merge_norm_de_prop |>
-#   dplyr::mutate(
-#     a = purrr::pmap(
-#       .l = list(
-#         .region = region,
-#         .norm = norm,
-#         .allmarkers = allmarkers
-#       ),
-#       .f = function(.region, .norm, .allmarkers) {
-#
-#         # .region <- azimuth_ref_sunburst_cell_merge_norm_de_prop$region[[1]]
-#         # .norm <- azimuth_ref_sunburst_cell_merge_norm_de_prop$norm[[1]]
-#         # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_de_prop$allmarkers[[1]]
-#
-#       }
-#     )
-#   )
+azimuth_ref_sunburst_cell_merge_norm_de_prop$de[[1]]$case_avg[1]
+
 
 
 # footer ------------------------------------------------------------------
