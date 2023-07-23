@@ -401,3 +401,4 @@ future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
 save.image(file = "data/azimuth/06-de.rda")
+load(file = "data/azimuth/06-de.rda")
