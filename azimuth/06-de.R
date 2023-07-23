@@ -152,7 +152,23 @@ fn_plot_prop_bulb <- function(.norm) {
     dplyr::count(case, cell3, cell3_color) |>
     dplyr::group_by(case) |>
     dplyr::mutate(prop = n / sum(n)) |>
-    dplyr::ungroup() |>
+    dplyr::ungroup() ->
+    .d_n_prop
+
+  .d_n_prop |>
+    dplyr::select(-prop) |>
+    tidyr::spread(key = case, value = n) |>
+    dplyr::select(-cell3_color) |>
+    tidyr::replace_na(
+      replace = list(
+        MCAO = 0,
+        Sham = 0,
+        UV = 0
+      )
+    ) ->
+    .d_n_prop_n
+
+  .d_n_prop |>
     dplyr::select(-n) |>
     tidyr::spread(key = case, value = prop) |>
     tidyr::replace_na(
@@ -275,7 +291,9 @@ fn_plot_prop_bulb <- function(.norm) {
 
   list(
     p_tmca_vs_sham = p_tmca_vs_sham,
-    p_uv_vs_mcao = p_uv_vs_mcao
+    p_uv_vs_mcao = p_uv_vs_mcao,
+    prop = .prop,
+    prop_n = .d_n_prop_n
   )
 
 }
@@ -314,88 +332,67 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
           height = 5
         )
 
+        .y$prop |>
+          dplyr::mutate(
+            `Sham (%)` = Sham * 100,
+            `tMCAO (%)` = MCAO * 100,
+            `tMCAO+UVB (%)` = UV * 100,
+          ) |>
+          dplyr::select(
+            cell3,
+            `Sham (%)`,
+            `tMCAO (%)`,
+            `tMCAO+UVB (%)`,
+            `log2(tMCAO vs. Sham)` = mcao_vs_sham_log2,
+            `log2(UVB+tMCAO vs. tMCAO)` = uv_vs_mcao_log2
+          ) ->
+          .yy1
+        .y$prop_n |>
+          dplyr::mutate(
+            `Sham (n)` = Sham,
+            `tMCAO (n)` = MCAO,
+            `tMCAO+UVB (n)` = UV
+          ) |>
+          dplyr::select(-c(2,3,4)) ->
+          .yy2
+
+        .yy1 |>
+          dplyr::left_join(.yy2, by = "cell3") |>
+          dplyr::rename(
+            `Cell type` = cell3
+          ) ->
+          .yyd
+
+        writexl::write_xlsx(
+          x = .yyd |>
+            dplyr::select(1, 7, 8, 9, 2, 3, 4, 5, 6),
+          "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio/{.x}-celltype-number-prop.xlsx" |> glue::glue(),
+        )
+
       }
     )
   )
 
 
-# tmp ---------------------------------------------------------------------
-a <- azimuth_ref_sunburst_cell_merge_norm_de$norm[[1]]
+# Marker gene table -------------------------------------------------------
 
-a@meta.data |>
-  data.table::as.data.table() |>
-  dplyr::select(case, region, cell1, cell2, cell3, cell1_color, cell2_color, cell3_color) ->
-  aa
-
-aa |>
-  dplyr::select(case, cell3, cell3_color) |>
-  dplyr::count(case, cell3, cell3_color) |>
-  dplyr::group_by(case) |>
-  dplyr::mutate(prop = n / sum(n)) |>
-  dplyr::ungroup() |>
-  dplyr::select(-n) |>
-  tidyr::spread(key = case, value = prop) |>
-  dplyr::mutate(mcao_vs_sham = MCAO / Sham) |>
-  dplyr::mutate(mcao_vs_sham_log2 = log2(mcao_vs_sham)) |>
-  dplyr::mutate(mcao_vs_sham_m = (MCAO + Sham) / 2) |>
-  dplyr::mutate(uv_vs_mcao = UV / MCAO) |>
-  dplyr::mutate(uv_vs_mcao_log2 = log2(uv_vs_mcao)) |>
-  dplyr::mutate(uv_vs_mcao_m = (UV + MCAO) / 2) ->
-  aaa
-
-aaa |>
-  ggplot(
-    aes(
-      x = mcao_vs_sham_log2,
-      y = forcats::fct_reorder(cell3, mcao_vs_sham_log2) ,
-      size = mcao_vs_sham_m,
-      color = cell3_color
-    )
-  ) +
-  geom_point() +
-  geom_vline(xintercept = 1, color = "red", linetype = "dashed") +
-  scale_color_identity() +
-  scale_size(name = "Mean Prop of tMCAO and Sham") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_line(
-      colour = "grey",
-      linetype = "dashed"
-    ),
-    panel.grid.major = element_line(
-      colour = "grey",
-      linetype = "dashed",
-      linewidth = 0.2
-    ),
-    axis.line = element_line(color = "black"),
-    axis.ticks = element_line(color = "black"),
-    axis.text = element_text(
-      color = "black",
-      size = 12
-    ),
-    axis.title = element_text(
-      color = "black",
-      size = 14
-    ),
-    axis.title.y = element_blank(),
-    legend.position = "top",
-    legend.key = element_blank()
-  ) +
-  labs(
-    x = "log2 fold change of tMCAO vs. Sham",
-  )
-
-aaa |>
-  ggplot(
-    aes(
-      x = uv_vs_mcao_log2,
-      y = forcats::fct_reorder(cell3, uv_vs_mcao_log2),
-      size = uv_vs_mcao_m,
-      color = cell3_color
-    )
-  ) +
-  geom_point() +
-  scale_color_identity()
+# azimuth_ref_sunburst_cell_merge_norm_de_prop |>
+#   dplyr::mutate(
+#     a = purrr::pmap(
+#       .l = list(
+#         .region = region,
+#         .norm = norm,
+#         .allmarkers = allmarkers
+#       ),
+#       .f = function(.region, .norm, .allmarkers) {
+#
+#         # .region <- azimuth_ref_sunburst_cell_merge_norm_de_prop$region[[1]]
+#         # .norm <- azimuth_ref_sunburst_cell_merge_norm_de_prop$norm[[1]]
+#         # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_de_prop$allmarkers[[1]]
+#
+#       }
+#     )
+#   )
 
 
 # footer ------------------------------------------------------------------
