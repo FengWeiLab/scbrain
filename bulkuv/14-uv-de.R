@@ -335,7 +335,7 @@ se_group %>%
     )
   ) ->
   se_group_de
-
+se_group_de$de[[1]]$UVB0_vs_BC[[1]]
 
 readr::write_rds(
   x = se_group_de,
@@ -800,7 +800,7 @@ ggplot() +
   label = glue::glue("Up:{paste0(up_inter[c(1:8)], collapse = ',')}\n{paste0(up_inter[c(9:15)], collapse = ',')}\n{paste0(up_inter[c(16:20)], collapse = ',')}\n\nDown:{paste0(down_inter[c(1:8)], collapse = ',')}\n{paste0(down_inter[c(9:15)], collapse = ',')}\n{paste0(down_inter[c(16:21)], collapse = ',')}")
   ) +
   theme_void() ->
-  p3
+  p3;p3
 
 
 ggvenn::ggvenn(
@@ -817,7 +817,7 @@ ggvenn::ggvenn(
   set_name_size = 4,
   text_size = 6
 ) ->
-  p1
+  p1;p1
 
 
 
@@ -835,14 +835,14 @@ ggvenn::ggvenn(
   set_name_size = 4,
   text_size = 6
 ) ->
-  p2
+  p2;p2
 
 (p1 | p2) / p3 +
   plot_annotation(
     title = glue::glue("Up and down DEGs intersection"),
     tag_levels = "A"
   ) ->
-  venn_plot
+  venn_plot;venn_plot
 
 
 
@@ -1101,7 +1101,7 @@ for_radar |>
   dplyr::slice(
     4, 3,2,1
   ) ->
-  rd
+  rd;rd
 
 
 
