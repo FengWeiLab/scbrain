@@ -550,9 +550,6 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
   azimuth_ref_sunburst_cell_merge_norm_de_change
 
 
-azimuth_ref_sunburst_cell_merge_norm_de_change$de_change[[1]] -> .x
-
-.x
 
 azimuth_ref_sunburst_cell_merge_norm_de_change |>
   dplyr::mutate(
@@ -593,8 +590,212 @@ azimuth_ref_sunburst_cell_merge_norm_de_change |>
             )
           ) |>
           dplyr::select(cell, n) |>
-          tidyr::unnest(cols = n)
+          tidyr::unnest(cols = n) |>
+          dplyr::filter(cell != "Platelet") ->
+          .d
 
+        .d |>
+          dplyr::filter(type == "ms") ->
+          .d_ms
+        .d |>
+          dplyr::filter(type == "um") ->
+          .d_um
+
+        .d_ms |>
+          dplyr::filter(change != "nosig") |>
+          dplyr::filter(cell != "Pseudo bulk") |>
+          dplyr::mutate(cell = forcats::fct_reorder(cell, n)) |>
+          dplyr::mutate(n = ifelse(change == "down", -n, n)) |>
+          dplyr::mutate(hjust = ifelse(change == "down", 1, 0)) |>
+          ggplot(aes(
+            x = n,
+            y = cell,
+            fill = change
+          )) +
+          geom_col() +
+          geom_text(
+            aes(
+              label = abs(n),
+              hjust = hjust
+            ),
+            size = 5,
+            fontface = 1,
+            show.legend = F
+          ) +
+          scale_x_continuous(
+            expand = expansion(
+              mult = c(0.1, 0.1)
+            )
+          ) +
+          geom_vline(xintercept = 0, size = 1) +
+          scale_fill_brewer(
+            palette = "Set1",
+            direction = -1,
+            name = "Regulations",
+            label = c("Down", "Up")
+          ) +
+          theme(
+            plot.background = element_blank(),
+            panel.background = element_blank(),
+            # panel.grid =  element_blank(),
+            panel.grid.major.y = element_line(
+              colour = "black",
+              linetype = "dotted",
+              linewidth = 0.2,
+            ),
+            # axis.line = element_line(size = 1),
+            axis.text.y = element_text(size = 14, color = "black", face = "bold"),
+            # axis.text.x = element_text(size = 14, color = "black", angle = 45, hjust = 1, face = "bold"),
+            axis.text.x = element_blank(),
+            axis.line = element_blank(),
+            axis.ticks = element_blank(),
+            axis.title = element_blank(),
+            # axis.title = element_text(size =14, color = "black", face = "bold"),
+            legend.position = "top",
+            plot.title = element_text(size =14, color = "black", face = "bold", hjust = 0.5)
+          ) +
+          labs(
+            title = "tMCAO vs. Sham"
+          ) ->
+          p_ms
+
+
+        .d_um |>
+          dplyr::filter(change != "nosig") |>
+          dplyr::filter(cell != "Pseudo bulk") |>
+          dplyr::mutate(cell = forcats::fct_reorder(cell, n)) |>
+          dplyr::mutate(n = ifelse(change == "down", -n, n)) |>
+          dplyr::mutate(hjust = ifelse(change == "down", 1, 0)) |>
+          ggplot(aes(
+            x = n,
+            y = cell,
+            fill = change
+          )) +
+          geom_col() +
+          geom_text(
+            aes(
+              label = abs(n),
+              hjust = hjust
+            ),
+            size = 5,
+            fontface = 1,
+            show.legend = F
+          ) +
+          scale_x_continuous(
+            expand = expansion(
+              mult = c(0.1, 0.1)
+            )
+          ) +
+          geom_vline(xintercept = 0, size = 1) +
+          scale_fill_brewer(
+            palette = "Set1",
+            direction = -1,
+            name = "Regulations",
+            label = c("Down", "Up")
+          ) +
+          theme(
+            plot.background = element_blank(),
+            panel.background = element_blank(),
+            # panel.grid =  element_blank(),
+            panel.grid.major.y = element_line(
+              colour = "black",
+              linetype = "dotted",
+              linewidth = 0.2,
+            ),
+            # axis.line = element_line(size = 1),
+            axis.text.y = element_text(size = 14, color = "black", face = "bold"),
+            # axis.text.x = element_text(size = 14, color = "black", angle = 45, hjust = 1, face = "bold"),
+            axis.text.x = element_blank(),
+            axis.line = element_blank(),
+            axis.ticks = element_blank(),
+            axis.title = element_blank(),
+            # axis.title = element_text(size =14, color = "black", face = "bold"),
+            legend.position = "top",
+            plot.title = element_text(size =14, color = "black", face = "bold", hjust = 0.5)
+          ) +
+          labs(
+            title = "UVB+tMCAO vs. tMCAO"
+          ) ->
+          p_um
+
+        list(
+          p_ms = p_ms,
+          p_um = p_um,
+          d = .d
+        )
+      }
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_de_change_nn
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn$nn[[2]] -> .nn
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn$region[[2]] -> .r
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
+      .y = nn,
+      .f = function(.r, .nn) {
+        ggsave(
+          filename = glue::glue("{.r}-DEG-n-tMCAO_vs_Sham.pdf"),
+          plot = .nn$p_ms,
+          device = "pdf",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de",
+          width = 8,
+          height = 5
+        )
+
+        ggsave(
+          filename = glue::glue("{.r}-DEG-n-UVB_vs_tMCAO.pdf"),
+          plot = .nn$p_um,
+          device = "pdf",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de",
+          width = 8,
+          height = 5
+        )
+
+        .nn$d |>
+          dplyr::filter(change != "nosig") ->
+          .dd
+
+        .dd |>
+          dplyr::filter(type == "ms") |>
+          dplyr::select(-type) |>
+          tidyr::spread(key = change, value = n) |>
+          tidyr::replace_na(
+            replace = list(
+              up = 0,
+              down = 0
+            )
+          ) |>
+          dplyr::select(`Cell type` = cell, Down = down, Up = up) |>
+          dplyr::mutate(DEG = Down + Up) |>
+          dplyr::arrange(-DEG) ->
+          .dd_ms
+
+        .dd |>
+          dplyr::filter(type == "um") |>
+          dplyr::select(-type) |>
+          tidyr::replace_na(
+            replace = list(
+              up = 0,
+              down = 0
+            )
+          ) |>
+          tidyr::spread(key = change, value = n) |>
+          dplyr::select(`Cell type` = cell, Down = down, Up = up) |>
+          dplyr::mutate(DEG = Down + Up) |>
+          dplyr::arrange(-DEG) ->
+          .dd_um
+
+        list(
+          "tMCAO vs. Sham" = .dd_ms,
+          "UVB+tMCAO vs. tMCAO" = .dd_um
+        ) |>
+          writexl::write_xlsx(
+            "/home/liuc9/github/scbrain/scuvresult/09-de/{.r}-n-deg.xlsx" |> glue::glue(),
+          )
 
       }
     )
