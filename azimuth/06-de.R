@@ -295,7 +295,8 @@ fn_plot_prop_bulb <- function(.norm) {
     p_uv_vs_mcao
 
   .prop |>
-    dplyr::select(cell3, cell3_color, mcao_vs_sham_log2, uv_vs_mcao_log2, mcao_vs_sham_m, uv_vs_mcao_m) ->
+    dplyr::select(cell3, cell3_color, mcao_vs_sham_log2, uv_vs_mcao_log2, mcao_vs_sham_m, uv_vs_mcao_m) |>
+    dplyr::mutate(cell3 = forcats::fct_reorder(cell3, uv_vs_mcao_log2)) ->
     .prop_forp
 
   .prop_forp |>
@@ -341,7 +342,7 @@ fn_plot_prop_bulb <- function(.norm) {
         xend = uv_vs_mcao_log2,
         yend = cell3,
       ),
-      arrow = arrow(length = unit(12, "points")),
+      arrow = arrow(length = unit(10, "points")),
       # linetype = "dotted"
       linewidth = 0.3
     ) +
@@ -359,6 +360,11 @@ fn_plot_prop_bulb <- function(.norm) {
     ) +
     geom_vline(xintercept = 0, color = "red", linetype = "dotted") +
     scale_size(name = "Mean prop") +
+    scale_x_continuous(
+      limits = c(-4, 4),
+      breaks = c(-4, -3,  -2, -1, 0, 1, 2, 3, 4),
+      labels = c(-4, -3, -2, -1, 0, 1, 2, 3, 4)
+    ) +
     theme(
       panel.background = element_blank(),
       panel.grid = element_line(
@@ -493,8 +499,9 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop$de[[1]] ->.de
   dplyr::filter()
 
 azimuth_ref_sunburst_cell_merge_norm_de_prop |>
+  dplyr::select(-prop_p) |>
   dplyr::mutate(
-    de_filter = purrr::map(
+    de_change = purrr::map(
       .x = de,
       .f = function(.de) {
         .de |>
@@ -503,6 +510,26 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
             mcao_vs_sham = purrr::map(
               .x = mcao_vs_sham,
               .f = function(.m) {
+                if(is.null(.m)) {return(NULL)}
+                .m |>
+                  tibble::rownames_to_column(
+                    var = "gene"
+                  ) |>
+                  dplyr::mutate(
+                    change = dplyr::case_when(
+                      p_val_adj < 0.05 & avg_log2FC > 0.5 ~ "up",
+                      p_val_adj < 0.05 & avg_log2FC < -0.5 ~ "down",
+                      TRUE ~ "nosig"
+                    )
+                  )
+              }
+            )
+          ) |>
+          dplyr::mutate(
+            uv_vs_mcao = purrr::map(
+              .x = uv_vs_mcao,
+              .f = function(.m) {
+                if(is.null(.m)) {return(NULL)}
                 .m |>
                   tibble::rownames_to_column(
                     var = "gene"
@@ -520,8 +547,58 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
       }
     )
   ) ->
-  azimuth_ref_sunburst_cell_merge_norm_de_prop_
+  azimuth_ref_sunburst_cell_merge_norm_de_change
 
+
+azimuth_ref_sunburst_cell_merge_norm_de_change$de_change[[1]] -> .x
+
+.x
+
+azimuth_ref_sunburst_cell_merge_norm_de_change |>
+  dplyr::mutate(
+    nn = purrr::map(
+      .x = de_change,
+      .f = function(.x) {
+        .x |>
+          dplyr::select(-case_avg) |>
+          dplyr::mutate(
+            mcao_vs_sham = purrr::map(
+              .x = mcao_vs_sham,
+              .f = function(.m) {
+                if(is.null(.m)) {return(NULL)}
+                .m |>
+                  dplyr::count(change) |>
+                  dplyr::mutate(type = "ms")
+              }
+            )
+          ) |>
+          dplyr::mutate(
+            uv_vs_mcao = purrr::map(
+              .x = uv_vs_mcao,
+              .f = function(.m) {
+                if(is.null(.m)) {return(NULL)}
+                .m |>
+                  dplyr::count(change) |>
+                  dplyr::mutate(type = "um")
+              }
+            )
+          ) |>
+          dplyr::mutate(
+            n = purrr::map2(
+              .x = mcao_vs_sham,
+              .y = uv_vs_mcao,
+              .f = function(.x, .y) {
+                dplyr::bind_rows(.x, .y)
+              }
+            )
+          ) |>
+          dplyr::select(cell, n) |>
+          tidyr::unnest(cols = n)
+
+
+      }
+    )
+  )
 
 
 # footer ------------------------------------------------------------------
