@@ -645,6 +645,9 @@ dplyr::bind_rows(
 
 
 s_up_down |>
+  dplyr::mutate(
+    Description = glue::glue("{Description} ({Count})")
+  ) |>
   dplyr::mutate(adjp = abs(adjp)) |>
   dplyr::select(Description, adjp, type) |>
   dplyr::mutate(Min = 0, Max = 52) |>
