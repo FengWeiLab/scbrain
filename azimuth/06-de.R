@@ -40,6 +40,10 @@ azimuth_ref_sunburst_cell_merge_norm <-
 
 
 # body --------------------------------------------------------------------
+# psudo bulk
+# https://hbctraining.github.io/scRNA-seq_online/lessons/pseudobulk_DESeq2_scrnaseq.html
+
+# https://academic.oup.com/bib/article/23/5/bbac286/6649780
 
 fn_case_de <- function(.x) {
   DefaultAssay(.x) <- "RNA"
@@ -483,7 +487,40 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
 
 # n DEG -------------------------------------------------------------------
 
-azimuth_ref_sunburst_cell_merge_norm_de_prop$de[[1]]$case_avg[1]
+azimuth_ref_sunburst_cell_merge_norm_de_prop$de[[1]] ->.de
+
+.de$mcao_vs_sham[[1]] |>
+  dplyr::filter()
+
+azimuth_ref_sunburst_cell_merge_norm_de_prop |>
+  dplyr::mutate(
+    de_filter = purrr::map(
+      .x = de,
+      .f = function(.de) {
+        .de |>
+          dplyr::select(-uv_vs_sham) |>
+          dplyr::mutate(
+            mcao_vs_sham = purrr::map(
+              .x = mcao_vs_sham,
+              .f = function(.m) {
+                .m |>
+                  tibble::rownames_to_column(
+                    var = "gene"
+                  ) |>
+                  dplyr::mutate(
+                    change = dplyr::case_when(
+                      p_val_adj < 0.05 & avg_log2FC > 0.5 ~ "up",
+                      p_val_adj < 0.05 & avg_log2FC < -0.5 ~ "down",
+                      TRUE ~ "nosig"
+                    )
+                  )
+              }
+            )
+          )
+      }
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_de_prop_
 
 
 
