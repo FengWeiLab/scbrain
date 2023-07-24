@@ -493,10 +493,6 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
 
 # n DEG -------------------------------------------------------------------
 
-azimuth_ref_sunburst_cell_merge_norm_de_prop$de[[1]] ->.de
-
-.de$mcao_vs_sham[[1]] |>
-  dplyr::filter()
 
 azimuth_ref_sunburst_cell_merge_norm_de_prop |>
   dplyr::select(-prop_p) |>
@@ -728,8 +724,6 @@ azimuth_ref_sunburst_cell_merge_norm_de_change |>
   ) ->
   azimuth_ref_sunburst_cell_merge_norm_de_change_nn
 
-azimuth_ref_sunburst_cell_merge_norm_de_change_nn$nn[[2]] -> .nn
-azimuth_ref_sunburst_cell_merge_norm_de_change_nn$region[[2]] -> .r
 
 azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
   dplyr::mutate(
@@ -801,6 +795,219 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
     )
   )
 
+
+# vocalno -----------------------------------------------------------------
+fn_volcano <- function(.x, .nn) {
+  # .x <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn$de_change[[1]]
+  # .nn <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn$nn[[1]]
+
+  .nnd <- .nn$d |>
+    dplyr::filter(change != "nosig") |>
+    tidyr::spread(key = change, value = n) |>
+    tidyr::replace_na(
+      replace = list(
+        up = 0,
+        down = 0
+      )
+    )
+
+  .x |>
+    dplyr::select(-case_avg) |>
+    tidyr::pivot_longer(
+      cols = -cell,
+      names_to = "type",
+      values_to = "de"
+    ) |>
+    dplyr::mutate(
+      type = dplyr::case_when(
+        type == "mcao_vs_sham" ~ "ms",
+        type == "uv_vs_mcao" ~ "um"
+      )
+    ) ->
+    .xx
+
+  .nnd |>
+    dplyr::left_join(
+      .xx, by = c("cell", "type")
+    ) ->
+    .nndxx
+
+  .nndxx |>
+    dplyr::mutate(
+      p = purrr::pmap(
+        .l = list(
+          .cell = cell,
+          .type = type,
+          .down = down,
+          .up = up,
+          .de = de
+        ),
+        .f = function(.cell, .type, .down, .up, .de) {
+          # .cell <- .nndxx$cell[[1]]
+          # .type <- .nndxx$type[[1]]
+          # .down <- .nndxx$down[[1]]
+          # .up <- .nndxx$up[[1]]
+          # .de <- .nndxx$de[[1]]
+          typeconv <- c("ms" = "tMCAO vs. Sham", "um" = "UVB+tMCAO vs. tMCAO")
+
+          .title <- glue::glue("{typeconv[.type]}, {.cell}, Up (n={.up}), Down (n={.down})")
+
+          .de |>
+            dplyr::mutate(fdr = -log10(p_val_adj)) |>
+            dplyr::mutate(
+              gene = stringr::str_to_sentence(
+                string = gene
+              )
+            ) ->
+            .xd
+
+          .xd |>
+            ggplot(aes(
+              x = avg_log2FC,
+              y = fdr,
+              color = change
+            )) +
+            geom_point() +
+            scale_color_manual(
+              name = "Regulation",
+              limits = c("down", "nosig", "up"),
+              labels = c("Dwon", "No sig", "Up"),
+              values =  c("#3D72AF", "grey", "#D80013")
+            ) +
+            geom_segment(
+              aes(x = x1, y = y1, xend = x2, yend = y2),
+              color = "black",
+              linetype = "dotted",
+              data = tibble::tibble(
+                x1 = c(-Inf, 0.5, -0.5, 0.5),
+                y1 = -log10(0.05),
+                x2 = c(-0.5, Inf, -0.5, 0.5),
+                y2 = c(-log10(0.05), -log10(0.05), Inf, Inf))
+            ) +
+            ggrepel::geom_text_repel(
+              aes(label = gene),
+              data = .xd |>
+                dplyr::filter(change == "up") |>
+                dplyr::filter(!grepl(pattern = "mt-", x = gene, ignore.case = T)) |>
+                dplyr::arrange(-fdr, -abs(avg_log2FC)) %>%
+                dplyr::slice(1:10),
+              box.padding = 0.5,
+              max.overlaps = Inf,
+              # size = 6
+            ) +
+            ggrepel::geom_text_repel(
+              aes(label = gene),
+              data = .xd |>
+                dplyr::filter(change == "down") |>
+                dplyr::filter(!grepl(pattern = "mt-", x = gene, ignore.case = T)) |>
+                dplyr::arrange(-fdr, -abs(avg_log2FC)) %>%
+                dplyr::slice(1:10),
+              box.padding = 0.5,
+              max.overlaps = Inf,
+              # size = 6
+            ) +
+            scale_x_continuous(
+              # limits = c(-4, 4),
+              expand = c(0.02, 0)
+            ) +
+            scale_y_continuous(
+              expand = c(0.01, 0),
+              limits = c(
+                0,
+                ceiling(
+                  max(
+                    .xd %>%
+                      dplyr::filter(!is.infinite(fdr)) %>%
+                      dplyr::pull(fdr)
+                  ) / 10
+                ) * 10
+              )
+            ) +
+            theme(
+              panel.background = element_rect(fill = NA, color = NA),
+              axis.line.x.bottom = element_line(color = "black"),
+              axis.line.y.left = element_line(color = "black"),
+              axis.text = element_text(color = "black", size = 16),
+              axis.title = element_text(color = "black", size = 18),
+
+              legend.position = "none",
+
+            ) +
+            labs(
+              x = "log2FC",
+              y = "-log10(FDR)",
+              title = .title
+            ) ->
+            p
+
+          list(
+            title = .title,
+            p = p
+          )
+
+        }
+      )
+    )
+
+
+}
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
+  dplyr::mutate(
+    volcano_plot = purrr::map2(
+      .x = de_change,
+      .y = nn,
+      .f = fn_volcano
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
+      .y = volcano_plot,
+      .f = function(.r, .v) {
+        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano$region[[1]]
+        # .v <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano$volcano_plot[[1]]
+
+        dir.create(
+          path = file.path(
+            "/home/liuc9/github/scbrain/scuvresult/09-de",
+            .r
+          ),
+          showWarnings = F,
+          recursive = T
+        )
+        .v |>
+          dplyr::mutate(
+            a = purrr::map(
+              .x = p,
+              .f = function(.p) {
+                ggsave(
+                  filename ="{.p$title}.pdf" |> glue::glue(),
+                  path = file.path(
+                    "/home/liuc9/github/scbrain/scuvresult/09-de",
+                    .r
+                  ),
+                  plot = .p$p,
+                  device = "pdf",
+                  width = 7,
+                  height = 5
+                )
+              }
+            )
+          )
+      }
+    )
+  )
+
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
+  dplyr::select(-de, -volcano_plot) |>
+  readr::write_rds(
+    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano.rds.gz"
+  )
 
 # footer ------------------------------------------------------------------
 
