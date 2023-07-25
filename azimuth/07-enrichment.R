@@ -143,7 +143,12 @@ fn_go_enrichment <- function(.de, .nn) {
         .y = de,
         .f = function(.down, .dde) {
           if(.down == 0){return(NULL)}
-          fn_gobp(.dde, .change = "down")
+          tryCatch(
+            expr = {
+              fn_gobp(.dde, .change = "down")
+            },
+            error = function(e) {return(NULL)}
+          )
         }
       )
     ) |>
@@ -153,7 +158,12 @@ fn_go_enrichment <- function(.de, .nn) {
         .y = de,
         .f = function(.up, .dde) {
           if(.up == 0) {return(NULL)}
-          fn_gobp(.dde, .change = "up")
+          tryCatch(
+            expr = {
+              fn_gobp(.dde, .change = "up")
+            },
+            error = function(e) {return(NULL)}
+          )
         }
       )
     )
@@ -168,6 +178,107 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
     )
   ) ->
   azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich
+
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
+  readr::write_rds(
+    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich.rds.gz"
+  )
+
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
+      .y = enrichment,
+      .f = function(.r, .e) {
+        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$region[[1]]
+        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$enrichment[[1]]
+
+        dir.create(
+          path = file.path(
+            "/home/liuc9/github/scbrain/scuvresult/10-enrichment",
+            .r
+          )
+        )
+
+        typeconv <- c("ms" = "tMCAO vs. Sham", "um" = "UVB+tMCAO vs. tMCAO")
+
+        .e |>
+          dplyr::mutate(
+            a = purrr::pmap(
+              .l = list(
+                .cell = cell,
+                .type = type,
+                .down = down,
+                .up = up,
+                .down_en = down_en,
+                .up_en = up_en
+              ),
+              .f = function(.cell, .type, .down, .up, .down_en, .up_en) {
+                .filename <- "{.r}-{.cell}-{typeconv[.type]}-down{.down}-up{.up}" |> glue::glue()
+
+                tryCatch(
+                  expr = {
+                    ggsave(
+                      plot = .down_en$goplot[[1]],
+                      filename = glue::glue("{.filename}-down-enrichment.pdf"),
+                      device = "pdf",
+                      path = file.path(
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment",
+                        .r
+                      ),
+                      width = 10,
+                      height = 6.5
+                    )
+
+                    writexl::write_xlsx(
+                      x = as.data.frame(.down_en$gobp[[1]]),
+                      path = file.path(
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment",
+                        .r,
+                        glue::glue("{.filename}-down-enrichment.xlsx")
+                      )
+                    )
+
+                  },
+                  error = function(e) {NULL}
+                )
+
+                tryCatch(
+                  expr = {
+                    ggsave(
+                      plot = .up_en$goplot[[1]],
+                      filename = glue::glue("{.filename}-up-enrichment.pdf"),
+                      device = "pdf",
+                      path = file.path(
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment",
+                        .r
+                      ),
+                      width = 10,
+                      height = 6.5
+                    )
+
+                    writexl::write_xlsx(
+                      x = as.data.frame(.up_en$gobp[[1]]),
+                      path = file.path(
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment",
+                        .r,
+                        glue::glue("{.filename}-up-enrichment.xlsx")
+                      )
+                    )
+
+                  },
+                  error = function(e) {NULL}
+                )
+
+              }
+            )
+          )
+
+      }
+    )
+  )
 
 # footer ------------------------------------------------------------------
 
