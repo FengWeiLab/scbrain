@@ -431,20 +431,21 @@ refs <- c(
   "Brain" = "mousecortexref",
   # "Meninge" = "pbmcref",
   "Meninge" = "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura",
-  "Skull" = "bonemarrowref"
+  # "Skull" = "bonemarrowref"
+  "Skull" = "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/Mazzitelli_Nat_Neurosci_2022/azimuth_skull"
 )
 
 celllevel <- c(
   "Brain" = "predicted.cluster",
   "Meninge" = "predicted.annotation.l1",
-  "Skull" = "predicted.celltype.l2"
+  "Skull" = "predicted.annotation.l1"
 )
 
 refcelllevel <- tibble::tibble(
   region = c("Brain", "Meninge", "Skull"),
-  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "bonemarrowref"),
-  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.celltype.l2"),
-  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.celltype.l1")
+  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/Mazzitelli_Nat_Neurosci_2022/azimuth_skull"),
+  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.annotation.l1"),
+  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.annotation.l1")
 )
 
 # body --------------------------------------------------------------------
@@ -646,7 +647,7 @@ project_sc_azimuth_brain_new |>
 
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel7"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
     )
   )
 
@@ -679,7 +680,7 @@ project_sc_azimuth_brain_new |>
 
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel7"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
     )
   ) |>
   dplyr::select(
@@ -745,7 +746,7 @@ ggsave(
   filename = "Propertion_Brain.pdf",
   plot = .p,
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel7",
+  path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13",
   width = 10,
   height = 8
 )
