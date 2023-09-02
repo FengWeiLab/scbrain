@@ -2,7 +2,7 @@
 
 # @AUTHOR: Chun-Jie Liu
 # @CONTACT: chunjie.sam.liu.at.gmail.com
-# @DATE: Wed Jul 19 15:55:43 2023
+# @DATE: Sun May  7 21:39:54 2023
 # @DESCRIPTION: filename
 
 # Library -----------------------------------------------------------------
@@ -39,11 +39,13 @@ azimuth_ref_sunburst_cell_cell_factor <-
     file = "/home/liuc9/github/scbrain/data/azimuth/recell_cell_factor.rds"
   )
 
-azimuth_ref_sunburst_cell <-  readr::read_rds(
-  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
-)
+# azimuth_ref_sunburst_cell <-  readr::read_rds(
+#   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
+# )
 
-# body --------------------------------------------------------------------
+
+# merge object ------------------------------------------------------------
+
 
 azimuth_ref_sunburst_cell |>
   dplyr::select(region, case, anno_new_new) |>
@@ -51,62 +53,92 @@ azimuth_ref_sunburst_cell |>
   tidyr::nest() |>
   dplyr::ungroup() |>
   dplyr::mutate(
-    norm = purrr::map2(
+    merge_object = purrr::map2(
       .x = region,
       .y = data,
       .f = function(.x, .y) {
         # .x <- .d$region[[1]]
         # .y <- .d$data[[1]]
 
-        .y |>
-          tibble::deframe() |>
-          purrr::map(
-            .f = function(.m) {
-              Seurat::DefaultAssay(.m) <- "RNA"
+        purrr::map(
+          .y$anno_new_new,
+          VariableFeatures
+        ) |>
+          purrr::reduce(.f = intersect) ->
+          variable_features
 
-              .m <- NormalizeData(.m)
-              .m <- FindVariableFeatures(.m, selection.method = "vst", nfeatures = 2000)
-            }
-          ) ->
-          .yy
+        glue::glue("{.x}_{.y$case}")
 
-        .yy.anchors <- FindIntegrationAnchors(object.list = .yy, dims = 1:20)
+        .m <- merge(
+          .y$anno_new_new[[1]],
+          y = c(
+            .y$anno_new_new[[2]],
+            .y$anno_new_new[[3]]
+          ),
+          add.cell.id = glue::glue("{.x}_{.y$case}"),
+          project = .x
+        )
+        tibble::tibble(
+          merge_object = list(.m),
+          variable_features = list(variable_features)
+        )
+      }
+    )
+  ) |>
+  dplyr::select(-data) |>
+  tidyr::unnest(cols = merge_object) ->
+  azimuth_ref_sunburst_cell_merge
 
-        .yy.combined <- IntegrateData(anchorset = .yy.anchors, dims = 1:20)
-        # .yy.combined
 
-        DefaultAssay(.yy.combined) <- "integrated"
-        .yy.combined <- ScaleData(.yy.combined, verbose = FALSE)
-        .yy.combined <- Seurat::RunPCA(.yy.combined)
-        .yy.combined <- Seurat::FindNeighbors(.yy.combined, dims = 1:10)
-        .yy.combined <- Seurat::RunUMAP(.yy.combined, dims = 1:10)
-        .yy.combined <- Seurat::RunTSNE(.yy.combined, dims = 1:10)
+
+
+# cluster plot --------------------------------------------------------------------
+
+
+azimuth_ref_sunburst_cell_merge |>
+  dplyr::mutate(
+    norm = purrr::pmap(
+      .l = list(
+        .r = region,
+        .m = merge_object,
+        .v = variable_features
+      ),
+      .f = function(.r, .m, .v) {
+        # .r <- azimuth_ref_sunburst_cell_merge$region[[1]]
+        # .m <- azimuth_ref_sunburst_cell_merge$merge_object[[1]]
+        # .v <- azimuth_ref_sunburst_cell_merge$variable_features[[1]]
+
+        Seurat::DefaultAssay(.m) <- "RNA"
+        .m <- Seurat::NormalizeData(.m)
+        .all.genes <- rownames(.m)
+        .m <- Seurat::ScaleData(.m, features = .all.genes)
+        .m <- Seurat::RunPCA(.m, features = .v)
+        .m <- Seurat::FindNeighbors(.m, dims = 1:10)
+        .m <- Seurat::RunUMAP(.m, dims = 1:10)
+        .m <- Seurat::RunTSNE(.m, dims = 1:10)
 
         azimuth_ref_sunburst_cell_cell_factor |>
-          dplyr::filter(region == .x) ->
-          .xx
+          dplyr::filter(region == .r) ->
+          .d
 
-        .xx$cell_factor[[1]] -> .cell_factor
+        .d$cell_factor[[1]] -> .cell_factor
 
 
 
-        .yy.combined$cell1 <- factor(x = .yy.combined$cell1, levels = .cell_factor$cell1)
-        .yy.combined$cell2 <- factor(x = .yy.combined$cell2, levels = .cell_factor$cell2)
-        .yy.combined$cell3 <- factor(x = .yy.combined$cell3, levels = .cell_factor$cell3)
+        .m$cell1 <- factor(x = .m$cell1, levels = .cell_factor$cell1)
+        .m$cell2 <- factor(x = .m$cell2, levels = .cell_factor$cell2)
+        .m$cell3 <- factor(x = .m$cell3, levels = .cell_factor$cell3)
 
-        .yy.combined$cell1_cluster <- as.factor(as.numeric(.yy.combined$cell1))
-        .yy.combined$cell2_cluster <- as.factor(as.numeric(.yy.combined$cell2))
-        .yy.combined$cell3_cluster <- as.factor(as.numeric(.yy.combined$cell3))
+        .m$cell1_cluster <- as.factor(as.numeric(.m$cell1))
+        .m$cell2_cluster <- as.factor(as.numeric(.m$cell2))
+        .m$cell3_cluster <- as.factor(as.numeric(.m$cell3))
 
-        .yy.combined
-
+        .m
       }
     )
   ) ->
   azimuth_ref_sunburst_cell_merge_norm
 
-
-# cluster plot ------------------------------------------------------------
 
 fn_plot_umap_tsne_new <- function(.x, .y) {
   # .x <- azimuth_ref_sunburst_cell_merge_norm$region[[1]]
@@ -336,6 +368,7 @@ fn_plot_umap_tsne_new <- function(.x, .y) {
   )
 }
 
+
 azimuth_ref_sunburst_cell_merge_norm |>
   dplyr::mutate(
     p = purrr::map2(
@@ -346,8 +379,6 @@ azimuth_ref_sunburst_cell_merge_norm |>
   ) |>
   tidyr::unnest(cols = p) ->
   azimuth_ref_sunburst_cell_merge_norm_p
-
-
 
 azimuth_ref_sunburst_cell_merge_norm_p |>
   dplyr::mutate(
@@ -363,33 +394,21 @@ azimuth_ref_sunburst_cell_merge_norm_p |>
           plot = .p2,
           width = 10,
           height = 8,
-          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3"
+          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot"
         )
         ggsave(
           filename = "{.r}-celltype-cluster-tsne.pdf" |> glue::glue(),
           plot = .p1,
           width = 10,
           height = 8,
-          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3"
+          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot"
         )
       }
     )
   )
 
 
-# azimuth_ref_sunburst_cell_merge_norm_p$norm[[1]]@active.ident
-# DimPlot(
-#   azimuth_ref_sunburst_cell_merge_norm_p$norm[[1]],
-#   reduction = "tsne",
-#   split.by = "case",
-#   group.by = "cell3"
-# )
-
-# a <- azimuth_ref_sunburst_cell_merge_norm_p$norm[[1]]
-
-
-
-# Marker gene -------------------------------------------------------------
+# Marker genes ------------------------------------------------------------
 
 
 fn_find_all_markers <- function(.norm) {
@@ -417,6 +436,15 @@ azimuth_ref_sunburst_cell_merge_norm |>
   ) ->
   azimuth_ref_sunburst_cell_merge_norm_allmarkers
 
+# azimuth_ref_sunburst_cell_merge_norm_allmarkers |>
+#   readr::write_rds(
+#     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_allmarkers.rds.gz"
+#   )
+
+azimuth_ref_sunburst_cell_merge_norm_allmarkers <- readr::read_rds(
+  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_allmarkers.rds.gz"
+)
+
 # Heatmap -----------------------------------------------------------------
 
 
@@ -427,9 +455,6 @@ fn_heatmap <- function(.norm,.region, .allmarkers, .topn=5){
   # .topn <- 10
 
   Idents(.norm) <- "cell3_cluster"
-  # print(.norm@active.a)
-
-  # DefaultAssay(.norm) <- "RNA"
 
   .allmarkers |>
     dplyr::group_by(cluster) |>
@@ -441,16 +466,31 @@ fn_heatmap <- function(.norm,.region, .allmarkers, .topn=5){
 }
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers |>
+  # dplyr::mutate(
+  #   allmarkers = purrr::map(
+  #     .x = allmarkers,
+  #     .f = function(.x) {
+  #
+  #       .x |>
+  #         dplyr::filter(gene != "Pisd") ->
+  #         .xx
+  #
+  #       .xx$gene <- rownames(.xx) |> stringr::str_to_sentence()
+  #       rownames(.xx) <- .xx$gene
+  #       .xx
+  #     }
+  #   )
+  # ) |>
   dplyr::mutate(
-  heatmap10 = purrr::pmap(
-    .l = list(
-      .norm = norm,
-      .region = region,
-      .allmarkers = allmarkers
-    ),
-    .f = fn_heatmap
-  )
-) ->
+    heatmap10 = purrr::pmap(
+      .l = list(
+        .norm = norm,
+        .region = region,
+        .allmarkers = allmarkers
+      ),
+      .f = fn_heatmap
+    )
+  ) ->
   azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
@@ -466,13 +506,11 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
           plot = .p,
           width = 20,
           height = 15,
-          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3"
+          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot"
         )
       }
     )
   )
-
-# Marker gene dot ---------------------------------------------------------
 
 
 fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c(
@@ -803,7 +841,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[1]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[1]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
   width = 7,
   height = 3
 )
@@ -813,7 +851,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[2]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[2]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
   width = 10,
   height = 5
 )
@@ -822,7 +860,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[3]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[3]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
   width = 9,
   height = 4
 )
@@ -831,8 +869,8 @@ ggsave(
 # marker gene -------------------------------------------------------------
 
 fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
-  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[2]]
-  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[2]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[1]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[1]]
 
   .allmarkers %>%
     dplyr::group_by(cluster) %>%
@@ -859,7 +897,6 @@ fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
         ),
         .f = function(.cluster, .gene, .cell3, .cell3_color) {
           .title = glue::glue("{stringr::str_to_title(.gene)}\n({.cell3})")
-          DefaultAssay(.norm) <- "RNA"
           FeaturePlot(
             object = .norm,
             features = .gene,
@@ -882,8 +919,7 @@ fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
     ) ->
     m
 
-  m |>
-    dplyr::ungroup()
+  m
 }
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
@@ -897,6 +933,10 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
   azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene
 
 
+# Save marker gene --------------------------------------------------------
+
+
+
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |>
   dplyr::mutate(
     a = purrr::map2(
@@ -908,7 +948,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
             .x
           ),
           recursive = T,
@@ -925,25 +965,26 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
                 .cell3 = cell3,
                 .fp = fp
               ),
-              .f = function(.cluster, .gene, .cell3, .fp) {
-                .filename <- glue::glue("{.x}_{.cluster}_{.cell3}_{stringr::str_to_sentence(.gene)}.pdf")
-                ggsave(
-                  filename = .filename,
-                  plot = .fp,
-                  device = "pdf",
-                  path = file.path(
-                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
-                    .x
-                  ),
-                  width = 5,
-                  height = 5
-                )
-              }
+                .f = function(.cluster, .gene, .cell3, .fp) {
+                  .filename <- glue::glue("{.x}_{.cluster}_{.cell3}_{stringr::str_to_sentence(.gene)}.pdf")
+                  ggsave(
+                    filename = .filename,
+                    plot = .fp,
+                    device = "pdf",
+                    path = file.path(
+                      "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
+                      .x
+                    ),
+                    width = 5,
+                    height = 5
+                  )
+                }
+              )
             )
-          )
-      }
+            }
     )
   )
+
 
 # write xlsx --------------------------------------------------------------
 
@@ -956,7 +997,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
       .f = function(.x, .y) {
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
             .x
           ),
           recursive = T,
@@ -967,18 +1008,18 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
           .y |>
             dplyr::mutate(gene = stringr::str_to_title(gene)),
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot",
             .x,
             "{.x}-all-marker-genes.xlsx" |> glue::glue()
           )
         )
       }
     )
-  )
+ )
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |>
   readr::write_rds(
-    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene_integration.rds.gz"
+    file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene.rds.gz"
   )
 
 # footer ------------------------------------------------------------------
@@ -986,5 +1027,4 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
-load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+save.image(file = "data/azimuth/05-cluster-marker-gene.rda")
