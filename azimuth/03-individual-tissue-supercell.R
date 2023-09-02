@@ -38,15 +38,27 @@ gtex <- yaml::yaml.load_file(input = "https://raw.githubusercontent.com/chunjie-
 
 # load data ---------------------------------------------------------------
 
-refcelllevel <- tibble::tibble(
-  region = c("Brain", "Meninge", "Skull"),
-  ref = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "bonemarrowref"),
-  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.celltype.l2"),
-  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.celltype.l1"),
+# refcelllevel <- tibble::tibble(
+#   region = c("Brain", "Meninge", "Skull"),
+#   ref = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "bonemarrowref"),
+#   celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.annotation.l1"),
+#   supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.annotation.l1"),
+# )
+
+
+
+celllevel <- c(
+  "Brain" = "predicted.cluster",
+  "Meninge" = "predicted.annotation.l1",
+  "Skull" = "predicted.annotation.l1"
 )
 
-
-
+refcelllevel <- tibble::tibble(
+  region = c("Brain", "Meninge", "Skull"),
+  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/Mazzitelli_Nat_Neurosci_2022/azimuth_skull"),
+  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.annotation.l1"),
+  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.annotation.l1")
+)
 
 project_sc_azimuth <- readr::read_rds(
   # file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/azimuth/project_sc_azimuth.rds"
@@ -143,7 +155,7 @@ project_sc_azimuth <- readr::read_rds(
           )
 
         },
-        .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel4"
+        .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
       )
     )
 
@@ -173,7 +185,7 @@ mousecortexref_cell |>
 
 SeuratData::LoadData(ds = "pbmcref", type = "azimuth") -> pbmcref
 pbmcref$plot@meta.data |>
-  dplyr::count(celltype.l1)
+  dplyr::count(celltype.l1, celltype.l2) |>
   dplyr::select(celltype.l1, celltype.l2, ) |>
   dplyr::arrange(celltype.l1, celltype.l2, ) |>
   dplyr::distinct() |>
@@ -206,9 +218,16 @@ bonemarrowref_cell |>
 
 refcelllevel <- tibble::tibble(
   region = c("Brain", "Meninge", "Skull"),
-  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "bonemarrowref"),
-  celllevel = c("celltype2", "predicted.annotation.l1", "predicted.celltype.l2"),
-  supercelllevel = c("celltype1", "predicted.annotation.l1", "predicted.celltype.l1")
+  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/Mazzitelli_Nat_Neurosci_2022/azimuth_skull"),
+  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.annotation.l1"),
+  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.annotation.l1")
+)
+
+refcelllevel <- tibble::tibble(
+  region = c("Brain", "Meninge", "Skull"),
+  refs = c("mousecortexref", "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura", "/mnt/isilon/xing_lab/liuc9/refdata/brainimmuneatlas/Mazzitelli_Nat_Neurosci_2022/azimuth_skull"),
+  celllevel = c("predicted.cluster", "predicted.annotation.l1", "predicted.annotation.l1"),
+  supercelllevel = c("predicted.subclass", "predicted.annotation.l1", "predicted.annotation.l1")
 ) |>
   dplyr::mutate(
     realcell = c(list(mousecortexref_cell), list(pbmcref_cell), list(bonemarrowref_cell))
@@ -255,43 +274,12 @@ project_sc_azimuth_ref_realcell |>
             )
         } else {
           .anno@meta.data |>
-            dplyr::left_join(
-              .realcell,
-              by = .celllevel
+            dplyr::mutate(
+              celltype.l1 = predicted.annotation.l1,
+              celltype.l2 = predicted.annotation.l1
             )
         }
 
-        # .dd <- if(.region == "Brain") {
-        #   nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
-        #   .d |>
-        #     dplyr::filter(!cluster %in% nnc) |>
-        #     dplyr::count(class, subclass, cluster) |>
-        #     dplyr::mutate(cluster_r = n / sum(n)) |>
-        #     dplyr::group_by(subclass) |>
-        #     dplyr::mutate(subclass_r = sum(cluster_r)) |>
-        #     dplyr::ungroup() |>
-        #     dplyr::group_by(class) |>
-        #     dplyr::mutate(class_r = sum(cluster_r)) |>
-        #     dplyr::ungroup() |>
-        #     dplyr::mutate(
-        #       class = glue::glue("{class} {round(class_r * 100, 2)}%"),
-        #       subclass = glue::glue("{subclass} {round(subclass_r * 100, 2)}%"),
-        #       cluster = glue::glue("{cluster} {round(cluster_r * 100, 2)}%")
-        #     ) |>
-        #     dplyr::select(2,3,4)
-        # } else {
-        #   .d |>
-        #     dplyr::count(celltype.l1, celltype.l2) |>
-        #     dplyr::mutate(celltype.l2_r = n / sum(n)) |>
-        #     dplyr::group_by(celltype.l1) |>
-        #     dplyr::mutate(celltype.l1_r = sum(celltype.l2_r)) |>
-        #     dplyr::ungroup() |>
-        #     dplyr::mutate(
-        #       celltype.l1 = glue::glue("{celltype.l1} {round(celltype.l1_r * 100, 2)}%"),
-        #       celltype.l2 = glue::glue("{celltype.l2} {round(celltype.l2_r * 100, 2)}%"),
-        #     ) |>
-        #     dplyr::select(1,2,3)
-        # }
         .d |>
           dplyr::count(celltype.l1, celltype.l2) |>
           dplyr::mutate(celltype.l2_r = n / sum(n)) |>
@@ -365,7 +353,7 @@ project_sc_azimuth_ref_realcell_sunburst |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel10"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
     )
   )
 
