@@ -49,6 +49,10 @@ recell3 <- c(
   # Myeloid
 
   "Neutrophils" = "Neutrophils",
+  "Proliferating neutrophils" = "Neutrophils",
+
+  "Basophils" = "Neutrophils",
+  "Mast cells" = "Neutrophils",
 
   "cl. Monocytes" = "CD14 Monocytes",
   "Non-cl. monocytes" = "CD16 Monocytes",
@@ -57,8 +61,12 @@ recell3 <- c(
   "CD14 Mono" = "CD14 Monocytes",
   "CD16 Mono" = "CD16 Monocytes",
 
+  "Monocytes" = "CD14 Monocytes",
+
   "D-BAM" = "Macrophage",
   "Macrophage" = "Macrophage",
+
+  "Macrophages" = "Macrophage",
 
   "pDC" = "pDC",
   "cDC2" = "mDC",
@@ -67,6 +75,8 @@ recell3 <- c(
   "pre-mDC" = "mDC",
   "pre-pDC" = "pDC",
   "ASDC" = "mDC",
+
+  "DCs cells" = "mDC",
 
   # Lymphoctyes
   "B cells" = "Mature B cells",
@@ -77,6 +87,13 @@ recell3 <- c(
   "Plasma" = "Mature B cells",
   "pro B" = "Pro-B cells",
 
+  "Mature B cells" = "Mature B cells",
+  "Immature B cells" = "Immature B cells",
+  "Pro-B cells" = "Pro-B cells",
+  "Pre-B cells" = "Pre-B cells",
+  "Plasma cells" = "Mature B cells",
+
+
   "CD4 Naive" = "CD4 naive T cells",
   "CD4 Memory" = "CD4 memory T cells",
   "CD8 Memory" = "CD8 memory T cells",
@@ -85,9 +102,12 @@ recell3 <- c(
   "CD8 Effector_2" = "CD8 effector T cells",
   "T Proliferating" = "CD8 T cells",
 
+  "T cells" = "T cells",
+
+
   "NK" = "NK cells",
   "NK cells" =  "NK cells",
-  "T/NKT cells" = "CD8 T cells",
+  "T/NKT cells" = "T cells",
 
   "Stromal" = "other",
   "LMPP" = "HSPC",
@@ -95,10 +115,15 @@ recell3 <- c(
   "BaEoMa" = "HSPC",
   "Late Eryth" = "Erythroid",
   "Early Eryth" = "Erythroid",
+
+  "Erythroblasts" = "Erythroid",
+
   "Prog Mk" = "HSPC",
   "CLP" = "HSPC",
   "Platelet" = "Platelet",
   "Endo" = "Endothelial",
+
+  "HSCs" = "HSPC",
 
   "Micro" = "Microglia",
   "PVM_1" = "Microglia",
@@ -116,13 +141,19 @@ recell3 <- c(
   "Oligo Enpp6_2" = "OLG",
   "Oligo Opalin_4" = "OLG",
 
-  "OPC Pdgfra" = "OPC"
+  "OPC Pdgfra" = "OPC",
+
+  "Sensory neurons" = "Sensory neurons"
   )
 
 recell2 <- c(
   # Myeloid
 
   "Neutrophils" = "Neutrophils",
+  "Proliferating neutrophils" = "Neutrophils",
+
+  "Basophils" = "Neutrophils",
+  "Mast cells" = "Neutrophils",
 
   "cl. Monocytes" = "Monocytes",
   "Non-cl. monocytes" = "Monocytes",
@@ -131,8 +162,12 @@ recell2 <- c(
   "CD14 Mono" = "Monocytes",
   "CD16 Mono" = "Monocytes",
 
+  "Monocytes" = "Monocytes",
+
   "D-BAM" = "Macrophage",
   "Macrophage" = "Macrophage",
+
+  "Macrophages" = "Macrophage",
 
   "pDC" = "DC",
   "cDC2" = "DC",
@@ -141,6 +176,8 @@ recell2 <- c(
   "pre-mDC" = "DC",
   "pre-pDC" = "DC",
   "ASDC" = "DC",
+
+  "DCs cells" = "DC",
 
   # Lymphoctyes
   "B cells" = "B cells",
@@ -151,6 +188,12 @@ recell2 <- c(
   "Plasma" = "B cells",
   "pro B" = "B cells",
 
+  "Mature B cells" = "B cells",
+  "Immature B cells" = "B cells",
+  "Pro-B cells" = "B cells",
+  "Pre-B cells" = "B cells",
+  "Plasma cells" = "B cells",
+
   "CD4 Naive" = "T cells",
   "CD4 Memory" = "T cells",
   "CD8 Memory" = "T cells",
@@ -158,6 +201,8 @@ recell2 <- c(
   "CD8 Effector_3" = "T cells",
   "CD8 Effector_2" = "T cells",
   "T Proliferating" = "T cells",
+
+  "T cells" = "T cells",
 
   "NK" = "NK cells",
   "NK cells" =  "NK cells",
@@ -169,10 +214,15 @@ recell2 <- c(
   "BaEoMa" = "HSPC",
   "Late Eryth" = "Erythroid",
   "Early Eryth" = "Erythroid",
+
+  "Erythroblasts" = "Erythroid",
+
   "Prog Mk" = "HSPC",
   "CLP" = "HSPC",
   "Platelet" = "Platelet",
   "Endo" = "Endothelial",
+
+  "HSCs" = "HSPC",
 
   "Micro" = "Microglia",
   "PVM_1" = "Microglia",
@@ -274,16 +324,16 @@ recells |>
       "ggsci::brown_material",
       "ggsci::grey_material",
       "ggsci::blue_grey_material",
-      "ggsci::deep_orange_material",
       "ggsci::yellow_material",
+      "ggsci::pink_material",
+      "ggsci::red_material", # T cell
+      # "ggsci::purple_material",
       "ggsci::red_material",
-      # "ggsci::pink_material",
-      "ggsci::purple_material",
       "ggsci::light_blue_material",
       "ggsci::blue_material",
       "ggsci::cyan_material",
       "ggsci::teal_material",
-      "ggsci::green_material",
+      # "ggsci::green_material",
       "ggsci::deep_purple_material",
       "ggsci::deep_purple_material",
       "ggsci::indigo_material",
@@ -296,24 +346,27 @@ recells |>
       .f = paletteer::paletteer_d
     )
   ) |>
-  # dplyr::select(cell2, color) |>
-  # tibble::deframe()
+  dplyr::mutate(
+    m = glue::glue("{cell2}, {n}")
+  ) |>
+  dplyr::select(m, color) |>
+  tibble::deframe()
   dplyr::mutate(
     ns = c(
       list(c(10, 9, 5)),
       list(c(3)),
       list(c(3)),
       list(c(3)),
-      list(c(3)),
-      list(c(7, 9, 7, 5, 4, 3)),
-      list(c(10, 9, 7, 5, 4, 2)),
-      # list(c(10, 7, 4)),
+      # list(c(3)),
+      list(c(7, 9, 7, 5, 3)),
       list(c(10)),
-      list(c(10)),
+      list(c(10)), #T
+      list(c(7)),
+      # list(c(10)),
       list(c(10, 7, 5)),
       list(c(10, 9, 5)),
       list(c(10)),
-      list(c(10)),
+      list(c(10)), # Neutrophil
       list(c(6)),
       list(c(5)),
       list(c(5)),
@@ -463,7 +516,7 @@ recell_color_final |>
     axis.text.y = element_blank(),
     axis.ticks.y = element_blank()
   ) ->
-  pc1
+  pc1;pc1
 
 recell_color_final |>
   ggplot(aes(
@@ -509,12 +562,12 @@ ggsave(
   device = "pdf",
   width = 10,
   height = 8,
-  path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12"
+  path = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
 )
 
 readr::write_rds(
   x = recell_color_final,
-  file = "/home/liuc9/github/scbrain/data/azimuth/recell_color.rds"
+  file = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13/recell_color.rds"
 )
 
 # body --------------------------------------------------------------------
@@ -635,7 +688,7 @@ azimuth_ref_sunburst |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
     )
   )
 
@@ -652,8 +705,8 @@ azimuth_ref_sunburst |>
       .x = data,
       .y = region,
       .f = function(.x, .y) {
-        # .x <- ddd$data[[3]]
-        # .y <- ddd$region[[3]]
+        # .x <- ddd$data[[1]]
+        # .y <- ddd$region[[1]]
 
         .x$cellratio |>
           dplyr::bind_rows() |>
@@ -678,19 +731,19 @@ azimuth_ref_sunburst |>
           list(
             cell1 = c("Lymphoctyes", "Myeloid cells"),
             cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils"),
-            cell3 = c("CD8 T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "Neutrophils")
+            cell3 = c("T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "Neutrophils")
           )
         } else if(.y == "Skull") {
           list(
-            cell1 = c("Lymphoctyes", "Myeloid cells", "HSPC", "Erythroid", "Platelet", "other"),
-            cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "HSPC", "Erythroid", "Platelet", "other"),
-            cell3 = c("CD4 memory T cells", "CD4 naive T cells", "CD8 T cells", "CD8 effector T cells", "CD8 memory T cells", "Mature B cells", "Memory B cells", "Naive B cells", "Pre-B cells", "Pro-B cells","NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "HSPC", "Erythroid", "Platelet", "other")
+            cell1 = c("Lymphoctyes", "Myeloid cells", "HSPC", "Erythroid", "Sensory neurons"),
+            cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils",  "HSPC", "Erythroid", "Sensory neurons"),
+            cell3 = c("T cells", "Mature B cells", "Immature B cells", "Pre-B cells", "Pro-B cells", "NK cells", "CD14 Monocytes", "Macrophage", "mDC", "Neutrophils", "HSPC", "Erythroid", "Sensory neurons")
           )
         } else if(.y == "Brain") {
           list(
             cell1 = c("Lymphoctyes", "Myeloid cells", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial"),
             cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial"),
-            cell3 = c("CD8 T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial" )
+            cell3 = c("T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial" )
           )
         }
 
@@ -1035,7 +1088,7 @@ azimuth_ref_sunburst_sel_ratiop |>
         )
 
       },
-      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12"
+      .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
     )
   )
 
@@ -1155,7 +1208,7 @@ ggsave(
   filename = glue::glue("Pie_plot_cell1.pdf"),
   plot = p1,
   device = "pdf",
-  path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12",
+  path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13",
   width = 15,
   height = 15
 )
@@ -1272,7 +1325,7 @@ ggsave(
   filename = glue::glue("Pie_plot_cell2.pdf"),
   plot = p2,
   device = "pdf",
-  path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel12",
+  path =  "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13",
   width = 20,
   height = 20
 )
@@ -1283,4 +1336,4 @@ ggsave(
 
 # save image --------------------------------------------------------------
 save.image(file = "data/azimuth/04-manual-annotation.rda")
-load(file = "data/azimuth/04-manual-annotation.rda")
+# load(file = "data/azimuth/04-manual-annotation.rda")
