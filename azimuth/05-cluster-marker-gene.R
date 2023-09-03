@@ -31,17 +31,20 @@ future::plan(future::multisession, workers = 10)
 pcc <- readr::read_tsv(file = "https://raw.githubusercontent.com/chunjie-sam-liu/chunjie-sam-liu.life/master/public/data/pcc.tsv")
 
 recell_color_final <- readr::read_rds(
-  file = "/home/liuc9/github/scbrain/data/azimuth/recell_color.rds"
+  file = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13/recell_color.rds"
 )
 
-azimuth_ref_sunburst_cell_cell_factor <-
-  readr::read_rds(
-    file = "/home/liuc9/github/scbrain/data/azimuth/recell_cell_factor.rds"
-  )
+# azimuth_ref_sunburst_cell_cell_factor <-
+#   readr::read_rds(
+#     file = "/home/liuc9/github/scbrain/data/azimuth/recell_cell_factor.rds"
+#   )
 
 azimuth_ref_sunburst_cell <-  readr::read_rds(
   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
 )
+
+azimuth_ref_sunburst_cell_cell_factor <- azimuth_ref_sunburst_cell |>
+  dplyr::select(project, region, case, cell_factor)
 
 # body --------------------------------------------------------------------
 
@@ -105,6 +108,15 @@ azimuth_ref_sunburst_cell |>
   ) ->
   azimuth_ref_sunburst_cell_merge_norm
 
+# azimuth_ref_sunburst_cell_merge_norm |>
+#   readr::write_rds(
+#   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm.rds.gz"
+# )
+
+# azimuth_ref_sunburst_cell_merge_norm <-
+#   readr::read_rds(
+#   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm.rds.gz"
+# )
 
 # cluster plot ------------------------------------------------------------
 
@@ -475,12 +487,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
 # Marker gene dot ---------------------------------------------------------
 
 
-fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c(
-  "lightgrey",
-  "blue"
-), col.min = -2.5, col.max = 2.5, dot.min = 0, dot.scale = 8,
-idents = NULL, group.by = NULL, split.by = NULL, cluster.idents = FALSE,
-scale = TRUE, scale.by = "radius", scale.min = NA, scale.max = NA) {
+fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lightgrey","blue"), col.min = -2.5, col.max = 2.5, dot.min = 0, dot.scale = 8, idents = NULL, group.by = NULL, split.by = NULL, cluster.idents = FALSE,scale = TRUE, scale.by = "radius", scale.min = NA, scale.max = NA) {
 
   # object <- .norm
   # assay = NULL
@@ -828,7 +835,9 @@ ggsave(
 )
 
 
-# marker gene -------------------------------------------------------------
+# marker gene
+
+-------------------------------------------------------------
 
 fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
   # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[2]]
