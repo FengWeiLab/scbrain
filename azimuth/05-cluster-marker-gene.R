@@ -592,6 +592,7 @@ fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lig
     data.use$id <- x
     return(data.use)
   })
+
   data.plot <- do.call(what = "rbind", args = data.plot)
   if (!is.null(x = id.levels)) {
     data.plot$id <- factor(x = data.plot$id, levels = id.levels)
@@ -688,6 +689,9 @@ fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lig
       color = "black",
       size = 4
     ) +
+    # scale_y_discrete(
+    #   expand = expansion(0, 0.2)
+    # ) +
     theme(
       axis.title.x = element_blank(),
       axis.title.y = element_blank(),
@@ -735,8 +739,12 @@ fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lig
       limits = c(-1, 2),
       name = "Average Expression"
     ) +
+    # scale_y_discrete(
+    #   expand = expansion(0, 0.2)
+    # ) +
     scale_x_discrete(
       position = "top",
+      # expand = expansion(0, 0.5)
     ) +
     theme(
       axis.title.x = element_blank(),
@@ -745,12 +753,12 @@ fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lig
       panel.grid = element_blank(),
       axis.ticks = element_blank(),
       axis.text.x.top = element_text(
-        angle = 90,
+        angle = 45,
         hjust = 0,
-        vjust = 0.5,
-        size = 10,
+        vjust = 0,
+        size = 12,
         color = "black",
-        face = "italic"
+        face = "bold.italic"
       ),
       legend.background = element_blank(),
       legend.key = element_blank(),
@@ -761,7 +769,7 @@ fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lig
     labs(x = "Features", y = ifelse(test = is.null(x = split.by),
                                     yes = "Identity", no = "Split Identity"
     ))  ->
-    p2
+    p2;p2
 
   cowplot::plot_grid(
     plotlist = list( p1, p2),
@@ -779,6 +787,10 @@ fn_gene_dotplot <- function(.norm, .allmarkers, .n = 2) {
   # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[2]]
 
   .allmarkers %>%
+    dplyr::filter(!grepl(
+      pattern = "Mt-|mt-",
+      x = gene
+    )) |>
     dplyr::group_by(cluster) %>%
     dplyr::slice_max(n = .n, order_by = avg_log2FC)  ->
     .marker_head
@@ -811,8 +823,8 @@ ggsave(
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[1]],
   device = "pdf",
   path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
-  width = 7,
-  height = 3
+  width = 6.5,
+  height = 4
 )
 
 
@@ -821,8 +833,8 @@ ggsave(
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[2]],
   device = "pdf",
   path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
-  width = 10,
-  height = 5
+  width = 8,
+  height = 4
 )
 
 ggsave(
@@ -830,20 +842,22 @@ ggsave(
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[3]],
   device = "pdf",
   path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
-  width = 9,
-  height = 4
+  width = 10,
+  height = 5
 )
 
 
-# marker gene
-
--------------------------------------------------------------
+# marker gene -------------------------------------------------------------
 
 fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
   # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[2]]
   # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[2]]
 
   .allmarkers %>%
+    dplyr::filter(!grepl(
+      pattern = "Mt-|mt-",
+      x = gene
+    )) |>
     dplyr::group_by(cluster) %>%
     dplyr::slice_max(n = .n, order_by = avg_log2FC) |>
     dplyr::left_join(
@@ -995,5 +1009,5 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
-load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+# save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+# load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
