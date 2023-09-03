@@ -865,15 +865,15 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 0.98,
-            color = 1,
-            linewidth = 0.02,
+            width = 0.9,
+            # color = 1,
+            linewidth = 0,
             # alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
             labels = c("Sham", "tMCAO", "tMCAO+UVB"),
-            expand = expansion(mult= c(0.25, 0.25), add = 0)
+            expand = expansion(mult= c(0.3, 0.3), add = 0)
           ) +
           scale_y_continuous(
             labels = scales::percent_format(),
@@ -911,6 +911,11 @@ azimuth_ref_sunburst_sel |>
               size = 14,
               color = "black",
               face = "bold"
+            ),
+            axis.text.x = element_text(
+              angle = 45,
+              vjust = 1,
+              hjust = 1
             )
           ) ->
           .p;.p
@@ -935,15 +940,15 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 0.98,
-            color = 1,
-            linewidth = 0.02,
+            width = 0.9,
+            # color = 1,
+            linewidth = 0,
             # alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
             labels = c("Sham", "tMCAO", "tMCAO+UVB"),
-            expand = expansion(mult= c(0.25, 0.25), add = 0)
+            expand = expansion(mult= c(0.3, 0.3), add = 0)
           ) +
           scale_y_continuous(
             labels = scales::percent_format(),
@@ -972,6 +977,11 @@ azimuth_ref_sunburst_sel |>
               size = 14,
               color = "black",
               face = "bold"
+            ),
+            axis.text.x = element_text(
+              angle = 45,
+              vjust = 1,
+              hjust = 1
             )
           ) ->
           .pp;.pp
@@ -996,15 +1006,15 @@ azimuth_ref_sunburst_sel |>
             fill = cluster
           )) +
           geom_col(
-            width = 0.98,
-            color = 1,
-            linewidth = 0.02,
+            width = 0.9,
+            # color = 1,
+            linewidth = 0,
             # alpha = 0.8
           ) +
           scale_x_discrete(
             limits = c("Sham", "MCAO", "UV"),
             labels = c("Sham", "tMCAO", "tMCAO+UVB"),
-            expand = expansion(mult= c(0.25, 0.25), add = 0)
+            expand = expansion(mult= c(0.3, 0.3), add = 0)
           ) +
           scale_y_continuous(
             labels = scales::percent_format(),
@@ -1038,6 +1048,11 @@ azimuth_ref_sunburst_sel |>
               size = 14,
               color = "black",
               face = "bold"
+            ),
+            axis.text.x = element_text(
+              angle = 45,
+              vjust = 1,
+              hjust = 1
             )
           ) ->
           .ppp;.ppp
@@ -1063,30 +1078,51 @@ azimuth_ref_sunburst_sel_ratiop |>
       .y = ratiop,
       .f = function(.region, .ratiop, .outdir) {
         ggsave(
-          filename = glue::glue("Propertion_{.region}_cell1.pdf"),
+          filename = glue::glue("Propertion_{.region}_cell1.2.pdf"),
           plot = .ratiop$p_cell1,
           device = "pdf",
           path = .outdir,
-          width = 10,
-          height = 8
+          width = 4,
+          height = 7
         )
 
         ggsave(
-          filename = glue::glue("Propertion_{.region}_cell2.pdf"),
+          filename = glue::glue("Propertion_{.region}_cell2.2.pdf"),
           plot = .ratiop$p_cell2,
           device = "pdf",
           path = .outdir,
-          width = 10,
-          height = 8
+          width = 4,
+          height = 7
+        )
+
+        wid <- ifelse(
+          .region == "Brain",
+          5,
+          4
         )
         ggsave(
-          filename = glue::glue("Propertion_{.region}_cell3.pdf"),
+          filename = glue::glue("Propertion_{.region}_cell3.2.pdf"),
           plot = .ratiop$p_cell3,
           device = "pdf",
           path = .outdir,
-          width = 10,
-          height = 8
+          width = wid,
+          height = 7
         )
+
+        tox <- list(
+          Cell1 = .ratiop$d_cell1,
+          Cell3 = .ratiop$d_cell2,
+          Cell3 = .ratiop$d_cell3
+        )
+
+        writexl::write_xlsx(
+          x = tox,
+          path = file.path(
+            .outdir,
+            glue::glue("Propertion_{.region}_cell_ratio.xlsx")
+          )
+        )
+
 
       },
       .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
