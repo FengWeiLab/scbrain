@@ -179,25 +179,142 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
   ) ->
   azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich
 
+#
+# azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
+#   readr::write_rds(
+#     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich.rds.gz"
+#   )
 
-azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
-  readr::write_rds(
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich <-
+  readr::read_rds(
     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich.rds.gz"
   )
 
 
+fn_plot_enrich <- function(.m, .change="up") {
+  # .d <- .dde %>% dplyr::filter(change == .change)
+  .go_bp <- .m$gobp[[1]]
+  .color <- c("up" = "#EE0000FF", "down" = "#008280FF")
+
+  if(is.null(.m)) {
+    return(NULL)
+  }
+
+  .go_bp %>%
+    tibble::as_tibble()  %>%
+    # dplyr::mutate(
+    #   Description = stringr::str_wrap(
+    #     stringr::str_to_sentence(string = Description),
+    #     width = 60
+    #   )
+    # ) %>%
+    dplyr::mutate(Description = stringr::str_to_sentence(string = Description)) |>
+    dplyr::mutate(adjp = -log10(p.adjust)) %>%
+    dplyr::select(ID, Description, adjp, Count) %>%
+    head(20) %>%
+    dplyr::arrange(adjp, Count) %>%
+    dplyr::mutate(
+      Description = factor(Description, levels = Description)
+    ) |>
+    dplyr::mutate(lb = glue::glue("{Description} (count = {Count})")) ->
+    .go_bp_for_plot
+
+  if (.change == "down") {
+    .go_bp_for_plot |>
+      ggplot(aes(x = Description, y = adjp)) +
+      geom_col(fill = .color[.change], color = NA, width = 0.9, alpha = 0.7) +
+      scale_y_reverse(expand = expansion(mult=0, add = c(0.5, 0.02))) +
+      scale_x_discrete(name = "", position = "top") +
+      coord_flip() +
+      geom_text(aes(label = lb, y = 0.05), hjust = 1, color = "black") +
+      labs(y = "-log10(Adj. P value)") +
+      theme(
+        panel.background = element_rect(fill = NA),
+        panel.grid = element_blank(),
+        axis.line.x = element_line(color = "black"),
+        axis.line.y = element_line(color = "black"),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_text(color = "black", size = 13, hjust = 1),
+        axis.text.y = element_blank(),
+        # axis.ticks.length.y = unit(3, units = "mm"),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_text(color = "black", size = 12, face = "bold"),
+        axis.title.x = element_text(color = "black", size = 14, face = "bold"),
+        axis.line.y.right = element_blank()
+
+      ) ->
+      .go_bp_plot;.go_bp_plot
+  } else {
+    .go_bp_for_plot |>
+      ggplot(aes(x = adjp, y = Description)) +
+      geom_col(fill = .color[.change], color = NA, width = 0.9, alpha = 0.7) +
+      geom_text(aes(label = lb, x = 0.05), hjust = 0, color = "black") +
+      labs(y = "-log10(Adj. P value)") +
+      scale_x_continuous(expand = expansion(mult=0, add = c(0.02, 0.5))) +
+      theme(
+        panel.background = element_rect(fill = NA),
+        panel.grid = element_blank(),
+        axis.line.x = element_line(color = "black"),
+        axis.line.y = element_line(color = "black"),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_text(color = "black", size = 13, hjust = 1),
+        axis.text.y = element_blank(),
+        # axis.ticks.length.y = unit(3, units = "mm"),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_text(color = "black", size = 12, face = "bold"),
+        axis.title.x = element_text(color = "black", size = 14, face = "bold"),
+        axis.line.y.left = element_blank()
+
+      ) ->
+      .go_bp_plot;.go_bp_plot
+  }
+
+  tibble::tibble(
+    gobp = list(.go_bp),
+    goplot = list(.go_bp_plot)
+  )
+}
+
 azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
   dplyr::mutate(
-    a = purrr::map2(
+    b = purrr::map(
+      .x = enrichment,
+      .f = \(.x) {
+        # .x <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$enrichment[[2]]
+
+        .x |>
+          dplyr::mutate(
+            up_en = purrr::map(
+              .x = up_en,
+              .f = fn_plot_enrich,
+              .change = "up"
+            ),
+            down_en = purrr::map(
+              .x = up_en,
+              .f = fn_plot_enrich,
+              .change = "down"
+            )
+          )
+      }
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot
+
+
+# azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |>
+  dplyr::mutate(
+    a = purrr::map(
       .x = region,
-      .y = enrichment,
+      .y = b,
       .f = function(.r, .e) {
-        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$region[[1]]
-        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$enrichment[[1]]
+        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$region[[3]]
+        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$b[[3]]
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/10-enrichment-2",
+            "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
             .r
           )
         )
@@ -225,17 +342,17 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
                       filename = glue::glue("{.filename}-down-enrichment.pdf"),
                       device = "pdf",
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-2",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
                         .r
                       ),
-                      width = 10,
-                      height = 6.5
+                      width = 7,
+                      height = 5
                     )
 
                     writexl::write_xlsx(
                       x = as.data.frame(.down_en$gobp[[1]]),
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-2",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
                         .r,
                         glue::glue("{.filename}-down-enrichment.xlsx")
                       )
@@ -252,17 +369,17 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
                       filename = glue::glue("{.filename}-up-enrichment.pdf"),
                       device = "pdf",
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-2",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
                         .r
                       ),
-                      width = 10,
-                      height = 6.5
+                      width = 7,
+                      height = 5
                     )
 
                     writexl::write_xlsx(
                       x = as.data.frame(.up_en$gobp[[1]]),
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-2",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
                         .r,
                         glue::glue("{.filename}-up-enrichment.xlsx")
                       )
