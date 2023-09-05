@@ -796,6 +796,132 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
   )
 
 
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
+  dplyr::mutate(
+    nn_merge_plot = purrr::map2(
+      .x = region,
+      .y = nn,
+      .f = \(.r, .nn) {
+        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn$region[[1]]
+        # .nn <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn$nn[[1]]
+
+        .r
+
+        .nn$d |>
+          dplyr::filter(change != "nosig") |>
+          dplyr::filter(cell != "Pseudo bulk") |>
+          dplyr::group_by(cell) |>
+          dplyr::mutate(n1 = sum(n)) |>
+          dplyr::ungroup() |>
+          dplyr::group_by(cell, type) |>
+          dplyr::mutate(n2 = sum(n)) |>
+          dplyr::ungroup() |>
+          dplyr::mutate(cell = forcats::fct_reorder(cell, n1)) |>
+          dplyr::mutate(n = ifelse(type == "ms", -n, n)) |>
+          dplyr::mutate(hjust = ifelse(type == "ms", 1, 0)) ->
+          .forp
+        .forp |>
+          ggplot(aes(
+            x = n,
+            y = cell
+          )) +
+          geom_col(aes(fill = change)) +
+          geom_text(
+            data = .forp |>
+              dplyr::mutate(n2 = ifelse(hjust == 1, -n2, n2)) |>
+              dplyr::select(cell, n2, hjust) |>
+              dplyr::distinct(),
+            aes(
+              x = n2,
+              y = cell,
+              label = abs(n2),
+              hjust = hjust
+            ),
+            size = 4,
+            fontface = 1,
+            show.legend = F
+          ) +
+          scale_x_continuous(
+            expand = expansion(
+              mult = c(0.1, 0.1)
+            )
+          ) +
+          geom_vline(xintercept = 0, linewidth = 0.5) +
+          # scale_fill_manual(
+          #   name = "Regulations",
+          #   breaks = c("down", "up"),
+          #   label = c("Down", "Up"),
+          #   values =  c("#008280FF", "#EE0000FF")
+          # )
+          scale_fill_brewer(
+            palette = "Set1",
+            direction = -1,
+            name = "Regulations",
+            limits = c("down", "up"),
+            label = c("Down", "Up")
+          ) +
+          theme(
+            plot.background = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.major.y = element_line(
+              colour = "black",
+              linetype = "dotted",
+              linewidth = 0.2,
+            ),
+            axis.text.y = element_text(size = 14, color = "black", face = "bold"),
+            axis.text.x = element_blank(),
+            axis.line.y = element_blank(),
+            axis.line.x = element_line(
+              arrow = grid::arrow(
+                angle = 10,
+                length = unit(10, 'pt'),
+                ends = "both"
+              )
+            ),
+            axis.ticks = element_blank(),
+            axis.title.y = element_blank(),
+            axis.title.x = element_text(
+              size = 16,
+              color = "black",
+              face = "bold",
+              # hjust = 0
+            ),
+            legend.position = "top",
+            plot.title = element_blank()
+          ) +
+          labs(x = "") +
+          coord_cartesian(clip = "off") +
+          annotation_custom(
+            grid::textGrob(label = "tMCAO vs. Sham", gp = grid::gpar(
+              fontsize = 12,
+              col = "black",
+              fontface = "bold"
+            )),
+            xmin = -Inf, xmax = -20,
+            ymin = 0, ymax = 0
+          ) +
+          annotation_custom(
+            grid::textGrob(label = "UVB+tMCAO vs. tMCAO", gp = grid::gpar(
+              fontsize = 12,
+              col = "black",
+              fontface = "bold"
+            )),
+            xmin = 20, xmax = Inf,
+            ymin = 0, ymax = 0
+          ) ->
+          p;p
+        ggsave(
+          filename = glue::glue("{.r}-DEG-n-MERGE.pdf"),
+          plot = p,
+          device = "pdf",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+          width = 7,
+          height = 5
+        )
+      }
+    )
+  )
+
 # vocalno -----------------------------------------------------------------
 fn_volcano <- function(.x, .nn) {
   # .x <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn$de_change[[1]]
