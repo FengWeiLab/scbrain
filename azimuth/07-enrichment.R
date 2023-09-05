@@ -291,7 +291,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
               .change = "up"
             ),
             down_en = purrr::map(
-              .x = up_en,
+              .x = down_en,
               .f = fn_plot_enrich,
               .change = "down"
             )
@@ -309,8 +309,8 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
       .x = region,
       .y = b,
       .f = function(.r, .e) {
-        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$region[[1]]
-        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$b[[1]]
+        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$region[[2]]
+        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$b[[2]]
 
         dir.create(
           path = file.path(
