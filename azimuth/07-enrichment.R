@@ -250,7 +250,7 @@ fn_plot_enrich <- function(.m, .change="up") {
       ggplot(aes(x = adjp, y = Description)) +
       geom_col(fill = .color[.change], color = NA, width = 0.9, alpha = 0.7) +
       geom_text(aes(label = lb, x = 0.05), hjust = 0, color = "black") +
-      labs(y = "-log10(Adj. P value)") +
+      labs(x = "-log10(Adj. P value)") +
       scale_x_continuous(expand = expansion(mult=0, add = c(0.02, 0.5))) +
       theme(
         panel.background = element_rect(fill = NA),
@@ -309,14 +309,15 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
       .x = region,
       .y = b,
       .f = function(.r, .e) {
-        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$region[[3]]
-        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$b[[3]]
+        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$region[[1]]
+        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$b[[1]]
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
+            "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
             .r
-          )
+          ),
+          recursive = T
         )
 
         typeconv <- c("ms" = "tMCAO vs. Sham", "um" = "UVB+tMCAO vs. tMCAO")
@@ -342,17 +343,17 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
                       filename = glue::glue("{.filename}-down-enrichment.pdf"),
                       device = "pdf",
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
                         .r
                       ),
-                      width = 7,
+                      width = 3,
                       height = 5
                     )
 
                     writexl::write_xlsx(
                       x = as.data.frame(.down_en$gobp[[1]]),
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
                         .r,
                         glue::glue("{.filename}-down-enrichment.xlsx")
                       )
@@ -369,17 +370,17 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
                       filename = glue::glue("{.filename}-up-enrichment.pdf"),
                       device = "pdf",
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
                         .r
                       ),
-                      width = 7,
+                      width = 3,
                       height = 5
                     )
 
                     writexl::write_xlsx(
                       x = as.data.frame(.up_en$gobp[[1]]),
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-3",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
                         .r,
                         glue::glue("{.filename}-up-enrichment.xlsx")
                       )
