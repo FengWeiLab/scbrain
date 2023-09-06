@@ -868,7 +868,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
               linetype = "dotted",
               linewidth = 0.2,
             ),
-            axis.text.y = element_text(size = 14, color = "black", face = "bold"),
+            axis.text.y = element_text(size = 12, color = "black", face = "bold"),
             axis.text.x = element_blank(),
             axis.line.y = element_blank(),
             axis.line.x = element_line(
@@ -893,7 +893,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           coord_cartesian(clip = "off") +
           annotation_custom(
             grid::textGrob(label = "tMCAO vs. Sham", gp = grid::gpar(
-              fontsize = 12,
+              fontsize = 10,
               col = "black",
               fontface = "bold"
             )),
@@ -902,7 +902,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           ) +
           annotation_custom(
             grid::textGrob(label = "UVB+tMCAO vs. tMCAO", gp = grid::gpar(
-              fontsize = 12,
+              fontsize = 10,
               col = "black",
               fontface = "bold"
             )),
@@ -915,12 +915,111 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           plot = p,
           device = "pdf",
           path = "/home/liuc9/github/scbrain/scuvresult/09-de-2",
-          width = 7,
-          height = 5
+          width = 6,
+          height = 4
         )
       }
     )
   )
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = de_change,
+      .y = region,
+      .f = \(.de_change, .r) {
+        m <- .de_change
+        m |>
+          dplyr::filter(cell != "Pseudo bulk") |>
+          dplyr::select(1, 2, 3) |>
+          tidyr::gather(-cell, key = "vs", value = "de") |>
+          tidyr::unnest(cols = de) |>
+          dplyr::select(1, 2, 3, change) |>
+          tidyr::spread(key = vs, value = change) |>
+          tidyr::replace_na(
+            replace = list(
+              mcao_vs_sham = "nosig",
+              uv_vs_mcao = "nosig"
+            )
+          ) |>
+          dplyr::mutate(
+            mcao_vs_sham = stringr::str_to_sentence(mcao_vs_sham),
+            uv_vs_mcao = stringr::str_to_sentence(uv_vs_mcao)
+          ) |>
+          dplyr::mutate(vs = glue::glue("{mcao_vs_sham} {uv_vs_mcao}")) |>
+          dplyr::filter(vs != "Nosig Nosig") |>
+          dplyr::mutate(
+            vs2 = glue::glue("tMCAO vs. Sham ({mcao_vs_sham}) \nUVB+tMCAO vs. tMCAO ({uv_vs_mcao})")
+          ) |>
+          dplyr::count(cell, vs2) ->
+          d
+
+        d |>
+          dplyr::group_by(cell) |>
+          dplyr::summarise(s = sum(n)) |>
+          dplyr::arrange(s) ->
+          dd
+
+        d |>
+          dplyr::mutate(cell = factor(cell, dd$cell)) |>
+          ggplot(aes(
+            x = vs2,
+            y = cell,
+            fill = n
+          )) +
+          geom_tile(
+            linewidth = 0.2,
+            colour = "grey"
+          ) +
+          geom_text(aes(label = n), size = 5) +
+          scale_fill_gradient(
+            low = "white",
+            # mid = "white",
+            high = "red",
+            # midpoint = 0,
+            space = "Lab",
+            na.value = "grey50",
+            guide = "colourbar",
+            aesthetics = "fill",
+            name = "Count"
+          ) +
+          theme(
+            panel.grid = element_blank(),
+            panel.background = element_rect(
+              fill = NA,
+              color = "black"
+            ),
+            aspect.ratio = 1,
+
+            axis.ticks = element_blank(),
+            axis.title = element_blank(),
+            axis.text = element_text(
+              color = "black",
+              size = 14,
+              face = "bold"
+            ),
+            axis.text.x = element_text(
+              angle = 45,
+              vjust = 1,
+              hjust = 1,
+              size = 10
+            ),
+            legend.position = "top"
+          ) ->
+          p;p
+        ggsave(
+          filename = glue::glue("{.r}-DEG-n-Intersection.pdf"),
+          plot = p,
+          device = "pdf",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+          width = 7,
+          height = 7
+        )
+
+      }
+    )
+  )
+
 
 # vocalno -----------------------------------------------------------------
 fn_volcano <- function(.x, .nn) {
