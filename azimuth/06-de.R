@@ -342,7 +342,10 @@ fn_plot_prop_bulb <- function(.norm) {
         xend = uv_vs_mcao_log2,
         yend = cell3,
       ),
-      arrow = arrow(length = unit(10, "points")),
+      arrow = arrow(
+        angle = 5,
+        length = unit(10, "pt")
+      ),
       # linetype = "dotted"
       linewidth = 0.3
     ) +
@@ -356,7 +359,7 @@ fn_plot_prop_bulb <- function(.norm) {
       name = "VS",
       limits = c("mcao_vs_sham_log2", "uv_vs_mcao_log2"),
       label = c("tMCAO vs Sham", "UVB+tMCAO vs tMCAO"),
-      values = c("blue", "red")
+      values = c("#377EB8FF", "#E41A1CFF")
     ) +
     geom_vline(xintercept = 0, color = "red", linetype = "dotted") +
     scale_size(name = "Mean prop") +
@@ -366,34 +369,75 @@ fn_plot_prop_bulb <- function(.norm) {
       labels = c(-4, -3, -2, -1, 0, 1, 2, 3, 4)
     ) +
     theme(
+      plot.background = element_blank(),
       panel.background = element_blank(),
-      panel.grid = element_line(
-        colour = "grey",
-        linetype = "dashed"
+      panel.grid.major.y = element_line(
+        colour = "black",
+        linetype = "dotted",
+        linewidth = 0.2,
       ),
-      panel.grid.major = element_line(
-        colour = "grey",
-        linetype = "dashed",
-        linewidth = 0.2
-      ),
-      axis.line = element_line(color = "black"),
-      axis.ticks = element_line(color = "black"),
-      axis.text = element_text(
-        color = "black",
+      axis.text.y = element_text(
         size = 12,
-      ),
-      axis.title = element_text(
         color = "black",
-        size = 14,
+        # face = "bold"
       ),
+      axis.line.y = element_blank(),
+      axis.line.x = element_line(
+        # arrow = grid::arrow(
+        #   angle = 10,
+        #   length = unit(10, 'pt'),
+        #   ends = "both"
+        # )
+      ),
+      axis.ticks = element_blank(),
       axis.title.y = element_blank(),
+      axis.title.x = element_text(
+        size = 12,
+        color = "black",
+        # face = "bold",
+      ),
       legend.position = "top",
-      legend.key = element_blank()
+      plot.title = element_blank(),
+      axis.text.x = element_text(
+        size = 10,
+        color = "black",
+      ),
+        legend.key = element_blank()
     ) +
     labs(
       x = "log2 Fold Change",
     ) ->
-    p_merge
+    p_merge;p_merge
+
+    # theme(
+    #   panel.background = element_blank(),
+    #   panel.grid = element_line(
+    #     colour = "grey",
+    #     linetype = "dashed"
+    #   ),
+    #   panel.grid.major = element_line(
+    #     colour = "grey",
+    #     linetype = "dashed",
+    #     linewidth = 0.2
+    #   ),
+    #   axis.line = element_line(color = "black"),
+    #   axis.ticks = element_line(color = "black"),
+    #   axis.text = element_text(
+    #     color = "black",
+    #     size = 12,
+    #   ),
+    #   axis.title = element_text(
+    #     color = "black",
+    #     size = 14,
+    #   ),
+    #   axis.title.y = element_blank(),
+    #   legend.position = "top",
+    #   legend.key = element_blank()
+    # ) +
+    # labs(
+    #   x = "log2 Fold Change",
+    # ) ->
+    # p_merge;p_merge
 
 
   list(
@@ -445,8 +489,8 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
           plot = .y$p_merge,
           device = "pdf",
           path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-2",
-          width = 8,
-          height = 5
+          width = 5,
+          height = 4.5
         )
 
         .y$prop |>
