@@ -603,6 +603,6 @@ readr::write_rds(
 # future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/uvrdanew/03-uv-de.rda")
+# save.image(file = "data/uvrdanew/03-uv-de.rda")
 load(file = "data/uvrdanew/03-uv-de.rda")
 

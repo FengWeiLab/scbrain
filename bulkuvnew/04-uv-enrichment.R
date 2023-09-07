@@ -433,4 +433,5 @@ se_group_de_enrichment_sel |>
 # future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/uvrdanew/04-uv-enrichment.rda")
+# save.image(file = "data/uvrdanew/04-uv-enrichment.rda")
+load(file = "data/uvrdanew/04-uv-enrichment.rda")
