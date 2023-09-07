@@ -36,9 +36,10 @@ fn_gobp <- function(.de, .color = "red") {
     universe = .de$GeneName,
     keyType = "SYMBOL",
     OrgDb = org.Mm.eg.db::org.Mm.eg.db,
-    ont = "BP",
+    ont = "ALL",
     pAdjustMethod = "BH",
   )
+
   if(is.null(.go_bp)) {
     return(
       tibble::tibble(
@@ -57,18 +58,19 @@ fn_gobp <- function(.de, .color = "red") {
       )
     ) %>%
     dplyr::mutate(adjp = -log10(p.adjust)) %>%
-    dplyr::select(ID, Description, adjp, Count) %>%
+    dplyr::select(ONTOLOGY, ID, Description, adjp, Count) %>%
     head(20) %>%
     dplyr::arrange(adjp, Count) %>%
     dplyr::mutate(
       Description = factor(Description, levels = Description)
-    ) ->
+    ) |>
+    dplyr::mutate(lab = glue::glue("{ONTOLOGY}, {Count}")) ->
     .go_bp_for_plot
 
   .go_bp_for_plot %>%
     ggplot(aes(x = Description, y = adjp)) +
     geom_col(fill = .cc[.color], color = NA, width = 0.7) +
-    geom_text(aes(label = Count), hjust = 4, color = "white", size = 5) +
+    geom_text(aes(label = lab), hjust = 4, color = "white", size = 5) +
     labs(y = "-log10(Adj. P value)") +
     scale_y_continuous(expand = c(0, 0.02)) +
     coord_flip() +
@@ -258,8 +260,8 @@ fn_save_enrichment_xlsx_pdf <- function(.d, .p, .filename, .path = "data/uvresul
 }
 
 fn_go_enrichment <- function(.vs, .de) {
-  # .vs <- se_group_de$vs[[1]]
-  # .de <- se_group_de$des_color[[1]]
+  # .vs <- se_group_de$vs[[4]]
+  # .de <- se_group_de$des_color[[4]]
 
   print(.vs)
   .up <- fn_gobp(.de, .color = "red")
@@ -399,7 +401,6 @@ se_group_de_enrichment_sel |>
             )
           ) %>%
           dplyr::mutate(adjp = -log10(p.adjust)) %>%
-          dplyr::select(ID, Description, adjp, Count) |>
           dplyr::arrange(adjp, Count) |>
           dplyr::mutate(adjp = - adjp) |>
           dplyr::mutate(type = "Down") ->
@@ -416,8 +417,6 @@ se_group_de_enrichment_sel |>
             )
           ) %>%
           dplyr::mutate(adjp = -log10(p.adjust)) %>%
-          dplyr::select(ID, Description, adjp, Count) |>
-          head(10) |>
           dplyr::arrange(-adjp, Count) |>
           dplyr::mutate(type = "Up") ->
           b_up_go
