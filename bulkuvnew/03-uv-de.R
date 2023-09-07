@@ -446,8 +446,7 @@ xlimits <- c(
   "UVM0_vs_NM", "UVM1_vs_UVM0", "UVM1_vs_NM",
   "",
   "UVS0_vs_NS", "UVS1_vs_UVS0", "UVS1_vs_NS"
-  ) |>
-  rev()
+  )
 xlabels <- gsub(pattern = "_vs_", replacement = " vs. ", x = xlimits) %>%
   gsub(pattern = "S|M|B", "", .) %>%
   gsub(pattern = "UV1", "UVB 24h", .) %>%
@@ -587,7 +586,17 @@ se_group_de_volcano_red_green |>
     )
   )
 
+se_group_de_volcano |>
+  dplyr::left_join(
+    se_group_de_volcano_red_green |> dplyr::select(-seq),
+    by = "vs"
+  ) ->
+  se_group_de_volcano_rg
 
+readr::write_rds(
+  x = se_group_de_volcano_rg,
+  file = "data/uvrdanew/se_group_de_volcano_rg.rds.gz"
+)
 
 # footer ------------------------------------------------------------------
 
@@ -595,4 +604,5 @@ se_group_de_volcano_red_green |>
 
 # save image --------------------------------------------------------------
 save.image(file = "data/uvrdanew/03-uv-de.rda")
+load(file = "data/uvrdanew/03-uv-de.rda")
 
