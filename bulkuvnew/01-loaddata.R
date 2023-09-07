@@ -109,7 +109,65 @@ depaths_loadeddata_join_sel |>
       "all_expr_count_matrix_uv.rds.gz"
     )
   )
+# depaths_loadeddata_join_sel <- readr::read_rds(
+#   file.path(
+#     "/home/liuc9/github/scbrain/data/uvrdanew",
+#     "all_expr_count_matrix_uv.rds.gz"
+#   )
+# )
 
+depaths_loadeddata_join_sel |>
+  dplyr::select(
+    1,
+    dplyr::contains(match = "B")
+  ) ->
+  brain
+
+depaths_loadeddata_join_sel |>
+  dplyr::select(
+    1,
+    dplyr::contains(match = "M")
+  ) ->
+  meninge
+
+depaths_loadeddata_join_sel |>
+  dplyr::select(
+    1,
+    dplyr::contains(match = "S")
+  ) ->
+  skull
+
+list("B", "M", "S") |>
+  purrr::map(
+    .f = \(.r) {
+      depaths_loadeddata_join_sel |>
+        dplyr::select(
+          1,
+          dplyr::contains(match = .r)
+        )
+    }
+  ) ->
+  region_count
+names(region_count) <- c("Brain", "Meninge", "Skull")
+
+region_count |>
+  tibble::enframe() |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = name,
+      .y = value,
+      .f = \(.x, .y) {
+        .filepath <- file.path(
+          "/home/liuc9/github/scbrain/data/uvrdanew",
+          "Raw_count_{.x}.tsv" |> glue::glue()
+        )
+        readr::write_tsv(
+          x = .y,
+          file = .filepath
+        )
+      }
+    )
+  )
 # footer ------------------------------------------------------------------
 
 # future::plan(future::sequential)

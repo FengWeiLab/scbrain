@@ -59,6 +59,14 @@ tibble::tibble(
   barcode_group
 
 barcode_group |> print(n = Inf)
+
+readr::write_tsv(
+  barcode_group,
+  file.path(
+    "/home/liuc9/github/scbrain/data/uvrdanew",
+    "barcode_group.tsv"
+  )
+)
 # body --------------------------------------------------------------------
 
 UV_data |>
@@ -144,4 +152,5 @@ readr::write_rds(
 # future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/uvrdanew/02-UV.rda")
+# save.image(file = "data/uvrdanew/02-UV.rda")
+load(file = "data/uvrdanew/02-UV.rda")
