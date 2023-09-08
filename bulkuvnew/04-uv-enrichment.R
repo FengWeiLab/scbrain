@@ -33,10 +33,10 @@ fn_gobp <- function(.de, .color = "red") {
 
   .go_bp <- clusterProfiler::enrichGO(
     gene = .d$GeneName,
-    universe = .de$GeneName,
-    keyType = "SYMBOL",
+    # universe = .de$GeneName,
+    # keyType = "SYMBOL",
     OrgDb = org.Mm.eg.db::org.Mm.eg.db,
-    ont = "ALL",
+    ont = "BP",
     pAdjustMethod = "BH",
   )
 
@@ -260,8 +260,8 @@ fn_save_enrichment_xlsx_pdf <- function(.d, .p, .filename, .path = "data/uvresul
 }
 
 fn_go_enrichment <- function(.vs, .de) {
-  # .vs <- se_group_de$vs[[4]]
-  # .de <- se_group_de$des_color[[4]]
+  # .vs <- se_group_de$vs[[5]]
+  # .de <- se_group_de$des_color[[5]]
 
   print(.vs)
   .up <- fn_gobp(.de, .color = "red")
@@ -292,50 +292,52 @@ fn_go_enrichment <- function(.vs, .de) {
     error = function(e) {NULL}
   )
 
-  # .gsea <- fn_gsea(.de = .de)
+  .gsea <- fn_gsea(.de = .de)
 
-  # tryCatch(
-  #   expr = {
-  #     .gsea %>%
-  #       purrr::pmap(
-  #         .f = function(gsea, gseaplotc5, gseaploth) {
-  #           .xlsx_filename <- glue::glue("GSEA-MSigDB-{.vs}.xlsx")
-  #           writexl::write_xlsx(
-  #             x =  gsea %>%
-  #               as.data.frame() %>%
-  #               dplyr::select(-ID, -Cat),
-  #             path = file.path(
-  #               "data/uvresultnew/03-go",
-  #               .xlsx_filename
-  #             )
-  #           )
-  #           .plotc5_filename <- glue::glue("GSEA-MSigDB-C5-{.vs}.pdf")
-  #           ggsave(
-  #             plot = gseaplotc5,
-  #             filename = .plotc5_filename,
-  #             device = "pdf",
-  #             path = "data/uvresultnew/03-go",
-  #             width = 10,
-  #             height = 6.5
-  #           )
-  #           .ploth_filename <- glue::glue("GSEA-MSigDB-H-{.vs}.pdf")
-  #
-  #           ggsave(
-  #             plot = gseaploth,
-  #             filename = .ploth_filename,
-  #             device = "pdf",
-  #             path = "data/uvresultnew/03-go",
-  #             width = 10,
-  #             height = 6.5
-  #           )
-  #         }
-  #       )
-  #   },
-  #   error = function(e) {NULL}
-  # )
+  tryCatch(
+    expr = {
+      .gsea %>%
+        purrr::pmap(
+          .f = function(gsea, gseaplotc5, gseaploth) {
+            .xlsx_filename <- glue::glue("GSEA-MSigDB-{.vs}.xlsx")
+            writexl::write_xlsx(
+              x =  gsea %>%
+                as.data.frame() %>%
+                dplyr::select(-ID, -Cat),
+              path = file.path(
+                "data/uvresultnew/03-go",
+                .xlsx_filename
+              )
+            )
+            .plotc5_filename <- glue::glue("GSEA-MSigDB-C5-{.vs}.pdf")
+            ggsave(
+              plot = gseaplotc5,
+              filename = .plotc5_filename,
+              device = "pdf",
+              path = "data/uvresultnew/03-go",
+              width = 10,
+              height = 6.5
+            )
+            .ploth_filename <- glue::glue("GSEA-MSigDB-H-{.vs}.pdf")
+
+            ggsave(
+              plot = gseaploth,
+              filename = .ploth_filename,
+              device = "pdf",
+              path = "data/uvresultnew/03-go",
+              width = 10,
+              height = 6.5
+            )
+          }
+        )
+    },
+    error = function(e) {NULL}
+  )
+
   .gobp %>%
     dplyr::select(-goplot) %>%
-    tidyr::spread(key = reg, value = gobp)
+    tidyr::spread(key = reg, value = gobp) |>
+    dplyr::bind_cols(.gsea %>% dplyr::select(gsea))
 }
 
 
