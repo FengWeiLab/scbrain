@@ -29,7 +29,7 @@ fn_gobp <- function(.de, .color = "red") {
 
   .go_bp <- clusterProfiler::enrichGO(
     gene = .d$GeneName,
-    universe = .de$GeneName,
+    # universe = .de$GeneName,
     keyType = "SYMBOL",
     OrgDb = org.Mm.eg.db::org.Mm.eg.db,
     ont = "BP",
