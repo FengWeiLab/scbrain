@@ -936,6 +936,84 @@ ComplexHeatmap::rowAnnotation(
 }
 
 
+# Gene candidates ---------------------------------------------------------
+
+
+
+list(
+  Brain = brain_genes,
+  Meninge = meninge_genes,
+  Skull = skull_genes
+) |>
+  tibble::enframe(name = "seq")  ->
+  gene_candidates
+
+readr::write_rds(
+  gene_candidates,
+  file = "/home/liuc9/github/scbrain/data/uvresultnew/05-heatmap/gene_candidates.rds"
+)
+
+writexl::write_xlsx(
+  gene_candidates |>
+    tibble::deframe(),
+  "/home/liuc9/github/scbrain/data/uvresultnew/05-heatmap/gene_candidates.xlsx"
+)
+
+
+se_group_de_deg |>
+  dplyr::select(seq,vs, des_color) |>
+  dplyr::left_join(gene_candidates,by = "seq") |>
+  dplyr::mutate(des = purrr::map2(
+    .x = des_color,
+    .y = value,
+    .f = \(.x, .y) {
+      .x |>
+        dplyr::filter(color != "grey") |>
+        dplyr::filter(GeneName %in% .y$genename)
+    }
+  )) ->
+  se_group_de_deg_candidates
+
+se_group_de_deg_candidates |>
+  dplyr::filter(seq == "Skull") |>
+  dplyr::select(seq, vs, des)  |>
+  tidyr::unnest(cols = des) |>
+  dplyr::arrange(FDR, -abs(log2FoldChange), baseMean) ->
+  skull_candidates
+
+
+se_group_de_deg_candidates |>
+  dplyr::filter(seq == "Brain") |>
+  dplyr::select(seq, vs, des)  |>
+  tidyr::unnest(cols = des) |>
+  dplyr::arrange(FDR, -abs(log2FoldChange), baseMean) ->
+  brain_candidates
+
+se_group_de_deg_candidates |>
+  dplyr::filter(seq == "Meninge") |>
+  dplyr::select(seq, vs, des)  |>
+  tidyr::unnest(cols = des) |>
+  dplyr::arrange(FDR, -abs(log2FoldChange), baseMean) ->
+  meninge_candidates
+
+
+list(
+  Brain = brain_candidates,
+  Meninge = meninge_candidates,
+  Skull = skull_candidates
+) ->
+  gene_candidates_de
+
+
+readr::write_rds(
+  gene_candidates_de,
+  file = "/home/liuc9/github/scbrain/data/uvresultnew/05-heatmap/gene_candidates_de.rds"
+)
+
+writexl::write_xlsx(
+  gene_candidates_de,
+  "/home/liuc9/github/scbrain/data/uvresultnew/05-heatmap/gene_candidates_de.xlsx"
+)
 # footer ------------------------------------------------------------------
 
 # future::plan(future::sequential)
