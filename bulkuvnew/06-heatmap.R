@@ -843,6 +843,99 @@ ComplexHeatmap::rowAnnotation(
   dev.off()
 }
 
+
+
+
+
+
+# Meninge -----------------------------------------------------------------
+
+
+
+se_group_de_deg_nest_heatmap_heatmap_gobp_unnest$row_order_gobp[[3]] |>
+  dplyr::arrange(cluster) ->
+  meninge_cluster
+
+meninge_cluster$gobp[[1]] |>
+  as.data.frame() |>
+  dplyr::filter(grepl(
+    pattern = "muscle",
+    x = Description,
+    ignore.case = T
+  )) |>
+  dplyr::pull(geneID) |>
+  strsplit("/") |>
+  unlist() |>
+  unique() |>
+  sort() ->
+  meninge_gene_1
+
+meninge_gene_1_1 <- meninge_gene_1[stringr::str_detect(meninge_gene_1, "Act|Atp|My|Sy")]
+
+meninge_cluster$gobp[[2]] |>
+  as.data.frame() |>
+  # dplyr::select(2) |> head(10)
+  dplyr::filter(grepl(
+    pattern = "Leukocyte",
+    x = Description,
+    ignore.case = T
+  )) |>
+  dplyr::pull(geneID) |>
+  strsplit("/") |>
+  unlist() |>
+  unique() |>
+  sort() ->
+  meninge_gene_2
+
+meninge_gene_2_2 <- meninge_gene_2[stringr::str_detect(meninge_gene_2, "Cxcl|Il|B2m|Gzm|Cd")]
+
+meninge_cluster$gobp[[3]] |>
+  as.data.frame() |>
+  # dplyr::select(2) |> head(10)
+  dplyr::filter(grepl(
+    pattern = "Odontogenesis|mitotic",
+    x = Description,
+    ignore.case = T
+  )) |>
+  dplyr::pull(geneID) |>
+  strsplit("/") |>
+  unlist() |>
+  unique() ->
+  meninge_gene_3
+
+se_group_de_deg_nest_heatmap_heatmap_gobp_unnest$row_order_index[[3]] |>
+  dplyr::slice(match(c(meninge_gene_1_1, meninge_gene_2_2, meninge_gene_3) |> unique(), genename)) ->
+  meninge_genes
+
+ComplexHeatmap::rowAnnotation(
+  link = anno_mark(
+    at = meninge_genes$index,
+    labels = meninge_genes$genename,
+    which = "row",
+    side = "left",
+    lines_gp = gpar(lwd = 0.5),
+    labels_gp = gpar(fontsize = 10),
+    padding = unit(0.5, "mm"),
+    link_width = unit(5, "mm"),
+  )
+) +
+  se_group_de_deg_nest_heatmap_heatmap_gobp_unnest$heatmap_go[[3]] ->
+  meninge_heatmap_mark;meninge_heatmap_mark
+
+{
+  pdf(
+    file = file.path(
+      "/home/liuc9/github/scbrain/data/uvresultnew/05-heatmap",
+      "Meninge-heatmap-mark.pdf"
+    ),
+    width = 10,
+    height = 8
+  )
+  ComplexHeatmap::draw(object = meninge_heatmap_mark)
+  dev.off()
+}
+
+
 # footer ------------------------------------------------------------------
 
 # future::plan(future::sequential)
