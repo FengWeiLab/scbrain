@@ -614,7 +614,7 @@ forplot |>
     labels = c("Skull 24h", "Skull 0.5h", "", "Meninge 24h", "Meninge 0.5h", "", "Brain 24h", "Brain 0.5h")
   ) +
   geom_point(
-    data = forplot |> dplyr::filter(p_val < 0.1),
+    data = forplot |> dplyr::filter(p_val < 0.2),
     shape = "asterisk"
   ) +
   coord_fixed() +
@@ -645,3 +645,4 @@ ggsave(
 
 # save image --------------------------------------------------------------
 save.image(file = "data/uvrdanew/05-uv-immune.rda")
+load(file = "data/uvrdanew/05-uv-immune.rda")
