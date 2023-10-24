@@ -724,8 +724,17 @@ brain_cluster$gobp[[2]] |> as.data.frame() |>
   unique() ->
   brain_gene_2
 
+brain_gene_3 <- c(
+  "Slc15a3",
+  "Tap2",
+  "Isg15",
+  "Nlrc5",
+  "Nfkbia",
+  "Prkch"
+)
+
 se_group_de_deg_nest_heatmap_heatmap_gobp_unnest$row_order_index[[1]] |>
-  dplyr::slice(match(c(brain_gene_1, brain_gene_2) |> unique(), genename)) ->
+  dplyr::slice(match(c(brain_gene_1, brain_gene_2, brain_gene_3) |> unique(), genename)) ->
   brain_genes
 
 ComplexHeatmap::rowAnnotation(
@@ -811,8 +820,40 @@ skull_cluster$gobp[[3]] |>
   unique() ->
   skull_gene_3
 
+skull_gene_4 <- c(
+  "Serpine1",
+  "Enpp2",
+  "Ch25h",
+  "Vegfd",
+  "Hbegf",
+  "Wnt7b",
+  "Ccl7",
+  "Cxcl5",
+  "Saa3",
+  "Tgfbi",
+
+  "Mmp3",
+  "Ndnf",
+  "Fscn1",
+  "Adamtsl4",
+  "Il1a",
+  "Serpinb2",
+  "Anxa8",
+  "Pdpn",
+  "Ccn4",
+
+  "Cd3e",
+  "Il10",
+  "Cd4",
+  "Gzmb",
+  "Cxcl1",
+  "Il6",
+  "Cxcl10",
+  "Nfkbiz"
+)
+
 se_group_de_deg_nest_heatmap_heatmap_gobp_unnest$row_order_index[[2]] |>
-  dplyr::slice(match(c(skull_gene_1_1, skull_gene_2_2, skull_gene_3) |> unique(), genename)) ->
+  dplyr::slice(match(c(skull_gene_1_1, skull_gene_2_2, skull_gene_3, skull_gene_4) |> unique(), genename)) ->
   skull_genes
 
 ComplexHeatmap::rowAnnotation(
@@ -903,8 +944,38 @@ meninge_cluster$gobp[[3]] |>
   unique() ->
   meninge_gene_3
 
+meninge_gene_4 <- c(
+  "Cxcl1",
+  "Il2rb",
+  "Il10",
+  "Il6",
+  "Cxcl9",
+  "Cxcl2",
+  "Cd74",
+
+  "Osr1",
+  "Sp7",
+  "Mmp3",
+  "Timp1",
+  "Polh",
+  "Lig4",
+  "Fignl1",
+  "Pkb",
+  "Brca1",
+
+  "Edar",
+  "Aurkb",
+  "Kntc1",
+  "Dlx3",
+  "Dtl",
+  "Skp2",
+  "Wnt7b",
+  "Tcf19",
+  "Inhba"
+)
+
 se_group_de_deg_nest_heatmap_heatmap_gobp_unnest$row_order_index[[3]] |>
-  dplyr::slice(match(c(meninge_gene_1_1, meninge_gene_2_2, meninge_gene_3) |> unique(), genename)) ->
+  dplyr::slice(match(c(meninge_gene_1_1, meninge_gene_2_2, meninge_gene_3, meninge_gene_4) |> unique(), genename)) ->
   meninge_genes
 
 ComplexHeatmap::rowAnnotation(
