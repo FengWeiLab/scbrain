@@ -13,13 +13,42 @@ library(patchwork)
 library(rlang)
 library(Seurat)
 library(Azimuth)
-
+library(HGNChelper)
 # args --------------------------------------------------------------------
 
 
 # src ---------------------------------------------------------------------
+source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/gene_sets_prepare.R")
+# load cell type annotation function
+source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/sctype_score_.R")
+# DB file
+db_full = "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_full.xlsx";
+db_short <- "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_short.xlsx"
+tissue = "Immune system" # e.g. Immune system, Liver, Pancreas, Kidney, Eye, Brain
+gs_list_immune_system = gene_sets_prepare(db_full, "Immune system")
+gs_list_brain = gene_sets_prepare(db_full, "Brain")
 
 
+purrr::map2(
+  .x = gs_list_immune_system$gs_positive,
+  .y = gs_list_immune_system$gs_negative,
+  .f = \(.x, .y) {
+    c(.x, .y) |>
+      stringr::str_to_sentence()
+  }
+) ->
+  gs_list_immune_system_merge
+
+
+purrr::map2(
+  .x = gs_list_brain$gs_positive,
+  .y = gs_list_brain$gs_negative,
+  .f = \(.x, .y) {
+    c(.x, .y) |>
+      stringr::str_to_sentence()
+  }
+) ->
+  gs_list_brain_merge
 # header ------------------------------------------------------------------
 
 future::plan(future::multisession, workers = 10)
@@ -782,15 +811,34 @@ fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lig
 }
 
 
-fn_gene_dotplot <- function(.norm, .allmarkers, .n = 2) {
-  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[2]]
-  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[2]]
+fn_gene_dotplot <- function(.region, .norm, .allmarkers, .n = 2) {
+
+  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[3]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[3]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[3]]
+
+  .gs <- if(.region == "Brain") {
+    c(
+      gs_list_immune_system_merge,
+      gs_list_brain_merge
+    ) |>
+      purrr::reduce(.f = c) |>
+      unique() |>
+      sort()
+  } else {
+    gs_list_immune_system_merge |>
+      purrr::reduce(.f = c) |>
+      unique() |>
+      sort()
+  }
+
 
   .allmarkers %>%
-    dplyr::filter(!grepl(
-      pattern = "Mt-|mt-",
-      x = gene
-    )) |>
+    # dplyr::filter(!grepl(
+    #   pattern = "Mt-|mt-|^Gm",
+    #   x = gene
+    # )) |>
+    dplyr::filter(gene %in% .gs) |>
     dplyr::group_by(cluster) %>%
     dplyr::slice_max(n = .n, order_by = avg_log2FC)  ->
     .marker_head
@@ -810,9 +858,12 @@ fn_gene_dotplot <- function(.norm, .allmarkers, .n = 2) {
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
   dplyr::mutate(
-    markerdot = purrr::map2(
-      .x = norm,
-      .y = allmarkers,
+    markerdot = purrr::pmap(
+      .l = list(
+        .region = region,
+        .norm = norm,
+        .allmarkers = allmarkers
+      ),
       .f = fn_gene_dotplot
     )
   ) ->
@@ -822,7 +873,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[1]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[1]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-4",
   width = 6.5,
   height = 4
 )
@@ -832,7 +883,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[2]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[2]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-4",
   width = 8,
   height = 4
 )
@@ -841,7 +892,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[3]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$markerdot[[3]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-4",
   width = 10,
   height = 5
 )
@@ -849,15 +900,31 @@ ggsave(
 
 # marker gene -------------------------------------------------------------
 
-fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
+fn_plot_dot_feature <- function(.region, .norm, .allmarkers, .n = 2) {
   # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[2]]
   # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[2]]
+
+  .gs <- if(.region == "Brain") {
+    c(
+      gs_list_immune_system_merge,
+      gs_list_brain_merge
+    ) |>
+      purrr::reduce(.f = c) |>
+      unique() |>
+      sort()
+  } else {
+    gs_list_immune_system_merge |>
+      purrr::reduce(.f = c) |>
+      unique() |>
+      sort()
+  }
 
   .allmarkers %>%
     dplyr::filter(!grepl(
       pattern = "Mt-|mt-",
       x = gene
     )) |>
+    dplyr::filter(gene %in% .gs) |>
     dplyr::group_by(cluster) %>%
     dplyr::slice_max(n = .n, order_by = avg_log2FC) |>
     dplyr::left_join(
@@ -911,9 +978,12 @@ fn_plot_dot_feature <- function(.norm, .allmarkers, .n = 2) {
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
   dplyr::mutate(
-    featuredot = purrr::map2(
-      .x = norm,
-      .y = allmarkers,
+    featuredot = purrr::pmap(
+      .l = list(
+        .region = region,
+        .norm = norm,
+        .allmarkers = allmarkers
+      ),
       .f = fn_plot_dot_feature
     )
   ) ->
@@ -931,7 +1001,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-4",
             .x
           ),
           recursive = T,
@@ -955,7 +1025,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
                   plot = .fp,
                   device = "pdf",
                   path = file.path(
-                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-4",
                     .x
                   ),
                   width = 5,

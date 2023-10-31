@@ -1372,5 +1372,6 @@ ggsave(
 # future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/azimuth/04-manual-annotation.rda")
+# save.image(file = "data/azimuth/04-manual-annotation.rda")
 # load(file = "data/azimuth/04-manual-annotation.rda")
+#
