@@ -18,74 +18,6 @@ library(HGNChelper)
 
 
 # src ---------------------------------------------------------------------
-# source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/gene_sets_prepare.R")
-# # load cell type annotation function
-# source("https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/R/sctype_score_.R")
-# # DB file
-# db_full = "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_full.xlsx";
-# db_short <- "https://raw.githubusercontent.com/chunjie-sam-liu/sc-type/master/ScTypeDB_short.xlsx"
-# tissue = "Immune system" # e.g. Immune system, Liver, Pancreas, Kidney, Eye, Brain
-# gs_list_immune_system = gene_sets_prepare(db_full, "Immune system")
-# gs_list_brain = gene_sets_prepare(db_full, "Brain")
-#
-#
-# purrr::map2(
-#   .x = gs_list_immune_system$gs_positive,
-#   .y = gs_list_immune_system$gs_negative,
-#   .f = \(.x, .y) {
-#     c(.x, .y) |>
-#       stringr::str_to_sentence()
-#   }
-# ) ->
-#   gs_list_immune_system_merge
-#
-#
-# purrr::map2(
-#   .x = gs_list_brain$gs_positive,
-#   .y = gs_list_brain$gs_negative,
-#   .f = \(.x, .y) {
-#     c(.x, .y) |>
-#       stringr::str_to_sentence()
-#   }
-# ) ->
-#   gs_list_brain_merge
-#
-#
-# cellmarker <- readxl::read_xlsx(
-#   path = "/mnt/isilon/xing_lab/liuc9/refdata/cellmarker/Cell_marker_Mouse.xlsx"
-# )
-#
-# cellmarker_brain <- cellmarker |>
-#   dplyr::filter(
-#     tissue_class %in% c(
-#       "Brain",
-#       "Bone marrow",
-#       "Blood",
-#       "Lymph node",
-#       "Nerve",
-#       "Lymphoid tissue",
-#       "Epithelium"
-#     )
-#   ) |>
-#   dplyr::filter(!is.na(cellontology_id)) |>
-#   dplyr::filter(!is.na(Symbol)) |>
-#   dplyr::filter(Genetype == "protein_coding") |>
-#   dplyr::filter(marker_source == "Single-cell sequencing")
-#
-# cellmarker_immune <- cellmarker |>
-#   dplyr::filter(
-#     tissue_class %in% c(
-#       "Bone marrow",
-#       "Blood",
-#       "Lymph node",
-#       "Lymphoid tissue",
-#       "Epithelium"
-#     )
-#   )|>
-#   dplyr::filter(!is.na(cellontology_id)) |>
-#   dplyr::filter(!is.na(Symbol)) |>
-#   dplyr::filter(Genetype == "protein_coding") |>
-#   dplyr::filter(marker_source == "Single-cell sequencing")
 
 candidate_markers <- readr::read_rds(
   file = "/home/liuc9/data/refdata/cellmarker/candidate_markers.rds.gz"
@@ -856,9 +788,9 @@ fn_marker_gene_dotplot <- function(object, assay = NULL, features, cols = c("lig
 
 fn_gene_dotplot <- function(.region, .norm, .allmarkers, .n = 2) {
 
-  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[2]]
-  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[2]]
-  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[2]]
+  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[3]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[3]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[3]]
 
   .norm@meta.data |>
     dplyr::select(cell3, cell3_cluster) |>
@@ -1123,7 +1055,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
       .f = function(.x, .y) {
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-4",
             .x
           ),
           recursive = T,
@@ -1134,7 +1066,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
           .y |>
             dplyr::mutate(gene = stringr::str_to_title(gene)),
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-3",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-4",
             .x,
             "{.x}-all-marker-genes.xlsx" |> glue::glue()
           )

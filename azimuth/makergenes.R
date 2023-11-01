@@ -254,32 +254,49 @@ cellmarker_brain |>
 
 # Brain -------------------------------------------------------------------
 
-dplyr::bind_rows(
-  cellmarker_brain |> 
+cellmarker_brain |> 
   dplyr::select(cell_name) |> 
   dplyr::arrange(cell_name) |> 
   dplyr::distinct() |> 
   # print(n = Inf)
-  dplyr::filter(grepl("vascular", x = cell_name, ignore.case = T)),
+  dplyr::filter(grepl("vascular", x = cell_name, ignore.case = T))
 
-cellmarker_brain |> 
-  dplyr::select(cell_name, Symbol) |> 
-  dplyr::distinct() |> 
-  dplyr::arrange(cell_name) |> 
-  dplyr::filter(grepl(pattern = "Astrocyte|astrocyte", x = cell_name)) |> 
-  dplyr::mutate(
-    cell3 = "Astrocyte Aqp4_Slc7a10"
-  ),
+astro <- tibble::tibble(
+  cell_name = "Astro",
+  Symbol = c("Gpc5", "Myoc", "Slc1a2", "Fxyd6", "Slc1a3", "Nrp2", "Slc6a6", "Apoe", "Aqp4", "Gfap", "Lsamp", "Gpc5", "Slc1a2", "Luzp2", "Slc1a3", "Apoe", "Cadm2", "Rora", "Aqp4", "Slc7a10", "Igfbpl1", "Gpc5", "Mki67", "Slc1a2", "Myt1", "Slc1a3", "Apoe", "E2f2", "E2f7", "Top2a") |> unique()
+)
 
-cellmarker_brain |> 
-  dplyr::select(cell_name, Symbol) |> 
-  dplyr::distinct() |> 
-  dplyr::arrange(cell_name) |> 
-  dplyr::filter(grepl(pattern = "Astrocyte|astrocyte", x = cell_name)) |> 
-  dplyr::mutate(
-    cell3 = "Astrocyte Aqp4_Gfap"
-  ),
 
+dplyr::bind_rows(
+ 
+# cellmarker_brain |> 
+#   dplyr::select(cell_name, Symbol) |> 
+#   dplyr::distinct() |> 
+#   dplyr::arrange(cell_name) |> 
+#   dplyr::filter(grepl(pattern = "Astrocyte|astrocyte", x = cell_name)) |> 
+#   dplyr::mutate(
+#     cell3 = "Astrocyte Aqp4_Slc7a10"
+#   ),
+# 
+# cellmarker_brain |> 
+#   dplyr::select(cell_name, Symbol) |> 
+#   dplyr::distinct() |> 
+#   dplyr::arrange(cell_name) |> 
+#   dplyr::filter(grepl(pattern = "Astrocyte|astrocyte", x = cell_name)) |> 
+#   dplyr::mutate(
+#     cell3 = "Astrocyte Aqp4_Gfap"
+#   ),
+  
+  astro |> 
+      dplyr::mutate(
+        cell3 = "Astrocyte Aqp4_Slc7a10"
+      ),
+
+  astro |> 
+      dplyr::mutate(
+        cell3 = "Astrocyte Aqp4_Gfap"
+      ),
+  
 cellmarker_brain |> 
   dplyr::select(cell_name, Symbol) |> 
   dplyr::distinct() |> 
@@ -344,6 +361,9 @@ dplyr::bind_rows(
   dplyr::ungroup() ->
   candidate_markers
 
+candidate_markers |> 
+  tidyr::unnest(cols = data) |> 
+  dplyr::filter(Symbol == "Ebf1")
 
 readr::write_rds(
   candidate_markers,
