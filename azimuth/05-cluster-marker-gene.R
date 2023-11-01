@@ -1080,4 +1080,4 @@ future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
 # save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
-# load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
