@@ -62,10 +62,7 @@ cellmarker_brain <- cellmarker |>
       "Lymphoid tissue",
       "Epithelium"
     )
-  ) |> 
-  dplyr::filter(!is.na(cellontology_id)) |> 
-  dplyr::filter(!is.na(Symbol)) |> 
-  dplyr::filter(Genetype == "protein_coding") 
+  ) 
 
 cellmarker_immune <- cellmarker |>
   dplyr::filter(
@@ -76,10 +73,7 @@ cellmarker_immune <- cellmarker |>
       "Lymphoid tissue",
       "Epithelium"
     )
-  )|> 
-  dplyr::filter(!is.na(cellontology_id)) |> 
-  dplyr::filter(!is.na(Symbol)) |> 
-  dplyr::filter(Genetype == "protein_coding") 
+  )
 
 
 cellmarker_immune |> 
@@ -248,7 +242,12 @@ cellmarker_brain |>
     cell3 = "Sensory neurons"
   )) |> 
   dplyr::select(cell3, Symbol) |> 
-  dplyr::distinct() ->
+  dplyr::distinct() |> 
+  dplyr::filter(!is.na(Symbol)) |> 
+  dplyr::filter(!grepl(
+    "H2-",
+    Symbol
+  )) ->
   acells
 
 
@@ -362,8 +361,11 @@ dplyr::bind_rows(
   candidate_markers
 
 candidate_markers |> 
+  # dplyr::filter(cell3 == "mDC")
   tidyr::unnest(cols = data) |> 
-  dplyr::filter(Symbol == "Ebf1")
+  dplyr::filter(Symbol == "H2-Ab1")
+  # print(n = Inf)
+  dplyr::filter(Symbol == "Aqp1")
 
 readr::write_rds(
   candidate_markers,
