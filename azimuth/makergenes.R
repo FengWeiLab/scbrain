@@ -250,6 +250,10 @@ cellmarker_brain |>
   )) ->
   acells
 
+acells |> 
+  dplyr::filter(cell3 %in% c("T cells", "B cells"))
+  dplyr::filter()
+
 
 # Brain -------------------------------------------------------------------
 

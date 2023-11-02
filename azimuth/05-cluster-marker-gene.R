@@ -808,6 +808,23 @@ fn_gene_dotplot <- function(.region, .norm, .allmarkers, .n = 2) {
     cluster_genes
 
 
+  cluster_genes |>
+    dplyr::slice(1:2) |>
+    tidyr::unnest(cols = symbol) ->
+    a
+
+  .allmarkers |>
+    dplyr::filter(cluster %in% c(1, 2)) |>
+    dplyr::group_by(cluster) |>
+    # dplyr::filter(gene == "Cd79a")
+    dplyr::slice_max(
+      n = 20,
+      order_by = avg_log2FC
+    ) |>
+      View()
+
+
+
   .allmarkers %>%
     dplyr::group_by(cluster) |>
     tidyr::nest() |>
@@ -1085,5 +1102,5 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-# save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
-load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+# load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
