@@ -40,10 +40,11 @@ fn_azimuth <- function(.sc, .ref) {
   .sct
 }
 
-fn_azimuth_brain <- function(.sc) {
+fn_azimuth_brain <- function(.sc, .ref) {
   .sct <- RunAzimuth(
     query = .sc,
-    reference = "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
+    reference = .ref
+    # reference = "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
     # reference = "pbmcref"
     # reference = "bonemarrowref"
   )
@@ -476,63 +477,87 @@ project_sc |>
 
 
 # Brain -------------------------------------------------------------------
+#
+#
+# SeuratData::LoadData(ds = "mousecortexref", type = "azimuth") -> mousecortexref
+# mousecortexref$plot@meta.data |>
+#   dplyr::select(class, subclass, cluster,) |>
+#   dplyr::arrange(class, subclass, cluster,) |>
+#   dplyr::distinct() |>
+#   tibble::as_tibble() |>
+#   dplyr::mutate(
+#     predicted.cluster = cluster
+#   ) ->
+#   mousecortexref_cell
+#
+# mousecortexref_cell |>
+#   dplyr::count(class, subclass, cluster) |>
+#   plotme::count_to_sunburst()
+#
+#
+# SeuratData::LoadData(ds = "pbmcref", type = "azimuth") -> pbmcref
+# pbmcref$plot@meta.data |>
+#   dplyr::select(celltype.l1, celltype.l2, ) |>
+#   dplyr::arrange(celltype.l1, celltype.l2, ) |>
+#   dplyr::distinct() |>
+#   tibble::as_tibble() |>
+#   dplyr::mutate(
+#     predicted.celltype.l2 = celltype.l2
+#   ) ->
+#   pbmcref_cell
+# pbmcref_cell |>
+#   dplyr::count(celltype.l1, celltype.l2, ) |>
+#   plotme::count_to_sunburst()
+#
+# SeuratData::LoadData(ds = "bonemarrowref", type = "azimuth") -> bonemarrowref
+# bonemarrowref$plot@meta.data |>
+#   dplyr::select(celltype.l1, celltype.l2) |>
+#   dplyr::arrange(celltype.l1, celltype.l2) |>
+#   dplyr::distinct() |>
+#   tibble::as_tibble() |>
+#   dplyr::mutate(
+#     predicted.celltype.l2 = celltype.l2
+#   ) ->
+#   bonemarrowref_cell
+#
+# bonemarrowref_cell |>
+#   dplyr::count(celltype.l1, celltype.l2) |>
+#   plotme::count_to_sunburst()
+#
+# project_sc_azimuth$anno[[1]]@meta.data |> dplyr::glimpse()
+# project_sc_azimuth$anno[[2]]@meta.data |> dplyr::glimpse()
+# project_sc_azimuth$anno[[3]]@meta.data |> dplyr::glimpse()
 
 
-SeuratData::LoadData(ds = "mousecortexref", type = "azimuth") -> mousecortexref
-mousecortexref$plot@meta.data |>
-  dplyr::select(class, subclass, cluster,) |>
-  dplyr::arrange(class, subclass, cluster,) |>
-  dplyr::distinct() |>
-  tibble::as_tibble() |>
-  dplyr::mutate(
-    predicted.cluster = cluster
-  ) ->
-  mousecortexref_cell
+# reference = "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
+# reference = "pbmcref"
+# reference = "bonemarrowref"
 
-mousecortexref_cell |>
-  dplyr::count(class, subclass, cluster) |>
-  plotme::count_to_sunburst()
-
-
-SeuratData::LoadData(ds = "pbmcref", type = "azimuth") -> pbmcref
-pbmcref$plot@meta.data |>
-  dplyr::select(celltype.l1, celltype.l2, ) |>
-  dplyr::arrange(celltype.l1, celltype.l2, ) |>
-  dplyr::distinct() |>
-  tibble::as_tibble() |>
-  dplyr::mutate(
-    predicted.celltype.l2 = celltype.l2
-  ) ->
-  pbmcref_cell
-pbmcref_cell |>
-  dplyr::count(celltype.l1, celltype.l2, ) |>
-  plotme::count_to_sunburst()
-
-SeuratData::LoadData(ds = "bonemarrowref", type = "azimuth") -> bonemarrowref
-bonemarrowref$plot@meta.data |>
-  dplyr::select(celltype.l1, celltype.l2) |>
-  dplyr::arrange(celltype.l1, celltype.l2) |>
-  dplyr::distinct() |>
-  tibble::as_tibble() |>
-  dplyr::mutate(
-    predicted.celltype.l2 = celltype.l2
-  ) ->
-  bonemarrowref_cell
-
-bonemarrowref_cell |>
-  dplyr::count(celltype.l1, celltype.l2) |>
-  plotme::count_to_sunburst()
-
-project_sc_azimuth$anno[[1]]@meta.data |> dplyr::glimpse()
-project_sc_azimuth$anno[[2]]@meta.data |> dplyr::glimpse()
-project_sc_azimuth$anno[[3]]@meta.data |> dplyr::glimpse()
 
 project_sc_azimuth |>
   dplyr::filter(region == "Brain") |>
-  dplyr::mutate(anno2 = purrr::map(
+  dplyr::mutate(
+    anno2 = purrr::map(
     .x = sc,
-    .f = fn_azimuth_brain
-  )) ->
+    .f = fn_azimuth_brain,
+    .ref = "/home/liuc9/data/refdata/brainimmuneatlas/azimuth_dura"
+    )
+  ) ->
+  # ) |>
+  # dplyr::mutate(
+  #   anno_brain_pbmc = purrr::map(
+  #     .x = sc,
+  #     .f = fn_azimuth_brain,
+  #     .ref = "pbmcref"
+  #   )
+  # ) |>
+  # dplyr::mutate(
+  #   anno_brain_bonemarrow = purrr::map(
+  #     .x = sc,
+  #     .f = fn_azimuth_brain,
+  #     .ref = "bonemarrowref"
+  #   )
+  # ) ->
   project_sc_azimuth_brain
 #
 # .anno <- project_sc_azimuth_brain$anno[[3]]
@@ -541,12 +566,15 @@ project_sc_azimuth |>
 
 project_sc_azimuth_brain |>
   dplyr::mutate(
-    annno_new = purrr::map2(
-      .x = anno,
-      .y = anno2,
+    annno_new = purrr::pmap(
+      .l = list(
+        .anno = anno,
+        .anno2 = anno2
+      ),
       .f = function(.anno, .anno2) {
-        # .anno
-        # .anno2
+        # .anno <- project_sc_azimuth_brain$anno[[2]]
+        # .anno2 <- project_sc_azimuth_brain$anno2[[2]]
+
 
 
         .anno@meta.data |>
@@ -560,26 +588,44 @@ project_sc_azimuth_brain |>
           tibble::as_tibble() |>
           dplyr::select(barcode,  predicted.annotation.l1, predicted.annotation.l1.score) ->
           a2_sel
-        nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
+
+
+
+
+        # nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
 
         a1_sel |>
           dplyr::inner_join(a2_sel, by = "barcode") |>
           dplyr::left_join(mousecortexref_cell, by = "predicted.cluster") |>
-          # dplyr::left_join(pbmcref_cell, by = "predicted.celltype.l2") |>
           dplyr::mutate(celltype2 = ifelse(
-            predicted.cluster %in% nnc,
+            # predicted.cluster %in% nnc,
+            predicted.annotation.l1.score > predicted.cluster.score,
             predicted.annotation.l1,
             predicted.cluster
           )) |>
+          dplyr::mutate(
+            celltype2 = ifelse(
+              celltype2 == "D-BAM",
+              "Micro",
+              celltype2
+            )
+          ) |>
           dplyr::mutate(
             subclass = as.character(subclass),
             predicted.annotation.l1 = as.character(predicted.annotation.l1)
           ) |>
           dplyr::mutate(
             celltype = ifelse(
-              predicted.cluster %in% nnc,
+              predicted.annotation.l1.score > predicted.cluster.score,
               predicted.annotation.l1,
               subclass
+            )
+          ) |>
+          dplyr::mutate(
+            celltype = ifelse(
+              celltype2 == "Micro",
+              "Micro-PVM",
+              celltype
             )
           ) |>
           dplyr::select(barcode, celltype, celltype2) ->
@@ -643,9 +689,6 @@ project_sc_azimuth_brain_new |>
             glue::glue("{.filename}.html")
           )
         )
-
-
-
       },
       .outdir = "/home/liuc9/github/scbrain/scuvresult/06-azimuth-celllevel13"
     )
@@ -1044,7 +1087,7 @@ writexl::write_xlsx(
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-save.image(file = "data/azimuth/02-individual-tissue.rda")
+# save.image(file = "data/azimuth/02-individual-tissue.rda")
 
 
 # load(file = "data/azimuth/02-individual-tissue.rda")
