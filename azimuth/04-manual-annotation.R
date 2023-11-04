@@ -107,7 +107,7 @@ recell3 <- c(
 
   "NK" = "NK cells",
   "NK cells" =  "NK cells",
-  "T/NKT cells" = "T cells",
+  "T/NKT cells" = "T/NKT cells",
 
   "Stromal" = "other",
   "LMPP" = "HSPC",
@@ -143,7 +143,12 @@ recell3 <- c(
 
   "OPC Pdgfra" = "OPC",
 
-  "Sensory neurons" = "Sensory neurons"
+  "Sensory neurons" = "Sensory neurons",
+  "Peri" = "Pericytes",
+  "Meis2" = "Neuron",
+  "L6 IT" = "Neuron",
+  "Meis2_Top2a" = "Neuron",
+  "L6 IT_1" = "Neuron"
   )
 
 recell2 <- c(
@@ -206,7 +211,7 @@ recell2 <- c(
 
   "NK" = "NK cells",
   "NK cells" =  "NK cells",
-  "T/NKT cells" = "T cells",
+  "T/NKT cells" = "T/NKT cells",
 
   "Stromal" = "other",
   "LMPP" = "HSPC",
@@ -240,7 +245,15 @@ recell2 <- c(
   "Oligo Enpp6_2" = "OLG",
   "Oligo Opalin_4" = "OLG",
 
-  "OPC Pdgfra" = "OPC"
+  "OPC Pdgfra" = "OPC",
+
+
+  "Sensory neurons" = "Sensory neurons",
+  "Peri" = "Pericytes",
+  "Meis2" = "Neuron",
+  "L6 IT" = "Neuron",
+  "Meis2_Top2a" = "Neuron",
+  "L6 IT_1" = "Neuron"
 )
 
 
@@ -254,14 +267,18 @@ recell1 <- c(
   "Macrophage" = "Myeloid cells",
   "Microglia" = "Microglia",
   "Monocytes" = "Myeloid cells",
+  "Neuron" = "Neuron",
   "Neutrophils" = "Myeloid cells",
+  "NK cells" = "Lymphoctyes",
   "OLG" = "OLG",
   "OPC" = "OPC",
+  "other" = "other",
+  "Pericytes" = "Pericytes",
   "Platelet" = "Erythroid",
+  "Sensory neurons" = "Neuron",
   "T cells" = "Lymphoctyes",
-  "NK cells" = "Lymphoctyes",
-  "VLMC" = "VLMC",
-  "other" = "other"
+  "T/NKT cells" = "Lymphoctyes",
+  "VLMC" = "VLMC"
 )
 
 
@@ -327,13 +344,15 @@ recells |>
       "ggsci::yellow_material",
       "ggsci::pink_material",
       "ggsci::red_material", # T cell
+      "ggsci::red_material", # T cell,
       # "ggsci::purple_material",
       "ggsci::red_material",
       "ggsci::light_blue_material",
       "ggsci::blue_material",
       "ggsci::cyan_material",
       "ggsci::teal_material",
-      # "ggsci::green_material",
+      "ggsci::green_material", # "Neuron"
+      "ggsci::green_material", # "Sensory neurons"
       "ggsci::deep_purple_material",
       "ggsci::deep_purple_material",
       "ggsci::indigo_material",
@@ -346,11 +365,11 @@ recells |>
       .f = paletteer::paletteer_d
     )
   ) |>
-  dplyr::mutate(
-    m = glue::glue("{cell2}, {n}")
-  ) |>
-  dplyr::select(m, color) |>
-  tibble::deframe()
+  # dplyr::mutate(
+  #   m = glue::glue("{cell2}, {n}")
+  # ) |>
+  # dplyr::select(m, color) |>
+  # tibble::deframe()
   dplyr::mutate(
     ns = c(
       list(c(10, 9, 5)),
@@ -360,6 +379,7 @@ recells |>
       # list(c(3)),
       list(c(7, 9, 7, 5, 3)),
       list(c(10)),
+      list(c(10)), #T,
       list(c(10)), #T
       list(c(7)),
       # list(c(10)),
@@ -367,9 +387,12 @@ recells |>
       list(c(10, 9, 5)),
       list(c(10)),
       list(c(10)), # Neutrophil
-      list(c(6)),
+      # list(c(6)),
+      list(c(3)), # Neurons
+      list(c(4)), # Sensory neurons
+      list(c(4)),
       list(c(5)),
-      list(c(5)),
+      list(c(2)),
       list(c(1))
     )
   ) |>
@@ -705,8 +728,8 @@ azimuth_ref_sunburst |>
       .x = data,
       .y = region,
       .f = function(.x, .y) {
-        # .x <- ddd$data[[1]]
-        # .y <- ddd$region[[1]]
+        # .x <- ddd$data[[3]]
+        # .y <- ddd$region[[3]]
 
         .x$cellratio |>
           dplyr::bind_rows() |>
@@ -723,27 +746,27 @@ azimuth_ref_sunburst |>
           dplyr::distinct() ->
           .xx
 
-        # .xx$cell1 |> unique()
-        # .xx$cell2 |> unique()
-        # .xx$cell3 |> unique()
+        .xx$cell1 |> unique()
+        .xx$cell2 |> unique()
+        .xx$cell3 |> unique()
         # .y
         if(.y == "Meninge") {
           list(
             cell1 = c("Lymphoctyes", "Myeloid cells"),
-            cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils"),
-            cell3 = c("T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "Neutrophils")
+            cell2 = c("T/NKT cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils"),
+            cell3 = c("T/NKT cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "pDC", "Neutrophils")
           )
         } else if(.y == "Skull") {
           list(
-            cell1 = c("Lymphoctyes", "Myeloid cells", "HSPC", "Erythroid", "Sensory neurons"),
+            cell1 = c("Lymphoctyes", "Myeloid cells", "HSPC", "Erythroid", "Neuron"),
             cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils",  "HSPC", "Erythroid", "Sensory neurons"),
             cell3 = c("T cells", "Mature B cells", "Immature B cells", "Pre-B cells", "Pro-B cells", "NK cells", "CD14 Monocytes", "Macrophage", "mDC", "Neutrophils", "HSPC", "Erythroid", "Sensory neurons")
           )
         } else if(.y == "Brain") {
           list(
-            cell1 = c("Lymphoctyes", "Myeloid cells", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial"),
-            cell2 = c("T cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial"),
-            cell3 = c("T cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial" )
+            cell1 = c("Lymphoctyes", "Myeloid cells", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron"),
+            cell2 = c("T/NKT cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron"),
+            cell3 = c("T/NKT cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron" )
           )
         }
 
@@ -1373,5 +1396,5 @@ ggsave(
 
 # save image --------------------------------------------------------------
 # save.image(file = "data/azimuth/04-manual-annotation.rda")
-# load(file = "data/azimuth/04-manual-annotation.rda")
+load(file = "data/azimuth/04-manual-annotation.rda")
 #
