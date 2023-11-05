@@ -342,9 +342,9 @@ recells |>
       "ggsci::grey_material",
       "ggsci::blue_grey_material",
       "ggsci::yellow_material",
-      "ggsci::pink_material",
+      "ggsci::pink_material", # NK cells
       "ggsci::red_material", # T cell
-      "ggsci::red_material", # T cell,
+      "ggsci::pink_material", # T/NKT cell,
       # "ggsci::purple_material",
       "ggsci::red_material",
       "ggsci::light_blue_material",
@@ -378,10 +378,10 @@ recells |>
       list(c(3)),
       # list(c(3)),
       list(c(7, 9, 7, 5, 3)),
-      list(c(10)),
-      list(c(10)), #T,
-      list(c(10)), #T
-      list(c(7)),
+      list(c(10)), # NK cells
+      list(c(10)), # T cells,
+      list(c(7)), # T/NKT cells
+      list(c(7)), # Microglia
       # list(c(10)),
       list(c(10, 7, 5)),
       list(c(10, 9, 5)),
@@ -765,8 +765,8 @@ azimuth_ref_sunburst |>
         } else if(.y == "Brain") {
           list(
             cell1 = c("Lymphoctyes", "Myeloid cells", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron"),
-            cell2 = c("T/NKT cells", "B cells", "NK cells", "Monocytes", "Macrophage", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron"),
-            cell3 = c("T/NKT cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "Macrophage", "mDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron" )
+            cell2 = c("T/NKT cells", "B cells", "NK cells", "Monocytes", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron"),
+            cell3 = c("T/NKT cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "mDC", "pDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron" )
           )
         }
 
@@ -783,15 +783,15 @@ azimuth_ref_sunburst |>
     by = c("region", "case")
   ) ->
   azimuth_ref_sunburst_cell
-
+#
 # readr::write_rds(
 #   x = azimuth_ref_sunburst_cell,
 #   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
 # )
-
-azimuth_ref_sunburst_cell <- readr::read_rds(
-  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
-)
+#
+# azimuth_ref_sunburst_cell <- readr::read_rds(
+#   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
+# )
 
 # Col plot ----------------------------------------------------------------
 
@@ -1396,5 +1396,5 @@ ggsave(
 
 # save image --------------------------------------------------------------
 # save.image(file = "data/azimuth/04-manual-annotation.rda")
-load(file = "data/azimuth/04-manual-annotation.rda")
+# load(file = "data/azimuth/04-manual-annotation.rda")
 #
