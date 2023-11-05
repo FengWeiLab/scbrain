@@ -269,6 +269,19 @@ astro <- tibble::tibble(
   Symbol = c("Gpc5", "Myoc", "Slc1a2", "Fxyd6", "Slc1a3", "Nrp2", "Slc6a6", "Apoe", "Aqp4", "Gfap", "Lsamp", "Gpc5", "Slc1a2", "Luzp2", "Slc1a3", "Apoe", "Cadm2", "Rora", "Aqp4", "Slc7a10", "Igfbpl1", "Gpc5", "Mki67", "Slc1a2", "Myt1", "Slc1a3", "Apoe", "E2f2", "E2f7", "Top2a") |> unique()
 )
 
+neuron <- tibble::tibble(
+  cell_name = "Neuron",
+  Symbol = c(
+    "Brinp3", "C1ql3", "Cdh13", "Fst", "Il1rapl2", "Negr1", "Efna5", "Zfp804b", "Plcxd3", "Dscaml1", "Igfbpl1", "Dcc", "E130114P18Rik", "Draxin", "Cd1d1", "Sp8", "Ccnd2", "Mdk", "Meis2", "Top2a"
+  ) |> unique()
+)
+
+Pericytes <- tibble::tibble(
+  cell_name = "Pericytes",
+  Symbol = c(
+    "Plp1", "Mbp", "St18", "Prr5l", "Mobp", "Mal", "Mog", "Cldn11", "Pde4b", "Mag", "Cubn", "Ptgds", "Bnc2", "Slc7a14", "Sptssb", "Cped1", "Slc7a11", "Dapl1", "Igfbp3", "Bmp6"
+  )
+)
 
 dplyr::bind_rows(
  
@@ -299,6 +312,15 @@ dplyr::bind_rows(
       dplyr::mutate(
         cell3 = "Astrocyte Aqp4_Gfap"
       ),
+  
+  neuron |> 
+    dplyr::mutate(
+      cell3 = "Neuron"
+    ),
+  Pericytes |> 
+    dplyr::mutate(
+      cell3 = "Pericytes"
+    ),
   
 cellmarker_brain |> 
   dplyr::select(cell_name, Symbol) |> 
@@ -358,18 +380,18 @@ cellmarker_brain |>
 
 dplyr::bind_rows(
   acells, bcells, ccells
-) |> 
+) ->
+  cell3_merge
+
+cell3_merge |> 
+  dplyr::filter(cell3 %in% c("T cells", "NK cells")) |> 
+  dplyr::mutate(cell3 = "T/NKT cells") |> 
+  dplyr::bind_rows(cell3_merge) |> 
   dplyr::group_by(cell3) |> 
   tidyr::nest() |> 
   dplyr::ungroup() ->
   candidate_markers
 
-candidate_markers |> 
-  # dplyr::filter(cell3 == "mDC")
-  tidyr::unnest(cols = data) |> 
-  dplyr::filter(Symbol == "H2-Ab1")
-  # print(n = Inf)
-  dplyr::filter(Symbol == "Aqp1")
 
 readr::write_rds(
   candidate_markers,
