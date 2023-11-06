@@ -373,4 +373,4 @@ future::plan(future::sequential)
 # save image --------------------------------------------------------------
 save.image(file = "data/azimuth/03-individual-tissue-supercell.rda")
 
-load(file = "data/azimuth/03-individual-tissue-supercell.rda")
+# load(file = "data/azimuth/03-individual-tissue-supercell.rda")
