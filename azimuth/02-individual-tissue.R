@@ -590,14 +590,14 @@ project_sc_azimuth_brain |>
 
 
 
-        # nnc <- c("L6 IT_1", "Meis2", "Peri", "Meis2_Top2a")
+        nnc <- c("L6 IT_1", "Meis2", "Meis2_Top2a")
 
         a1_sel |>
           dplyr::inner_join(a2_sel, by = "barcode") |>
           dplyr::left_join(mousecortexref_cell, by = "predicted.cluster") |>
           dplyr::mutate(celltype2 = ifelse(
             # predicted.cluster %in% nnc,
-            predicted.annotation.l1.score > 0.65 & predicted.annotation.l1.score > predicted.cluster.score,
+            predicted.annotation.l1.score > 0.85 & predicted.annotation.l1.score > predicted.cluster.score,
             predicted.annotation.l1,
             predicted.cluster
           )) |>
@@ -609,12 +609,19 @@ project_sc_azimuth_brain |>
             )
           ) |>
           dplyr::mutate(
+            celltype2 = ifelse(
+              celltype2 %in% nnc,
+              "Endo",
+              celltype2
+            )
+          ) |>
+          dplyr::mutate(
             subclass = as.character(subclass),
             predicted.annotation.l1 = as.character(predicted.annotation.l1)
           ) |>
           dplyr::mutate(
             celltype = ifelse(
-              predicted.annotation.l1.score > 0.65 & predicted.annotation.l1.score > predicted.cluster.score,
+              predicted.annotation.l1.score > 0.85 & predicted.annotation.l1.score > predicted.cluster.score,
               predicted.annotation.l1,
               subclass
             )
@@ -623,6 +630,13 @@ project_sc_azimuth_brain |>
             celltype = ifelse(
               celltype2 == "Micro",
               "Micro-PVM",
+              celltype
+            )
+          ) |>
+          dplyr::mutate(
+            celltype = ifelse(
+              celltype2 %in% nnc,
+              "Endo",
               celltype
             )
           ) ->
@@ -642,6 +656,7 @@ project_sc_azimuth_brain |>
   ) |>
   tidyr::unnest(cols = annno_new) ->
   project_sc_azimuth_brain_new
+
 
 
 project_sc_azimuth_brain_new |>
@@ -796,9 +811,9 @@ ggsave(
 
 
 # save image --------------------------------------------------------------
-project_sc_azimuth |> dplyr::glimpse()
-
-project_sc_azimuth_brain_new |> dplyr::glimpse()
+# project_sc_azimuth |> dplyr::glimpse()
+#
+# project_sc_azimuth_brain_new |> dplyr::glimpse()
 
 project_sc_azimuth |>
   dplyr::filter(region != "Brain") |>
