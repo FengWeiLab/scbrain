@@ -572,10 +572,8 @@ project_sc_azimuth_brain |>
         .anno2 = anno2
       ),
       .f = function(.anno, .anno2) {
-        # .anno <- project_sc_azimuth_brain$anno[[2]]
-        # .anno2 <- project_sc_azimuth_brain$anno2[[2]]
-
-
+        # .anno <- project_sc_azimuth_brain$anno[[3]]
+        # .anno2 <- project_sc_azimuth_brain$anno2[[3]]
 
         .anno@meta.data |>
           tibble::rownames_to_column(var = "barcode") |>
@@ -599,7 +597,7 @@ project_sc_azimuth_brain |>
           dplyr::left_join(mousecortexref_cell, by = "predicted.cluster") |>
           dplyr::mutate(celltype2 = ifelse(
             # predicted.cluster %in% nnc,
-            predicted.annotation.l1.score > predicted.cluster.score,
+            predicted.annotation.l1.score > 0.65 & predicted.annotation.l1.score > predicted.cluster.score,
             predicted.annotation.l1,
             predicted.cluster
           )) |>
@@ -616,7 +614,7 @@ project_sc_azimuth_brain |>
           ) |>
           dplyr::mutate(
             celltype = ifelse(
-              predicted.annotation.l1.score > predicted.cluster.score,
+              predicted.annotation.l1.score > 0.65 & predicted.annotation.l1.score > predicted.cluster.score,
               predicted.annotation.l1,
               subclass
             )
@@ -627,7 +625,9 @@ project_sc_azimuth_brain |>
               "Micro-PVM",
               celltype
             )
-          ) |>
+          ) ->
+          .m
+        .m |>
           dplyr::select(barcode, celltype, celltype2) ->
           .d
         .anno@meta.data$celltype1 <- .d$celltype
@@ -1087,7 +1087,7 @@ writexl::write_xlsx(
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-# save.image(file = "data/azimuth/02-individual-tissue.rda")
+save.image(file = "data/azimuth/02-individual-tissue.rda")
 
 
 # load(file = "data/azimuth/02-individual-tissue.rda")

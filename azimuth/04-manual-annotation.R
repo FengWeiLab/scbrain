@@ -784,11 +784,11 @@ azimuth_ref_sunburst |>
   ) ->
   azimuth_ref_sunburst_cell
 #
-# readr::write_rds(
-#   x = azimuth_ref_sunburst_cell,
-#   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
-# )
-#
+readr::write_rds(
+  x = azimuth_ref_sunburst_cell,
+  file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
+)
+
 # azimuth_ref_sunburst_cell <- readr::read_rds(
 #   file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell.rds"
 # )
@@ -1395,6 +1395,6 @@ ggsave(
 # future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-# save.image(file = "data/azimuth/04-manual-annotation.rda")
+save.image(file = "data/azimuth/04-manual-annotation.rda")
 # load(file = "data/azimuth/04-manual-annotation.rda")
 #

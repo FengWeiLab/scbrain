@@ -27,7 +27,7 @@ candidate_markers <- readr::read_rds(
 
 # header ------------------------------------------------------------------
 
-future::plan(future::multisession, workers = 10)
+# future::plan(future::multisession, workers = 10)
 
 # function ----------------------------------------------------------------
 
