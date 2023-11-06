@@ -351,7 +351,7 @@ recells |>
       "ggsci::blue_material",
       "ggsci::cyan_material",
       "ggsci::teal_material",
-      "ggsci::green_material", # "Neuron"
+      # "ggsci::green_material", # "Neuron"
       "ggsci::green_material", # "Sensory neurons"
       "ggsci::deep_purple_material",
       "ggsci::deep_purple_material",
@@ -388,7 +388,7 @@ recells |>
       list(c(10)),
       list(c(10)), # Neutrophil
       # list(c(6)),
-      list(c(3)), # Neurons
+      # list(c(3)), # Neurons
       list(c(4)), # Sensory neurons
       list(c(4)),
       list(c(5)),
@@ -722,14 +722,17 @@ azimuth_ref_sunburst |>
   dplyr::select(region, case, cellratio) |>
   dplyr::group_by(region) |>
   tidyr::nest() |>
-  dplyr::ungroup() |>
+  dplyr::ungroup() ->
+  azimuth_ref_sunburst_nest
+
+azimuth_ref_sunburst_nest |>
   dplyr::mutate(
     cell_factor = purrr::map2(
       .x = data,
       .y = region,
       .f = function(.x, .y) {
-        # .x <- ddd$data[[3]]
-        # .y <- ddd$region[[3]]
+        # .x <- azimuth_ref_sunburst_nest$data[[3]]
+        # .y <- azimuth_ref_sunburst_nest$region[[3]]
 
         .x$cellratio |>
           dplyr::bind_rows() |>
@@ -764,9 +767,9 @@ azimuth_ref_sunburst |>
           )
         } else if(.y == "Brain") {
           list(
-            cell1 = c("Lymphoctyes", "Myeloid cells", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron"),
-            cell2 = c("T/NKT cells", "B cells", "NK cells", "Monocytes", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron"),
-            cell3 = c("T/NKT cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "mDC", "pDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes", "Neuron" )
+            cell1 = c("Lymphoctyes", "Myeloid cells", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes"),
+            cell2 = c("T/NKT cells", "B cells", "NK cells", "Monocytes", "DC", "Neutrophils", "Astrocyte", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes"),
+            cell3 = c("T/NKT cells", "Mature B cells", "NK cells", "CD14 Monocytes", "CD16 Monocytes", "mDC", "Neutrophils", "Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "OPC", "VLMC", "Endothelial", "Pericytes" )
           )
         }
 

@@ -435,14 +435,20 @@ azimuth_ref_sunburst_cell_merge_norm |>
     )
   ) ->
   azimuth_ref_sunburst_cell_merge_norm_allmarkers
+#
+# azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[1]]@assays$RNA |> rownames() ->b
+#
+# azimuth_ref_sunburst_cell_merge_norm_allmarkers$allmarkers[[1]] |>
+#   tibble::rownames_to_column(var = "newgene") |>
+#   dplyr::filter(newgene != gene)
 
 # Heatmap -----------------------------------------------------------------
 
 
 fn_heatmap <- function(.norm,.region, .allmarkers, .topn=5){
-  .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[3]]
-  .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[3]]
-  .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$allmarkers[[3]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[3]]
+  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[3]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$allmarkers[[3]]
   # .topn <- 10
 
   Idents(.norm) <- "cell3_cluster"
@@ -1111,5 +1117,5 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene |
 future::plan(future::sequential)
 
 # save image --------------------------------------------------------------
-# save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
+save.image(file = "data/azimuth/05-cluster-marker-gene-1.rda")
 # load(file = "data/azimuth/05-cluster-marker-gene-1.rda")
