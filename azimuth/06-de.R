@@ -470,7 +470,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
           filename = glue::glue("{.x}-prop-ratio-tmcao-vs-sham.pdf"),
           plot = .y$p_tmca_vs_sham,
           device = "pdf",
-          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-2",
+          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-3",
           width = 8,
           height = 5
         )
@@ -479,7 +479,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
           filename = glue::glue("{.x}-prop-ratio-uvb-vs-tmcao.pdf"),
           plot = .y$p_uv_vs_mcao,
           device = "pdf",
-          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-2",
+          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-3",
           width = 8,
           height = 5
         )
@@ -488,7 +488,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
           filename = glue::glue("{.x}-prop-ratio-uvb-merge.pdf"),
           plot = .y$p_merge,
           device = "pdf",
-          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-2",
+          path = "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-3",
           width = 5,
           height = 4.5
         )
@@ -527,7 +527,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_prop |>
         writexl::write_xlsx(
           x = .yyd |>
             dplyr::select(1, 7, 8, 9, 2, 3, 4, 5, 6),
-          "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-2/{.x}-celltype-number-prop.xlsx" |> glue::glue(),
+          "/home/liuc9/github/scbrain/scuvresult/08-prop-ratio-3/{.x}-celltype-number-prop.xlsx" |> glue::glue(),
         )
 
       }
@@ -779,7 +779,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           filename = glue::glue("{.r}-DEG-n-tMCAO_vs_Sham.pdf"),
           plot = .nn$p_ms,
           device = "pdf",
-          path = "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de-3",
           width = 8,
           height = 5
         )
@@ -788,7 +788,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           filename = glue::glue("{.r}-DEG-n-UVB_vs_tMCAO.pdf"),
           plot = .nn$p_um,
           device = "pdf",
-          path = "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de-3",
           width = 8,
           height = 5
         )
@@ -832,7 +832,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           "UVB+tMCAO vs. tMCAO" = .dd_um
         ) |>
           writexl::write_xlsx(
-            "/home/liuc9/github/scbrain/scuvresult/09-de-2/{.r}-n-deg.xlsx" |> glue::glue(),
+            "/home/liuc9/github/scbrain/scuvresult/09-de-3/{.r}-n-deg.xlsx" |> glue::glue(),
           )
 
       }
@@ -958,7 +958,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           filename = glue::glue("{.r}-DEG-n-MERGE.pdf"),
           plot = p,
           device = "pdf",
-          path = "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de-3",
           width = 6,
           height = 4
         )
@@ -1055,7 +1055,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           filename = glue::glue("{.r}-DEG-n-Intersection.pdf"),
           plot = p,
           device = "pdf",
-          path = "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+          path = "/home/liuc9/github/scbrain/scuvresult/09-de-3",
           width = 7,
           height = 7
         )
@@ -1235,6 +1235,55 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
   dplyr::mutate(
     a = purrr::map2(
       .x = region,
+      .y = de_change,
+      .f = \(.x, .y) {
+        # .x <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano$region[[3]]
+        # .y <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano$de_change[[3]]
+
+        .y |>
+          dplyr::select(cell, mcao_vs_sham) |>
+          dplyr::filter(!purrr::map_lgl(
+            .x = mcao_vs_sham,
+            .f = is.null
+          )) |>
+          dplyr::mutate(cell = gsub("/", "_", cell)) |>
+          tibble::deframe() ->
+          .y_mcao_vs_sham
+
+        .y |>
+          dplyr::select(cell, uv_vs_mcao) |>
+          dplyr::filter(!purrr::map_lgl(
+            .x = uv_vs_mcao,
+            .f = is.null
+          )) |>
+          dplyr::mutate(cell = gsub("/", "_", cell)) |>
+          tibble::deframe() ->
+          .y_uv_vs_mcao
+
+        writexl::write_xlsx(
+          x = .y_mcao_vs_sham,
+          file.path(
+            "/home/liuc9/github/scbrain/scuvresult/09-de-3/",
+          "{.x}-celltype-DEG-mcao_vs_sham.xlsx" |> glue::glue()
+          )
+        )
+
+        writexl::write_xlsx(
+          x = .y_uv_vs_mcao,
+          file.path(
+            "/home/liuc9/github/scbrain/scuvresult/09-de-3/",
+            "{.x}-celltype-DEG-uv_vs_mcao.xlsx" |> glue::glue()
+          )
+        )
+
+      }
+    )
+  )
+
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
       .y = volcano_plot,
       .f = function(.r, .v) {
         # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano$region[[1]]
@@ -1242,7 +1291,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+            "/home/liuc9/github/scbrain/scuvresult/09-de-3",
             .r
           ),
           showWarnings = F,
@@ -1253,10 +1302,11 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
             a = purrr::map(
               .x = p,
               .f = function(.p) {
+                  .title <- gsub("/", "_", .p$title)
                 ggsave(
-                  filename ="{.p$title}.pdf" |> glue::glue(),
+                  filename ="{.title}.pdf" |> glue::glue(),
                   path = file.path(
-                    "/home/liuc9/github/scbrain/scuvresult/09-de-2",
+                    "/home/liuc9/github/scbrain/scuvresult/09-de-3",
                     .r
                   ),
                   plot = .p$p,

@@ -314,7 +314,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
+            "/home/liuc9/github/scbrain/scuvresult/10-enrichment-5",
             .r
           ),
           recursive = T
@@ -343,7 +343,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
                       filename = glue::glue("{.filename}-down-enrichment.pdf"),
                       device = "pdf",
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-5",
                         .r
                       ),
                       width = 3,
@@ -353,7 +353,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
                     writexl::write_xlsx(
                       x = as.data.frame(.down_en$gobp[[1]]),
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-5",
                         .r,
                         glue::glue("{.filename}-down-enrichment.xlsx")
                       )
@@ -370,7 +370,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
                       filename = glue::glue("{.filename}-up-enrichment.pdf"),
                       device = "pdf",
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-5",
                         .r
                       ),
                       width = 3,
@@ -380,7 +380,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
                     writexl::write_xlsx(
                       x = as.data.frame(.up_en$gobp[[1]]),
                       path = file.path(
-                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-4",
+                        "/home/liuc9/github/scbrain/scuvresult/10-enrichment-5",
                         .r,
                         glue::glue("{.filename}-up-enrichment.xlsx")
                       )
