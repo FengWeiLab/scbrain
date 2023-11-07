@@ -180,16 +180,16 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
   azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich
 
 #
-# azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
-#   readr::write_rds(
-#     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich.rds.gz"
-#   )
-
-
-azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich <-
-  readr::read_rds(
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
+  readr::write_rds(
     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich.rds.gz"
   )
+
+
+# azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich <-
+#   readr::read_rds(
+#     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich.rds.gz"
+#   )
 
 
 fn_plot_enrich <- function(.m, .change="up") {
@@ -309,8 +309,8 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot |
       .x = region,
       .y = b,
       .f = function(.r, .e) {
-        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$region[[2]]
-        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$b[[2]]
+        # .r <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$region[[3]]
+        # .e <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich_newenrichplot$b[[3]]
 
         dir.create(
           path = file.path(
