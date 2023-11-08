@@ -393,6 +393,12 @@ cell3_merge |>
   candidate_markers
 
 
+candidate_markers |> 
+  tidyr::unnest(cols = data) |> 
+  writexl::write_xlsx(
+    "/home/liuc9/data/refdata/cellmarker/cellmarker.xlsx"
+  )
+
 readr::write_rds(
   candidate_markers,
   "/home/liuc9/data/refdata/cellmarker/candidate_markers.rds.gz"

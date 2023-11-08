@@ -463,7 +463,18 @@ fn_heatmap <- function(.norm,.region, .allmarkers, .topn=5){
     .top
 
   p <- Seurat::DoHeatmap(.norm, features = unique(.top$gene)) + NoLegend()
-  p
+
+
+  .allmarkers |>
+    dplyr::group_by(cluster) |>
+    dplyr::top_n(50, wt = avg_log2FC) |>
+    dplyr::ungroup() ->
+    .top50
+
+  list(
+    heatmap = p,
+    markergene = .top50
+  )
 }
 
 azimuth_ref_sunburst_cell_merge_norm_allmarkers |>
@@ -487,13 +498,31 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
         .p = heatmap10
       ),
       .f = function(.r, .p) {
+
+        .p_heatmap <- .p$heatmap
+        .markergene <- .p$markergene
+
         ggsave(
           filename = "{.r}-markergenes-heatmap.pdf" |> glue::glue(),
-          plot = .p,
+          plot = .p_heatmap,
           width = 20,
           height = 15,
           path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5"
         )
+
+        .markergene |>
+          dplyr::group_split(cluster) ->
+          .d
+
+        writexl::write_xlsx(
+          x = .d,
+          path = file.path(
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5",
+            "{.r}-markergenes-heatmap-top50.xlsx" |> glue::glue()
+          )
+        )
+
+
       }
     )
   )
@@ -912,6 +941,266 @@ ggsave(
   height = 5
 )
 
+
+# Marker gene manual ------------------------------------------------------
+updated_markergenes <- list(
+  "Brain" = list(
+    "T/NKT cells" = c("Ccl5", "Nkg7"),
+    "Mature B cells" = c("Ly6d", "Cd79a", "Cd74"),
+    "NK cells" = c("Ccl5", "Nkg7", "Gzma"),
+    "CD14 Monocytes" = c("Ly6c2", "Lyz2", "Wfdc17"),
+    "CD16 Monocytes" = c("Ly6c2", "Lyz2", "CD300a"),
+    "mDC" = c("CD74", "H2-Ab1", "H2-Aa"),
+    "Neutrophils" = c("S100a8", "Retnlg"),
+    "Astrocyte Aqp4_Gfap" = c("Gfap", "Slc1a2", "Slc1a3"),
+    "Astrocyte Aqp4_Slc7a10" = c("Slc1a2", "Slc1a3"),
+    "Microglia" = c("C1qa", "C1qc", "Hexb"),
+    "OLG" = c("Plp1", "Ptgds", "Mbp"),
+    "OPC" = c("Pdgfra", "Ptprz1"),
+    "VLMC" = c("Ptgds", "Slc7a11", "Pdgfra", "Dcn"),
+    "Endothenial" = c("Cldn5", "Ly6c1"),
+    "Pericytes" = c("Vtn", "Rgs5")
+  ),
+  "Meninge" = list(
+    "T/NKT cells" = c("Trbc2", "Cd3d"),
+    "Mature B cells" = c("Cd79a", "Ly6d"),
+    "NK cells" = c("Gzma", "Ccl5", "Nkg7"),
+    "CD14 Monocytes" = c("Lyz2", "Fn1", "Ly6c2"),
+    "CD16 Monocytes" = c("Lyz2", "Ace"),
+    "Macrophage" = c("C1qa", "C1qb", "Pf4"),
+    "mDC" = c("Cst3", "H2-Aa"),
+    "pDC" = c("Siglech", "Bst2"),
+    "Neutrophils" = c("Retnlg", "S100a8")
+  ),
+  "Skull" = list(
+    "T cells" = c("Trbc2", "Cd3d"),
+    "Mature B cells" = c("Cd79a", "Ms4a1", "H2-Aa"),
+    "Immature B cells" = c("Cd79b", "Rag1"),
+    "Pre-B cells" = c("Vpreb3", "Il7r"),
+    "Pro-B cells" = c("Dntt", "Igll1"),
+    "NK cells" = c("Gzma", "Nkg7"),
+    "CD14 Monocytes" = c("Ly6c2", "Fn1"),
+    "Macrophage" = c("Saa3", "Ctss"),
+    "mDC" = c("Bst2", "Siglech"),
+    "Neutrophils" = c("Retnlg", "S100a8"),
+    "HSPC" = c("Aqp1", "Pdzk1iq1"),
+    "Erythroid" = c("Hbba-a2", "Hbba-a1"),
+    "Sensory neurons" = c()
+  )
+)
+
+fn_gene_dotplot_manual <- function(.region, .norm, .allmarkers) {
+
+  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[3]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[3]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[3]]
+
+  updated_markergenes[[.region]] |>
+    purrr::reduce(.f = c) |>
+    unique() ->
+    .m
+
+  DefaultAssay(.norm) <- "RNA"
+  Idents(.norm) <- "cell3_cluster"
+
+
+  fn_marker_gene_dotplot(
+    .norm,
+    features = .m,
+    cols = c("blue", "red"),
+    dot.scale = 6
+  )
+}
+
+
+
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
+  dplyr::mutate(
+    markerdot = purrr::pmap(
+      .l = list(
+        .region = region,
+        .norm = norm,
+        .allmarkers = allmarkers
+      ),
+      .f = fn_gene_dotplot_manual
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual
+
+ggsave(
+  filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$region[[1]]}-markergenes-dot.pdf"),
+  plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$markerdot[[1]],
+  device = "pdf",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+  width = 6.5,
+  height = 4
+)
+
+
+ggsave(
+  filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$region[[2]]}-markergenes-dot.pdf"),
+  plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$markerdot[[2]],
+  device = "pdf",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+  width = 8,
+  height = 4
+)
+
+ggsave(
+  filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$region[[3]]}-markergenes-dot.pdf"),
+  plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$markerdot[[3]],
+  device = "pdf",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+  width = 10,
+  height = 5
+)
+
+fn_plot_dot_feature_manual <- function(.region, .norm, .allmarkers) {
+  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$region[[2]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$norm[[2]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot$allmarkers[[2]]
+
+  updated_markergenes[[.region]] |>
+    purrr::reduce(.f = c) |>
+    unique() ->
+    .m
+
+
+
+  .allmarkers %>%
+    dplyr::group_by(cluster) |>
+    tidyr::nest() |>
+    dplyr::ungroup() |>
+    dplyr::mutate(
+      a = purrr::map(
+        .x = data,
+        .f = \(.x) {
+          .x |>
+            dplyr::filter(gene %in% .m)
+        }
+      )
+    ) |>
+    dplyr::select(cluster, a) |>
+    tidyr::unnest(cols = a) ->
+    .marker_head_a
+
+  .marker_head_a |>
+    dplyr::left_join(
+      .norm@meta.data |>
+        dplyr::select(cell3, cell3_color, cell3_cluster) |>
+        dplyr::distinct() |>
+        dplyr::mutate(
+          cluster = cell3_cluster
+        ),
+      by = "cluster"
+    ) ->
+    .marker_head
+
+  .marker_head |>
+    dplyr::mutate(
+      fp = purrr::pmap(
+        .l = list(
+          .cluster = cluster,
+          .gene = gene,
+          .cell3 = cell3,
+          .cell3_color = cell3_color
+        ),
+        .f = function(.cluster, .gene, .cell3, .cell3_color) {
+          .title = glue::glue("{stringr::str_to_title(.gene)}\n({.cell3})")
+          DefaultAssay(.norm) <- "RNA"
+          FeaturePlot(
+            object = .norm,
+            features = .gene,
+            cols = c("gold", "#F02415"),
+            # cols = c("gold", .cell3_color),
+            order = TRUE,
+            reduction = "tsne",
+            max.cutoff = 3
+          ) +
+            labs(title = .title) +
+            theme(
+              axis.line = element_blank(),
+              axis.ticks = element_blank(),
+              axis.text = element_blank(),
+              axis.title = element_blank()
+            ) +
+            plot_layout(guides = 'collect')
+        }
+      )
+    ) ->
+    m
+
+  m |>
+    dplyr::ungroup()
+}
+
+
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
+  dplyr::mutate(
+    featuredot = purrr::pmap(
+      .l = list(
+        .region = region,
+        .norm = norm,
+        .allmarkers = allmarkers
+      ),
+      .f = fn_plot_dot_feature_manual
+    )
+  ) ->
+  azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene_manual
+
+
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene_manual |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = region,
+      .y = featuredot,
+      .f = function(.x, .y) {
+        # .x <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene$region[[1]]
+        # .y <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene$featuredot[[1]]
+
+        dir.create(
+          path = file.path(
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+            .x
+          ),
+          recursive = T,
+          showWarnings = F
+        )
+
+
+        .y |>
+          dplyr::mutate(
+            b = purrr::pmap(
+              .l = list(
+                .cluster = cluster,
+                .gene = gene,
+                .cell3 = cell3,
+                .fp = fp
+              ),
+              .f = function(.cluster, .gene, .cell3, .fp) {
+                .cell3_new <- gsub(
+                  pattern = "/",
+                  "_",
+                  .cell3
+                )
+                .filename <- glue::glue("{.x}_{.cluster}_{.cell3_new}_{stringr::str_to_sentence(.gene)}.pdf")
+                ggsave(
+                  filename = .filename,
+                  plot = .fp,
+                  device = "pdf",
+                  path = file.path(
+                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+                    .x
+                  ),
+                  width = 5,
+                  height = 5
+                )
+              }
+            )
+          )
+      }
+    )
+  )
 
 # marker gene -------------------------------------------------------------
 
