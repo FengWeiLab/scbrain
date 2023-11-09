@@ -983,17 +983,17 @@ updated_markergenes <- list(
     "Macrophage" = c("Saa3", "Ctss"),
     "mDC" = c("Bst2", "Siglech"),
     "Neutrophils" = c("Retnlg", "S100a8"),
-    "HSPC" = c("Aqp1", "Pdzk1iq1"),
-    "Erythroid" = c("Hbba-a2", "Hbba-a1"),
+    "HSPC" = c("Aqp1", "Pdzk1ip1"),
+    "Erythroid" = c("Hba-a2", "Hba-a1"),
     "Sensory neurons" = c()
   )
 )
 
 fn_gene_dotplot_manual <- function(.region, .norm, .allmarkers) {
 
-  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[3]]
-  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[3]]
-  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[3]]
+  # .region <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$region[[2]]
+  # .norm <- azimuth_ref_sunburst_cell_merge_norm_allmarkers$norm[[2]]
+  # .allmarkers <- azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap$allmarkers[[2]]
 
   updated_markergenes[[.region]] |>
     purrr::reduce(.f = c) |>
