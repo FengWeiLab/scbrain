@@ -949,7 +949,7 @@ updated_markergenes <- list(
     "Mature B cells" = c("Ly6d", "Cd79a", "Cd74"),
     "NK cells" = c("Ccl5", "Nkg7", "Gzma"),
     "CD14 Monocytes" = c("Ly6c2", "Lyz2", "Wfdc17"),
-    "CD16 Monocytes" = c("Ly6c2", "Lyz2", "CD300a"),
+    "CD16 Monocytes" = c("Ly6c2", "Lyz2", "Cd300a"),
     "mDC" = c("CD74", "H2-Ab1", "H2-Aa"),
     "Neutrophils" = c("S100a8", "Retnlg"),
     "Astrocyte Aqp4_Gfap" = c("Gfap", "Slc1a2", "Slc1a3"),
