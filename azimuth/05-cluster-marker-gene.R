@@ -78,19 +78,19 @@ azimuth_ref_sunburst_cell |>
           ) ->
           .yy
 
-        # .npcs <- 30
+        .npcs <- 30
 
-        .yy.anchors <- FindIntegrationAnchors(object.list = .yy, dims = 1:20)
+        .yy.anchors <- FindIntegrationAnchors(object.list = .yy, dims = 1:.npcs)
 
-        .yy.combined <- IntegrateData(anchorset = .yy.anchors, dims = 1:20)
+        .yy.combined <- IntegrateData(anchorset = .yy.anchors, dims = 1:.npcs)
         # .yy.combined
 
         DefaultAssay(.yy.combined) <- "integrated"
         .yy.combined <- ScaleData(.yy.combined, verbose = FALSE)
         .yy.combined <- Seurat::RunPCA(.yy.combined)
-        .yy.combined <- Seurat::FindNeighbors(.yy.combined, dims = 1:10)
-        .yy.combined <- Seurat::RunUMAP(.yy.combined, dims = 1:10)
-        .yy.combined <- Seurat::RunTSNE(.yy.combined, dims = 1:10)
+        .yy.combined <- Seurat::FindNeighbors(.yy.combined, dims = 1:.npcs)
+        .yy.combined <- Seurat::RunUMAP(.yy.combined, dims = 1:.npcs)
+        .yy.combined <- Seurat::RunTSNE(.yy.combined, dims = 1:.npcs)
 
         azimuth_ref_sunburst_cell_cell_factor |>
           dplyr::filter(region == .x) ->
