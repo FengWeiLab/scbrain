@@ -80,9 +80,9 @@ azimuth_ref_sunburst_cell |>
 
         .npcs <- 30
 
-        .yy.anchors <- FindIntegrationAnchors(object.list = .yy, dims = 1:.npcs)
+        .yy.anchors <- FindIntegrationAnchors(object.list = .yy, dims = 1:20)
 
-        .yy.combined <- IntegrateData(anchorset = .yy.anchors, dims = 1:.npcs)
+        .yy.combined <- IntegrateData(anchorset = .yy.anchors, dims = 1:20)
         # .yy.combined
 
         DefaultAssay(.yy.combined) <- "integrated"
@@ -382,14 +382,14 @@ azimuth_ref_sunburst_cell_merge_norm_p |>
           plot = .p2,
           width = 10,
           height = 8,
-          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5"
+          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6"
         )
         ggsave(
           filename = "{.r}-celltype-cluster-tsne.pdf" |> glue::glue(),
           plot = .p1,
           width = 10,
           height = 8,
-          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5"
+          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6"
         )
       }
     )
@@ -507,7 +507,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
           plot = .p_heatmap,
           width = 20,
           height = 15,
-          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5"
+          path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6"
         )
 
         .markergene |>
@@ -517,7 +517,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap |>
         writexl::write_xlsx(
           x = .d,
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6",
             "{.r}-markergenes-heatmap-top50.xlsx" |> glue::glue()
           )
         )
@@ -1031,7 +1031,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$region[[1]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$markerdot[[1]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6/manual",
   width = 6.5,
   height = 4
 )
@@ -1041,7 +1041,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$region[[2]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$markerdot[[2]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6/manual",
   width = 8,
   height = 4
 )
@@ -1050,7 +1050,7 @@ ggsave(
   filename = glue::glue("{azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$region[[3]]}-markergenes-dot.pdf"),
   plot = azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual$markerdot[[3]],
   device = "pdf",
-  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+  path = "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6/manual",
   width = 10,
   height = 5
 )
@@ -1135,7 +1135,7 @@ fn_plot_dot_feature_manual <- function(.region, .norm, .allmarkers) {
 }
 
 
-azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot |>
+azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_manual |>
   dplyr::mutate(
     featuredot = purrr::pmap(
       .l = list(
@@ -1160,7 +1160,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene_m
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+            "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6/manual",
             .x
           ),
           recursive = T,
@@ -1189,7 +1189,7 @@ azimuth_ref_sunburst_cell_merge_norm_allmarkers_heatmap_markerdot_feature_gene_m
                   plot = .fp,
                   device = "pdf",
                   path = file.path(
-                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-5/manual",
+                    "/home/liuc9/github/scbrain/scuvresult/07-cluster-dot-6/manual",
                     .x
                   ),
                   width = 5,
