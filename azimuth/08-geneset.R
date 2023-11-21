@@ -190,6 +190,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
     ucell = purrr::map(
       .x = norm,
       .f = \(.norm) {
+        # .norm <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$norm[[1]]
 
         a1 <- UCell::AddModuleScore_UCell(
           .norm,
@@ -301,10 +302,17 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
           ) ->
           a5_sel
 
-        dplyr::bind_rows(
-          a1_sel, a2_sel, a3_sel,
-          a4_sel, a5_sel
-        )
+        list(
+          neuron_regeneration = a1_sel,
+          positive_immune = a2_sel,
+          negative_immune = a3_sel,
+          inflammatory = a4_sel,
+          angiogenesis = a5_sel
+        ) |>
+          tibble::enframe(
+            name = "gs",
+            value = "data"
+          )
       }
     )
   ) ->
@@ -328,41 +336,199 @@ azimuth_ref_ucell |>
         )
         dir.create(outdir1, showWarnings = F, recursive = F)
 
-        the_case_color |>
-          dplyr::left_join(
-            .y,
-            by = "case"
-          ) |>
-          dplyr::group_by(
-            geneset
-          ) |>
-          tidyr::nest() |>
-          dplyr::ungroup() ->
-          .d
+        # the_case_color |>
+        #   dplyr::left_join(
+        #     .y,
+        #     by = "case"
+        #   ) |>
+        #   dplyr::group_by(
+        #     geneset
+        #   ) |>
+        #   tidyr::nest() |>
+        #   dplyr::ungroup() ->
+        #   .d
+
+        .y |>
+          dplyr::mutate(
+            data = purrr::map(
+              .x = data,
+              .f = \(.xx) {
+                the_case_color |>
+                  dplyr::left_join(
+                    .xx,
+                    by = "case"
+                  )
+              }
+            )
+          ) -> .d
 
         .d |>
           dplyr::mutate(
             a = purrr::map2(
               .x = data,
-              .y = geneset,
+              .y = gs,
               .f = \(.m, .gs) {
                 # .d$data[[1]] -> .m
-                # .d$geneset[[1]] -> .gs
+                # .d$gs[[1]] -> .gs
 
                 .regnames <- colnames(
                   .m |>
                     dplyr::select(-c(
-                      case, label, color, barcode, cell1, cell2, cell3,
+                      case, label, color, geneset, barcode, cell1, cell2, cell3,
                       cell1_color, cell2_color, cell3_color
                     ))
                 )
 
                 .m$cell1 |> as.character() |>  unique() -> .m_cell1
-                .m$cell2 |> as.character() |>  unique() -> .m_cell2
-                .m$cell3 |> as.character() |>  unique() -> .m_cell3
+                .m$cell2 |> as.character() |>  unique() |> gsub("/", "_", x = _) -> .m_cell2
+                .m$cell3 |> as.character() |>  unique() |> gsub("/", "_", x = _) -> .m_cell3
 
 
                 .m_cell1 |>
+                  purrr::map(
+                    .f = \(.mc) {
+                      # .mc <- .m_cell1[[1]]
+                      outdir2 <- file.path(
+                        outdir1, .mc
+                      )
+                      dir.create(outdir2, showWarnings = F, recursive = F)
+
+                      outdir3 <- file.path(
+                        outdir2, .gs
+                      )
+
+                      dir.create(outdir3, showWarnings = F, recursive = F)
+
+
+                      .m |>
+                        dplyr::filter(cell1 == .mc) ->
+                        .mcm
+
+                      .regnames |>
+                        purrr::map(
+                          .f = \(.regname) {
+
+                            # .regname <- .regnames[[1]]
+
+                            .ylabel <- gsub(
+                              pattern = "\\.|_UCell",
+                              replacement = " ",
+                              x = .regname
+                            ) |>
+                              stringr::str_to_title()
+
+                            ggpubr::ggviolin(
+                              .mcm,
+                              x = "label", y = .regname,
+                              fill = "label",
+                              palette = the_case_color$color,
+                              add = "boxplot",
+                              add.params = list(fill = "white"),
+                              order = the_case_color$label,
+                            ) +
+                              ggpubr::stat_compare_means(
+                                comparisons = list(
+                                  c("tMCAO", "Sham"),
+                                  c("tMCAO+UVB", "tMCAO")
+                                ),
+                              ) +
+                              ggpubr::stat_compare_means(label.y = 0.4) +
+                              theme(
+                                legend.position = "none"
+                              ) +
+                              labs(
+                                x = "",
+                                y = .ylabel
+                              ) ->
+                              p
+
+                            .filename <- "{.ylabel}.pdf" |> glue::glue()
+
+                            ggsave(
+                              filename = .filename,
+                              plot = p,
+                              path = outdir3,
+                              width = 4,
+                              height = 4.5
+                            )
+                          }
+                        )
+                    }
+                  )
+
+                .m_cell2 |>
+                  purrr::map(
+                    .f = \(.mc) {
+                      # .mc <- .m_cell1[[1]]
+                      outdir2 <- file.path(
+                        outdir1, .mc
+                      )
+                      dir.create(outdir2, showWarnings = F, recursive = F)
+
+                      outdir3 <- file.path(
+                        outdir2, .gs
+                      )
+
+                      dir.create(outdir3, showWarnings = F, recursive = F)
+
+
+                      .m |>
+                        dplyr::filter(cell1 == .mc) ->
+                        .mcm
+
+                      .regnames |>
+                        purrr::map(
+                          .f = \(.regname) {
+
+                            # .regname <- .regnames[[1]]
+
+                            .ylabel <- gsub(
+                              pattern = "\\.|_UCell",
+                              replacement = " ",
+                              x = .regname
+                            ) |>
+                              stringr::str_to_title()
+
+                            ggpubr::ggviolin(
+                              .mcm,
+                              x = "label", y = .regname,
+                              fill = "label",
+                              palette = the_case_color$color,
+                              add = "boxplot",
+                              add.params = list(fill = "white"),
+                              order = the_case_color$label,
+                            ) +
+                              ggpubr::stat_compare_means(
+                                comparisons = list(
+                                  c("tMCAO", "Sham"),
+                                  c("tMCAO+UVB", "tMCAO")
+                                ),
+                              ) +
+                              ggpubr::stat_compare_means(label.y = 0.4) +
+                              theme(
+                                legend.position = "none"
+                              ) +
+                              labs(
+                                x = "",
+                                y = .ylabel
+                              ) ->
+                              p
+
+                            .filename <- "{.ylabel}.pdf" |> glue::glue()
+
+                            ggsave(
+                              filename = .filename,
+                              plot = p,
+                              path = outdir3,
+                              width = 4,
+                              height = 4.5
+                            )
+                          }
+                        )
+                    }
+                  )
+
+                .m_cell3 |>
                   purrr::map(
                     .f = \(.mc) {
                       # .mc <- .m_cell1[[1]]
