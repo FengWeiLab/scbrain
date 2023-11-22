@@ -326,8 +326,8 @@ azimuth_ref_ucell |>
       .x = region,
       .y = ucell,
       .f = \(.x, .y) {
-        # .x <- azimuth_ref_ucell$region[[1]]
-        # .y <- azimuth_ref_ucell$ucell[[1]]
+        # .x <- azimuth_ref_ucell$region[[3]]
+        # .y <- azimuth_ref_ucell$ucell[[3]]
 
         # .x
 
@@ -360,7 +360,8 @@ azimuth_ref_ucell |>
                   )
               }
             )
-          ) -> .d
+          ) ->
+          .d
 
         .d |>
           dplyr::mutate(
@@ -473,7 +474,7 @@ azimuth_ref_ucell |>
 
 
                       .m |>
-                        dplyr::filter(cell1 == .mc) ->
+                        dplyr::filter(cell2 == .mc) ->
                         .mcm
 
                       .regnames |>
@@ -531,7 +532,7 @@ azimuth_ref_ucell |>
                 .m_cell3 |>
                   purrr::map(
                     .f = \(.mc) {
-                      # .mc <- .m_cell1[[1]]
+                      # .mc <- .m_cell3[[1]]
                       outdir2 <- file.path(
                         outdir1, .mc
                       )
@@ -545,7 +546,7 @@ azimuth_ref_ucell |>
 
 
                       .m |>
-                        dplyr::filter(cell1 == .mc) ->
+                        dplyr::filter(cell3 == .mc) ->
                         .mcm
 
                       .regnames |>
