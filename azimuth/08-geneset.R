@@ -177,6 +177,138 @@ neuron_regeneration |>
   tibble::deframe() ->
   neuron_regeneration_nest
 
+establishment_BBB <- readr::read_tsv(
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/GO_term_summary_20231126_144257_establishement_of_blood_brain_barrier.txt"
+)
+
+establishment_BBB |>
+  dplyr::select(Symbol, term = `Annotated Term`) |>
+  dplyr::group_by(term) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::filter(
+    purrr::map_lgl(
+      .x = data,
+      .f = \(.x) {
+        nrow(.x) > 3
+      }
+    )
+  ) |>
+  dplyr::mutate(
+    data = purrr::map(
+      .x = data,
+      .f = \(.x) {
+        .x$Symbol
+      }
+    )
+  ) |>
+  tibble::deframe() ->
+  establishment_BBB_nest
+
+maintenance_BBB <- readr::read_tsv(
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/GO_term_summary_20231126_144602_maintenance_of_blood_brain_barrier.txt"
+)
+
+
+maintenance_BBB |>
+  dplyr::select(Symbol, term = `Annotated Term`) |>
+  dplyr::group_by(term) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::filter(
+    purrr::map_lgl(
+      .x = data,
+      .f = \(.x) {
+        nrow(.x) > 3
+      }
+    )
+  ) |>
+  dplyr::mutate(
+    data = purrr::map(
+      .x = data,
+      .f = \(.x) {
+        .x$Symbol
+      }
+    )
+  ) |>
+  tibble::deframe() ->
+  maintenance_BBB_nest
+
+
+
+
+reg_nervous_system <- readr::read_tsv(
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/GO_term_summary_20231126_144957_regulation_of_nervous_system_development.txt"
+)
+
+
+reg_nervous_system |>
+  dplyr::select(Symbol, term = `Annotated Term`) |>
+  dplyr::group_by(term) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::filter(
+    purrr::map_lgl(
+      .x = data,
+      .f = \(.x) {
+        nrow(.x) > 3
+      }
+    )
+  ) |>
+  dplyr::mutate(
+    data = purrr::map(
+      .x = data,
+      .f = \(.x) {
+        .x$Symbol
+      }
+    )
+  ) |>
+  tibble::deframe() ->
+  reg_nervous_system_nest
+
+
+
+tissue_regeneration <- readr::read_tsv(
+  file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/GO_term_summary_20231126_145119_tissue_regeneration.txt"
+)
+
+
+tissue_regeneration |>
+  dplyr::select(Symbol, term = `Annotated Term`) |>
+  dplyr::group_by(term) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::filter(
+    purrr::map_lgl(
+      .x = data,
+      .f = \(.x) {
+        nrow(.x) > 3
+      }
+    )
+  ) |>
+  dplyr::mutate(
+    data = purrr::map(
+      .x = data,
+      .f = \(.x) {
+        .x$Symbol
+      }
+    )
+  ) |>
+  tibble::deframe() ->
+  tissue_regeneration_nest
+
+combined_gene_set_list <- c(
+  angiogenesis_nest,
+  inflammatory_nest,
+  negative_immune_nest,
+  positive_immune_nest,
+  neuron_regeneration_nest,
+  establishment_BBB_nest,
+  maintenance_BBB_nest,
+  reg_nervous_system_nest,
+  tissue_regeneration_nest
+)
+
 # body --------------------------------------------------------------------
 the_case_color <- tibble::tibble(
   case = c("Sham", "MCAO", "UV"),
@@ -192,6 +324,10 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
       .f = \(.norm) {
         # .norm <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$norm[[1]]
 
+        a1 <- UCell::AddModuleScore_UCell(
+          .norm,
+          features = combined_gene_set_list
+        )
         a1 <- UCell::AddModuleScore_UCell(
           .norm,
           features = neuron_regeneration_nest
