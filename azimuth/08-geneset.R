@@ -37,6 +37,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich <-
     file = "/home/liuc9/github/scbrain/data/azimuth/azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich.rds.gz"
   )
 
+
 angiogenesis <- readr::read_tsv(
   file = "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/GO_term_summary_20231121_163027_angiogenesis.txt"
 )
@@ -309,12 +310,12 @@ combined_gene_set_list <- c(
   tissue_regeneration_nest
 )
 
-# body --------------------------------------------------------------------
 the_case_color <- tibble::tibble(
   case = c("Sham", "MCAO", "UV"),
   label = c("Sham", "tMCAO", "tMCAO+UVB"),
   color = c("#1B1919FF", "#0099B4FF", "#FDAF91FF") |> prismatic::color()
 )
+# body --------------------------------------------------------------------
 
 azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
   dplyr::select(region, norm) |>
@@ -324,10 +325,6 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
       .f = \(.norm) {
         # .norm <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$norm[[1]]
 
-        a1 <- UCell::AddModuleScore_UCell(
-          .norm,
-          features = combined_gene_set_list
-        )
         a1 <- UCell::AddModuleScore_UCell(
           .norm,
           features = neuron_regeneration_nest
@@ -742,6 +739,143 @@ azimuth_ref_ucell |>
       }
     )
   )
+
+# Update ------------------------------------------------------------------
+
+future::plan(future::multisession, workers = 3)
+azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich |>
+  dplyr::select(region, norm) |>
+  dplyr::mutate(
+    ucell = furrr::future_map(
+      .x = norm,
+      .f = \(.norm) {
+        # .norm <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano_enrich$norm[[1]]
+
+        UCell::AddModuleScore_UCell(
+          .norm,
+          features = combined_gene_set_list
+        )
+
+      }
+    )
+  ) ->
+  azimuth_ref_ucell
+future::plan(future::sequential)
+
+geneset_name <- names(combined_gene_set_list)
+
+azimuth_ref_ucell |>
+  dplyr::mutate(
+    selected_metadata = purrr::map(
+      .x = ucell,
+      .f = \(.x) {
+        # .x <- azimuth_ref_ucell$ucell[[3]]
+        .x@meta.data |>
+          dplyr::select(
+            case, cell3,
+            dplyr::contains("_UCell")
+          ) |>
+          dplyr::select(-dplyr::contains("signature_")) |>
+          dplyr::mutate(case = factor(case, levels =  the_case_color$case)) ->
+          .xx
+
+        .xx |>
+          tidyr::gather(
+            -case, -cell3,
+            key = geneset,
+            value = score
+          ) |>
+          dplyr::group_by(
+            cell3, geneset
+          ) |>
+          tidyr::nest() |>
+          dplyr::ungroup() ->
+          .d
+
+        future::plan(future::multisession, workers = 10)
+        .d |>
+          dplyr::mutate(
+            t = purrr::map(
+              .x = data,
+              .f = \(.m) {
+                vs1 <- c("Sham", "MCAO")
+                vs2 <- c("MCAO", "UV")
+
+                .m |>
+                  dplyr::filter(case %in% vs1) ->
+                  .m_vs1
+
+                .m |>
+                  dplyr::filter(case %in% vs2) ->
+                  .m_vs2
+
+                .mm <- tryCatch(
+                  expr = {
+                    t.test(score ~ case, .m_vs1) |>
+                      broom::tidy() |>
+                      dplyr::select(Sham = estimate1, MCAO = estimate2, MCAO_vs_Sham_pval = p.value) ->
+                      t_vs1
+
+                    t.test(score ~ case, .m_vs2) |>
+                      broom::tidy() |>
+                      dplyr::select(MCAO = estimate1, UV = estimate2, UV_vs_MCAO_pval = p.value) ->
+                      t_vs2
+
+                    t_vs1 |>
+                      dplyr::bind_cols(t_vs2 |> dplyr::select(-MCAO)) |>
+                      dplyr::relocate(UV, .before = 3) |>
+                      dplyr::mutate(MCAO_Sham = MCAO - Sham, UV_MCAO = UV - MCAO, UV_Sham = UV - Sham)
+                  },
+                  error = \(e) {
+                    tibble::tibble(
+                      Sham = NULL,
+                      MCAO = NULL,
+                      UV = NULL,
+                      MOCA_vs_Sham_pval = NULL,
+                      UV_vs_MCAO_pval = NULL,
+                      MCAO_Sham = NULL,
+                      UV_MCAO = NULL,
+                      UV_Sham = NULL
+                    )
+                  }
+                )
+                .mm
+              }
+            )
+          ) |>
+          tidyr::unnest(cols = t) ->
+          .dd
+        future::plan(future::sequential)
+
+        .dd
+      }
+    )
+  ) ->
+  azimuth_ref_ucell_ttest
+
+
+azimuth_ref_ucell_ttest |>
+  dplyr::mutate(
+    sigs = purrr::map(
+      .x = selected_metadata,
+      .f = \(.x) {
+        .x |>
+          dplyr::select(-data) |>
+          dplyr::filter(MCAO_vs_Sham_pval < 0.05) |>
+          dplyr::filter(UV_vs_MCAO_pval < 0.05)
+      }
+    )
+  ) |>
+  dplyr::select(region, sigs) ->
+  azimuth_ref_ucell_ttest_sigs
+
+
+azimuth_ref_ucell_ttest_sigs |>
+  tibble::deframe() |>
+  writexl::write_xlsx(
+
+  )
+
 
 # footer ------------------------------------------------------------------
 
