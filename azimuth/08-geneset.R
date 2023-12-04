@@ -873,7 +873,7 @@ azimuth_ref_ucell_ttest |>
 azimuth_ref_ucell_ttest_sigs |>
   tibble::deframe() |>
   writexl::write_xlsx(
-
+    "/home/liuc9/github/scbrain/scuvresult/11-geneset/geneset_ttest.xlsx"
   )
 
 
