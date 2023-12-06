@@ -310,6 +310,11 @@ combined_gene_set_list <- c(
   tissue_regeneration_nest
 )
 
+combined_gene_set_list |>
+  tibble::enframe() |>
+  dplyr::filter()
+
+
 the_case_color <- tibble::tibble(
   case = c("Sham", "MCAO", "UV"),
   label = c("Sham", "tMCAO", "tMCAO+UVB"),
@@ -874,6 +879,608 @@ azimuth_ref_ucell_ttest_sigs |>
   tibble::deframe() |>
   writexl::write_xlsx(
     "/home/liuc9/github/scbrain/scuvresult/11-geneset/geneset_ttest.xlsx"
+  )
+
+
+# Inde --------------------------------------------------------------------
+
+fn_tile <- function(a) {
+  a |>
+    dplyr::mutate(
+      score = scale(score)
+    ) |>
+    dplyr::mutate(
+      type = factor(type, c("Sham", "MCAO", "UV"))
+    ) |>
+    ggplot(aes(
+      x = type,
+      y = cell3,
+      fill = score
+    )) +
+    geom_tile(
+      linewidth = 0.2,
+      colour = "grey",
+    ) +
+    geom_tile() +
+    scale_x_discrete(expand = c(0,0)) +
+    scale_y_discrete(expand = c(0,0)) +
+    # geom_text(aes(label = n), size = 5) +
+    coord_fixed(ratio = 1) +
+    scale_fill_gradient2(
+      # breaks = round(seq(-0.4, 0.4,length.out = 5), digits = 2),
+      # labels = format(seq(-0.4, 0.4,length.out = 5), digits = 2),
+      low = "#33cbfe",
+      mid = "#000000",
+      high = "#fdfe00"
+    ) +
+    theme(
+      text = element_text(family = 'Times'),
+      title = element_text(family = 'Times'),
+
+      # axis text
+      axis.title = element_blank(),
+      axis.text = element_text(size = 16, colour = "black"),
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+
+      # ticks
+      axis.ticks = element_blank(),
+
+      # legend
+      legend.background = element_rect(colour = NA, fill = NA),
+      legend.key = element_rect(colour = NA),
+      legend.position = "right",
+
+      #panel
+      panel.background = element_blank(),
+      # panel.spacing = unit(0, units = 'pt'),
+      panel.grid = element_blank(),
+
+      # plot
+      plot.background = element_rect(fill = NA, colour = NA),
+      # plot.margin = unit(c(0,0,0,0), units = 'pt'),
+      plot.title = element_text(hjust = 0.5),
+
+      validate = TRUE
+    )
+}
+
+
+
+# Brain
+azimuth_ref_ucell_ttest_sigs$sigs[[3]] |>
+  dplyr::filter(cell3 %in% c("Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "Endothelial", "Pericytes" )) |>
+  dplyr::mutate(
+    cell3 = factor(cell3, levels = c("Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "Endothelial", "Pericytes" ) |> rev())
+  ) ->
+  brain_geneset
+
+
+brain_geneset |>
+  dplyr::select(
+    cell3, geneset, Sham, MCAO, UV, MCAO_vs_Sham_pval, UV_vs_MCAO_pval
+  ) |>
+  tidyr::pivot_longer(
+    cols = c(Sham, MCAO, UV),
+    names_to = "type",
+    values_to = "score"
+  ) |>
+  dplyr::group_by(
+    geneset
+  ) |>
+  tidyr::nest() |>
+  dplyr::ungroup()->
+  brain_geneset_nest
+
+brain_geneset_nest |>
+  dplyr::mutate(
+    p = purrr::map(
+      .x = data,
+      .f = fn_tile
+    )
+  ) ->
+  brain_geneset_nest_p
+
+brain_geneset_nest_p |>
+  # head(1)  |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = p,
+      .y = geneset,
+      .f = \(.p, .geneset) {
+        .filename <- glue::glue("{.geneset}.pdf")
+        ggsave(
+          filename = .filename,
+          plot = .p,
+          device = "pdf",
+          width = 5,
+          height = 6,
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/brain"
+        )
+      }
+    )
+  )
+
+
+azimuth_ref_ucell_ttest_sigs$sigs[[1]] |>
+  dplyr::filter(cell3 %in% c("Mature B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
+  dplyr::mutate(cell3 = factor(cell3, c("Mature B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev())) ->
+  meninge_geneset
+
+meninge_geneset |>
+  dplyr::select(
+    cell3, geneset, Sham, MCAO, UV, MCAO_vs_Sham_pval, UV_vs_MCAO_pval
+  ) |>
+  tidyr::pivot_longer(
+    cols = c(Sham, MCAO, UV),
+    names_to = "type",
+    values_to = "score"
+  ) |>
+  dplyr::group_by(
+    geneset
+  ) |>
+  tidyr::nest() |>
+  dplyr::ungroup()->
+  meninge_geneset_nest
+
+meninge_geneset_nest |>
+  dplyr::mutate(
+    p = purrr::map(
+      .x = data,
+      .f = fn_tile
+    )
+  ) ->
+  meninge_geneset_nest_p
+
+
+meninge_geneset_nest_p |>
+  # head(1)  |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = p,
+      .y = geneset,
+      .f = \(.p, .geneset) {
+        .filename <- glue::glue("{.geneset}.pdf")
+        ggsave(
+          filename = .filename,
+          plot = .p,
+          device = "pdf",
+          width = 5,
+          height = 6,
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/meninge"
+        )
+      }
+    )
+  )
+
+
+azimuth_ref_ucell_ttest_sigs$sigs[[2]] |>
+  dplyr::filter(cell3 %in% c("Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
+  dplyr::mutate(cell3 = factor(cell3, c("Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev())) ->
+  skull_geneset
+
+
+
+skull_geneset |>
+  dplyr::select(
+    cell3, geneset, Sham, MCAO, UV, MCAO_vs_Sham_pval, UV_vs_MCAO_pval
+  ) |>
+  tidyr::pivot_longer(
+    cols = c(Sham, MCAO, UV),
+    names_to = "type",
+    values_to = "score"
+  ) |>
+  dplyr::group_by(
+    geneset
+  ) |>
+  tidyr::nest() |>
+  dplyr::ungroup()->
+  skull_geneset_nest
+
+skull_geneset_nest |>
+  dplyr::mutate(
+    p = purrr::map(
+      .x = data,
+      .f = fn_tile
+    )
+  ) ->
+  skull_geneset_p
+
+
+skull_geneset_p |>
+  # head(1)  |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = p,
+      .y = geneset,
+      .f = \(.p, .geneset) {
+        .filename <- glue::glue("{.geneset}.pdf")
+        ggsave(
+          filename = .filename,
+          plot = .p,
+          device = "pdf",
+          width = 5,
+          height = 6,
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/skull"
+        )
+      }
+    )
+  )
+
+
+
+
+
+
+# Load gene set -----------------------------------------------------------
+
+fn_new_tile <- function(.a) {
+
+  .a |>
+    dplyr::mutate(
+      geneset = gsub("_UCell", "", geneset)
+    ) |>
+    dplyr::mutate(
+      geneset = gsub("\\.", " ", geneset)
+    ) |>
+    dplyr::mutate(
+      geneset = stringr::str_to_sentence(
+        string = geneset
+      )
+    ) |>
+    dplyr::group_by(geneset) |>
+    dplyr::mutate(score = scale(score)) |>
+    dplyr::ungroup() ->
+    for_plot
+
+
+  for_plot |>
+    dplyr::select(Terms) |>
+    dplyr::distinct() |>
+    dplyr::arrange(Terms) |>
+    dplyr::mutate(
+      color = ggsci::pal_aaas()(length(unique(for_plot$Terms)))
+    ) ->
+    parent_term_color
+
+  for_plot |>
+    dplyr::group_by(Terms, geneset) |>
+    dplyr::summarise(s = sum(score)) |>
+    dplyr::ungroup() |>
+    dplyr::arrange(
+      dplyr::desc(Terms), s
+    ) |>
+    dplyr::left_join(
+      term_color,
+      by = "Terms"
+    ) ->
+    for_plot_e_rank
+
+
+  for_plot_e_rank |>
+    dplyr::mutate(
+      Terms = factor(
+        Terms,
+        levels = parent_term_color$Terms
+      )
+    ) |>
+    dplyr::mutate(
+      geneset = factor(
+        geneset,
+        levels = for_plot_e_rank$geneset
+      )
+    ) |>
+    dplyr::arrange(Terms) |>
+    tibble::rowid_to_column() |>
+    dplyr::group_by(Terms) |>
+    dplyr::mutate(
+      n = mean(rowid)
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(
+      n = as.integer(floor(n))
+    ) |>
+    dplyr::mutate(
+      label = ifelse(
+        rowid == n,
+        stringr::str_wrap(
+          string = Terms,
+          width = 10
+        ),
+        ""
+      )
+    ) |>
+    ggplot(aes(
+      x = 1,
+      y = geneset,
+      fill = Terms,
+      color = Terms,
+      label = label
+    )) +
+    geom_tile(
+      width = 0.3
+    ) +
+    geom_text(
+      color = "white",
+      angle = 90,
+      size = 6
+    ) +
+    scale_fill_manual(
+      values = parent_term_color$color
+    ) +
+    scale_color_manual(
+      values = parent_term_color$color
+    ) +
+    scale_y_discrete(
+      expand = c(0,0),
+      position = "left"
+    ) +
+    scale_x_continuous(expand = c(0, 0)) +
+    theme(
+      panel.background = element_blank(),
+      panel.grid = element_blank(),
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.y = element_text(
+        face = "bold",
+        color = for_plot_e_rank$color,
+        size = 10
+      ),
+      axis.ticks.y = element_line(
+        color = for_plot_e_rank$color,
+      ),
+      legend.position = "none",
+      plot.margin = unit(c(0, 0, 0, 0), "cm")
+    ) ->
+    p_bar
+
+  CPCOLS <- c("#191970", "#F8F8FF", "#FF4040")
+
+  for_plot |>
+    dplyr::mutate(
+      geneset = factor(geneset, for_plot_e_rank$geneset),
+      type = factor(type, c("Sham", "MCAO", "UV"))
+    ) |>
+    ggplot(aes(
+      x = type,
+      y = geneset,
+    )) +
+    geom_tile(aes(fill = score)) +
+    scale_x_discrete(position = "top") +
+    coord_fixed(ratio = 1) +
+    # scale_fill_gradient2(
+    #   high = "#B71C1CFF",
+    #   mid = "#EEEEEEFF",
+    #   low = "#0D47A1FF"
+    # ) +
+    scale_fill_gradient2(
+      name = "Normalized score",
+      low = CPCOLS[1],
+      mid = CPCOLS[2],
+      high = CPCOLS[3],
+    ) +
+    theme(
+      # panel.grid = element_blank(),
+      # panel.background = element_blank(),
+      panel.background = element_rect(colour = NA, fill = NA),
+      # panel.grid = element_line(colour = "grey", linetype = "dashed"),
+      panel.grid = element_blank(),
+      # panel.grid.major = element_line(
+      #   colour = "grey",
+      #   linetype = "dashed",
+      #   size = 0.2
+      # ),
+      axis.text = element_text(color = "black"),
+      axis.text.x = element_text(
+        angle = 45,
+        hjust = 0,
+        vjust = 0.5,
+        face = "bold",
+        size = 12
+      ),
+      # axis.text.y = element_text(
+      #   face = "bold",
+      #   color = for_plot_e_rank$color,
+      #   size = 12
+      # ),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title = element_blank(),
+      # complete = 1,
+      legend.position = "right",
+      plot.margin = unit(c(0, 0, 0, 0), "cm")
+    ) ->
+    p_tile
+
+  cowplot::plot_grid(
+    plotlist = list(p_bar, p_tile),
+    align = 'h',
+    rel_widths = c(.7, 1)
+  ) ->
+    p
+  p
+
+}
+
+geneset_filename <- "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/geneset_ttest-updata.xlsx"
+
+brain_geneset <- readxl::read_xlsx(
+  path = geneset_filename,
+  sheet = "Brain"
+)
+
+brain_geneset |>
+  dplyr::filter(cell3 %in% c("Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "Endothelial", "Pericytes", "VLMC" )) |>
+  dplyr::mutate(
+    cell3 = factor(cell3, levels = c("Astrocyte Aqp4_Gfap", "Astrocyte Aqp4_Slc7a10", "Microglia", "OLG", "Endothelial", "Pericytes", "VLMC" ) |> rev())
+  ) |>
+  dplyr::filter(!is.na(Terms)) ->
+  brain_geneset_terms
+
+brain_geneset_terms |>
+  dplyr::select(
+    cell3, geneset, Sham, MCAO, UV, Terms
+  ) |>
+  tidyr::pivot_longer(
+    cols = c(Sham, MCAO, UV),
+    names_to = "type",
+    values_to = "score"
+  ) |>
+  dplyr::group_by(
+    cell3
+  ) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    p = purrr::map(
+      .x = data,
+      .f = fn_new_tile
+    )
+  ) ->
+  brain_geneset_terms_nest_p
+
+brain_geneset_terms_nest_p |>
+  # head(1)  |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = p,
+      .y = cell3,
+      .f = \(.p, .cell3) {
+        .filename <- glue::glue("{.cell3}.pdf")
+        dir.create(
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/brain",
+          recursive = T
+        )
+        ggsave(
+          filename = .filename,
+          plot = .p,
+          device = "pdf",
+          width = 14,
+          height = 7,
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/brain"
+        )
+      }
+    )
+  )
+
+
+meninge_geneset <- readxl::read_xlsx(
+  path = geneset_filename,
+  sheet = "Meninge"
+)
+
+meninge_geneset |>
+  dplyr::filter(cell3 %in% c("Mature B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
+  dplyr::mutate(cell3 = factor(cell3, c("Mature B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev())) |>
+  dplyr::filter(!is.na(Terms)) ->
+  meninge_geneset_terms
+
+
+
+meninge_geneset_terms |>
+  dplyr::select(
+    cell3, geneset, Sham, MCAO, UV, Terms
+  ) |>
+  tidyr::pivot_longer(
+    cols = c(Sham, MCAO, UV),
+    names_to = "type",
+    values_to = "score"
+  ) |>
+  dplyr::group_by(
+    cell3
+  ) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    p = purrr::map(
+      .x = data,
+      .f = fn_new_tile
+    )
+  ) ->
+  meninge_geneset_terms_nest_p
+
+
+meninge_geneset_terms_nest_p |>
+  # head(1)  |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = p,
+      .y = cell3,
+      .f = \(.p, .cell3) {
+        .filename <- glue::glue("{.cell3}.pdf")
+        dir.create(
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/meninge",
+          recursive = T
+        )
+        ggsave(
+          filename = .filename,
+          plot = .p,
+          device = "pdf",
+          width = 14,
+          height = 7,
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/meninge"
+        )
+      }
+    )
+  )
+
+
+skull_geneset <- readxl::read_xlsx(
+  path = geneset_filename,
+  sheet = "Skull"
+)
+
+skull_geneset |>
+  dplyr::filter(cell3 %in% c("Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
+  dplyr::mutate(cell3 = factor(cell3, c("Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev()))|>
+  dplyr::filter(!is.na(Terms)) ->
+  skull_geneset_terms
+
+
+skull_geneset_terms |>
+  dplyr::select(
+    cell3, geneset, Sham, MCAO, UV, Terms
+  ) |>
+  tidyr::pivot_longer(
+    cols = c(Sham, MCAO, UV),
+    names_to = "type",
+    values_to = "score"
+  ) |>
+  dplyr::group_by(
+    cell3
+  ) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    p = purrr::map(
+      .x = data,
+      .f = fn_new_tile
+    )
+  ) ->
+  skull_geneset_terms_nest_p
+
+skull_geneset_terms_nest_p |>
+  # head(1)  |>
+  dplyr::mutate(
+    a = purrr::map2(
+      .x = p,
+      .y = cell3,
+      .f = \(.p, .cell3) {
+        .filename <- glue::glue("{.cell3}.pdf")
+        dir.create(
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/skull",
+          recursive = T
+        )
+        ggsave(
+          filename = .filename,
+          plot = .p,
+          device = "pdf",
+          width = 14,
+          height = 7,
+          path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/skull"
+        )
+      }
+    )
   )
 
 
