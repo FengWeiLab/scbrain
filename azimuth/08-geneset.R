@@ -1150,7 +1150,7 @@ fn_new_tile <- function(.a) {
       dplyr::desc(Terms), s
     ) |>
     dplyr::left_join(
-      term_color,
+      parent_term_color,
       by = "Terms"
     ) ->
     for_plot_e_rank
@@ -1224,7 +1224,7 @@ fn_new_tile <- function(.a) {
       axis.text.y = element_text(
         face = "bold",
         color = for_plot_e_rank$color,
-        size = 10
+        size = 8
       ),
       axis.ticks.y = element_line(
         color = for_plot_e_rank$color,
@@ -1431,8 +1431,8 @@ skull_geneset <- readxl::read_xlsx(
 )
 
 skull_geneset |>
-  dplyr::filter(cell3 %in% c("Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
-  dplyr::mutate(cell3 = factor(cell3, c("Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev()))|>
+  dplyr::filter(cell3 %in% c("Immature B cells", "Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
+  dplyr::mutate(cell3 = factor(cell3, c("Immature B cells", "Mature B cells",  "Pre-B cells", "Pro-B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev()))|>
   dplyr::filter(!is.na(Terms)) ->
   skull_geneset_terms
 
