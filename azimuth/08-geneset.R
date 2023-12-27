@@ -1302,6 +1302,83 @@ fn_new_tile <- function(.a) {
 
 }
 
+fn_linear <- function(.a) {
+
+  terms_color <- c("Angiogenesis&BBB" = "#E41A1CFF", "Immune response" = "#FFFF33FF", "Inflammatory response" = "#984EA3FF", "Neurogenesis" = "#66C2A5FF")
+
+  .a$Terms |> sort() |> unique() -> .terms
+
+  tibble::tibble(
+    Terms = .terms
+  ) |>
+    dplyr::mutate(
+      termcolor = terms_color[Terms]
+    ) |>
+    dplyr::mutate(
+      Terms = factor(Terms, levels = .terms)
+    ) |>
+    dplyr::arrange(Terms) ->
+    .terms_color
+
+  .a |>
+    dplyr::mutate(
+      geneset = gsub("_UCell", "", geneset)
+    ) |>
+    dplyr::mutate(
+      geneset = gsub("\\.", " ", geneset)
+    ) |>
+    dplyr::mutate(
+      geneset = stringr::str_to_sentence(
+        string = geneset
+      )
+    ) |>
+    dplyr::group_by(geneset) |>
+    dplyr::mutate(score = scale(score)) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(
+      Terms = factor(Terms, levels = .terms)
+    ) ->
+    for_plot
+
+  for_plot |>
+    dplyr::mutate(
+      type = factor(type, c("Sham", "MCAO", "UV"))
+    ) |>
+    dplyr::mutate(group = as.numeric(type)) |>
+    ggplot(aes(x = type, y = score, group = geneset, color = Terms)) +
+    geom_point() +
+    geom_line() +
+    scale_color_manual(
+      values = .terms_color$termcolor,
+      guide = guide_legend(
+        nrow = 2
+      )
+    ) +
+    scale_x_discrete(
+      labels = c("Sham", "tMCAO", "tMCAO+UVB"),
+      expand = expansion(mult = 0, add = 0.3),
+    ) +
+    theme_classic() +
+    theme(
+      legend.position = "top",
+      axis.title.x = element_blank(),
+      axis.title = element_text(
+        color = "black",
+        size = 16,
+        face = "bold"
+      ),
+      axis.text = element_text(
+        color = "black",
+        size = 14,
+        face = "bold"
+      )
+    ) +
+    labs(
+      y = "Gene signature score"
+    ) ->
+    p;p
+}
+
 geneset_filename <- "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/geneset_ttest-updata.xlsx"
 
 brain_geneset <- readxl::read_xlsx(
@@ -1336,16 +1413,25 @@ brain_geneset_terms |>
       .x = data,
       .f = fn_new_tile
     )
+  ) |>
+  dplyr::mutate(
+    plinear = purrr::map(
+      .x = data,
+      .f = fn_linear
+    )
   ) ->
   brain_geneset_terms_nest_p
 
 brain_geneset_terms_nest_p |>
   # head(1)  |>
   dplyr::mutate(
-    a = purrr::map2(
-      .x = p,
-      .y = cell3,
-      .f = \(.p, .cell3) {
+    a = purrr::pmap(
+      .l = list(
+        .p = p,
+        .cell3  = cell3,
+        .plinear = plinear
+      ),
+      .f = \(.p, .cell3, .plinear) {
         .filename <- glue::glue("{.cell3}.pdf")
         dir.create(
           path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/brain",
@@ -1358,6 +1444,19 @@ brain_geneset_terms_nest_p |>
           width = 14,
           height = 7,
           path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/brain"
+        )
+
+        dir.create(
+          path = "/home/liuc9/github/scbrain/scuvresult/13-geneset-linearplot/brain",
+          recursive = T
+        )
+        ggsave(
+          filename = .filename,
+          plot = .plinear,
+          device = "pdf",
+          width = 7,
+          height = 7,
+          path = "/home/liuc9/github/scbrain/scuvresult/13-geneset-linearplot/brain"
         )
       }
     )
@@ -1396,6 +1495,12 @@ meninge_geneset_terms |>
       .x = data,
       .f = fn_new_tile
     )
+  ) |>
+  dplyr::mutate(
+    plinear = purrr::map(
+      .x = data,
+      .f = fn_linear
+    )
   ) ->
   meninge_geneset_terms_nest_p
 
@@ -1403,10 +1508,13 @@ meninge_geneset_terms |>
 meninge_geneset_terms_nest_p |>
   # head(1)  |>
   dplyr::mutate(
-    a = purrr::map2(
-      .x = p,
-      .y = cell3,
-      .f = \(.p, .cell3) {
+    a = purrr::pmap(
+      .l = list(
+        .p = p,
+        .cell3  = cell3,
+        .plinear = plinear
+      ),
+      .f = \(.p, .cell3, .plinear)  {
         .filename <- glue::glue("{.cell3}.pdf")
         dir.create(
           path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/meninge",
@@ -1419,6 +1527,20 @@ meninge_geneset_terms_nest_p |>
           width = 14,
           height = 7,
           path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/meninge"
+        )
+
+
+        dir.create(
+          path = "/home/liuc9/github/scbrain/scuvresult/13-geneset-linearplot/meninge",
+          recursive = T
+        )
+        ggsave(
+          filename = .filename,
+          plot = .plinear,
+          device = "pdf",
+          width = 7,
+          height = 7,
+          path = "/home/liuc9/github/scbrain/scuvresult/13-geneset-linearplot/meninge"
         )
       }
     )
@@ -1456,16 +1578,25 @@ skull_geneset_terms |>
       .x = data,
       .f = fn_new_tile
     )
+  ) |>
+  dplyr::mutate(
+    plinear = purrr::map(
+      .x = data,
+      .f = fn_linear
+    )
   ) ->
   skull_geneset_terms_nest_p
 
 skull_geneset_terms_nest_p |>
   # head(1)  |>
   dplyr::mutate(
-    a = purrr::map2(
-      .x = p,
-      .y = cell3,
-      .f = \(.p, .cell3) {
+    a = purrr::pmap(
+      .l = list(
+        .p = p,
+        .cell3  = cell3,
+        .plinear = plinear
+      ),
+      .f = \(.p, .cell3, .plinear)  {
         .filename <- glue::glue("{.cell3}.pdf")
         dir.create(
           path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/skull",
@@ -1478,6 +1609,20 @@ skull_geneset_terms_nest_p |>
           width = 14,
           height = 7,
           path = "/home/liuc9/github/scbrain/scuvresult/12-geneset-tileplot/skull"
+        )
+
+
+        dir.create(
+          path = "/home/liuc9/github/scbrain/scuvresult/13-geneset-linearplot/skull",
+          recursive = T
+        )
+        ggsave(
+          filename = .filename,
+          plot = .plinear,
+          device = "pdf",
+          width = 7,
+          height = 7,
+          path = "/home/liuc9/github/scbrain/scuvresult/13-geneset-linearplot/skull"
         )
       }
     )
