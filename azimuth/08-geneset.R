@@ -1304,7 +1304,7 @@ fn_new_tile <- function(.a) {
 
 fn_linear <- function(.a) {
 
-  terms_color <- c("Angiogenesis&BBB" = "#E41A1CFF", "Immune response" = "#FFFF33FF", "Inflammatory response" = "#984EA3FF", "Neurogenesis" = "#66C2A5FF")
+  terms_color <- c("Angiogenesis&BBB" = "#E41A1CFF", "Immune response" = "#FFFF33FF", "Inflammatory response" = "#984EA3FF", "Neurogenesis & neurodevelopment" = "#66C2A5FF")
 
   .a$Terms |> sort() |> unique() -> .terms
 
@@ -1380,6 +1380,7 @@ fn_linear <- function(.a) {
 }
 
 geneset_filename <- "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/geneset_ttest-updata.xlsx"
+geneset_filename <- "/mnt/isilon/xing_lab/liuc9/projnet/2022-02-08-single-cell/scuvresult/Supplementary Dataset8-geneset_ttest.xlsx"
 
 brain_geneset <- readxl::read_xlsx(
   path = geneset_filename,
@@ -1469,8 +1470,8 @@ meninge_geneset <- readxl::read_xlsx(
 )
 
 meninge_geneset |>
-  dplyr::filter(cell3 %in% c("Mature B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
-  dplyr::mutate(cell3 = factor(cell3, c("Mature B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev())) |>
+  dplyr::filter(cell3 %in% c("B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils")) |>
+  dplyr::mutate(cell3 = factor(cell3, c("B cells", "CD14 Monocytes", "Macrophage",  "mDC", "Neutrophils") |> rev())) |>
   dplyr::filter(!is.na(Terms)) ->
   meninge_geneset_terms
 
