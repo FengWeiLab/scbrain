@@ -972,6 +972,9 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
       .x = de_change,
       .y = region,
       .f = \(.de_change, .r) {
+
+        # .de_change <- azimuth_ref_sunburst_cell_merge_norm_de_change_nn$de_change[[1]]
+        # .r <- "Meninge"
         m <- .de_change
         m |>
           dplyr::filter(cell != "Pseudo bulk") |>
@@ -1063,6 +1066,125 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
       }
     )
   )
+
+m |>
+  dplyr::filter(cell != "Pseudo bulk") |>
+  dplyr::select(1, 2, 3) |>
+  tidyr::gather(-cell, key = "vs", value = "de") |>
+  tidyr::unnest(cols = de) |>
+  dplyr::select(1, 2, 3, change) |>
+  tidyr::spread(key = vs, value = change) |>
+  tidyr::replace_na(
+    replace = list(
+      mcao_vs_sham = "nosig",
+      uv_vs_mcao = "nosig"
+    )
+  ) |>
+  dplyr::mutate(
+    mcao_vs_sham = stringr::str_to_sentence(mcao_vs_sham),
+    uv_vs_mcao = stringr::str_to_sentence(uv_vs_mcao)
+  ) |>
+  dplyr::mutate(vs = glue::glue("{mcao_vs_sham} {uv_vs_mcao}")) |>
+  dplyr::filter(vs != "Nosig Nosig") |>
+  dplyr::mutate(
+    vs2 = glue::glue("tMCAO vs. Sham ({mcao_vs_sham}) \nUVB+tMCAO vs. tMCAO ({uv_vs_mcao})")
+  ) |>
+  dplyr::filter(cell == "Mature B cells")  ->
+  mninge_b_cell
+
+mninge_b_cell |>
+  dplyr::filter(vs2 == "tMCAO vs. Sham (Down) \nUVB+tMCAO vs. tMCAO (Up)") ->
+  mninge_b_cell_down_up
+
+mninge_b_cell |>
+  dplyr::filter(vs2 == "tMCAO vs. Sham (Up) \nUVB+tMCAO vs. tMCAO (Down") ->
+  mninge_b_cell_up_down
+
+fn_kegg <- function(.gs) {
+  .gs_id <- clusterProfiler::bitr(
+    geneID = .gs,
+    OrgDb = org.Mm.eg.db::org.Mm.eg.db,
+    fromType = "SYMBOL",
+    toType = "ENTREZID"
+  )
+
+  .kegg <- clusterProfiler::enrichKEGG(
+    gene = .gs_id$ENTREZID,
+    organism = "mmu"
+  )
+
+  .kegg |>
+    tibble::as_tibble()
+}
+
+fn_kegg(mninge_b_cell_down_up$gene) -> mninge_b_cell_down_up_kegg
+fn_kegg(mninge_b_cell_up_down$gene) -> mninge_b_cell_up_down_kegg
+
+writexl::write_xlsx(
+  mninge_b_cell_down_up_kegg,
+  path = "/home/liuc9/github/scbrain/scuvresult/09-de-3/meninge_b_cell.xlsx"
+)
+
+mninge_b_cell_down_up_kegg |>
+  dplyr::filter(subcategory %in% c("Immune system", "Immune disease", "Signal transduction", "Nervous system")) ->
+  mninge_b_cell_down_up_kegg_filter
+mninge_b_cell_down_up_kegg_filter |>
+  tibble::as_tibble()  %>%
+  dplyr::mutate(Description = gsub(
+    " - Mus musculus \\(house mouse\\)",
+    "",
+    Description
+  )) |>
+  # dplyr::pull(Description)
+  dplyr::mutate(
+    Description = glue::glue("{Description}({ID})")
+  ) |>
+  dplyr::mutate(
+    Description = stringr::str_wrap(
+      stringr::str_to_sentence(string = Description),
+      width = 60
+    )
+  ) %>%
+  dplyr::mutate(adjp = -log10(p.adjust)) %>%
+  dplyr::select(ID, Description, adjp, Count) |>
+  dplyr::arrange(adjp, Count) %>%
+  dplyr::mutate(
+    Description = factor(Description, levels = Description)
+  ) |>
+  dplyr::filter(Description %in% c("Asthma", ""))
+  forplot
+.color <- c("up" = "#AE1700", "down" = "#112a13")
+.change <- "up"
+forplot |>
+  ggplot(aes(x = Description, y = adjp)) +
+  geom_point(aes(size = adjp, color = Count)) +
+  scale_color_viridis_c() +
+  # geom_col(fill = .color[.change], color = NA, width = 0.7) +
+  geom_text(aes(label = Count), hjust = 4, color = "white", size = 5) +
+  labs(y = "-log10(Adj. P value)") +
+  scale_y_continuous(expand = c(0, 0.02)) +
+  coord_flip() +
+  theme(
+    panel.background = element_rect(fill = NA),
+    panel.grid = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    axis.title.y = element_blank(),
+    axis.text.y = element_text(color = "black", size = 13, hjust = 1),
+    axis.ticks.length.y = unit(3, units = "mm"),
+    axis.text.x = element_text(color = "black", size = 12)
+  ) ->
+  p;p
+
+ggsave(
+  filename = "meninge_b_cell.pdf",
+  plot = p,
+  device = "pdf",
+  path = "/home/liuc9/github/scbrain/scuvresult/09-de-3",
+  width = 9,
+  height = 7
+)
+
 
 
 # vocalno -----------------------------------------------------------------
