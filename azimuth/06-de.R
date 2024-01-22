@@ -1234,11 +1234,11 @@ fn_volcano <- function(.x, .nn) {
           .de = de
         ),
         .f = function(.cell, .type, .down, .up, .de) {
-          # .cell <- .nndxx$cell[[1]]
-          # .type <- .nndxx$type[[1]]
-          # .down <- .nndxx$down[[1]]
-          # .up <- .nndxx$up[[1]]
-          # .de <- .nndxx$de[[1]]
+          # .cell <- .nndxx$cell[[7]]
+          # .type <- .nndxx$type[[7]]
+          # .down <- .nndxx$down[[7]]
+          # .up <- .nndxx$up[[7]]
+          # .de <- .nndxx$de[[7]]
           typeconv <- c("ms" = "tMCAO vs. Sham", "um" = "UVB+tMCAO vs. tMCAO")
 
           .title <- glue::glue("{typeconv[.type]}, {.cell}, Up (n={.up}), Down (n={.down})")
@@ -1249,8 +1249,38 @@ fn_volcano <- function(.x, .nn) {
               gene = stringr::str_to_sentence(
                 string = gene
               )
-            ) ->
+            ) |>
+            dplyr::mutate(fdr = ifelse(is.infinite(fdr), 300, fdr)) ->
             .xd
+
+          .geneset <- c("Cd79a", "Cd79b", "Lyn", "Syk", "Btk", "Blnk", "Hras", "Kras", "Nras", "Prkcb", "Nfkb1", "Ikbkb", "Malt1", "Bcl10")
+
+          .xd |>
+            dplyr::filter(gene %in% .geneset) ->
+            .xd_geneset
+
+          .xd_geneset |>
+            dplyr::filter(change == "up") ->
+            .xd_geneset_up
+          .xd_geneset |>
+            dplyr::filter(change == "down") ->
+            .xd_geneset_down
+
+          .xd |>
+            dplyr::filter(!grepl(pattern = "mt-", x = gene, ignore.case = T)) |>
+            dplyr::filter(change == "up") |>
+            dplyr::arrange(-fdr, -abs(avg_log2FC)) |>
+            dplyr::slice(1:10) |>
+            dplyr::bind_rows(.xd_geneset_up) ->
+            .xd_label_up
+
+          .xd |>
+            dplyr::filter(!grepl(pattern = "mt-", x = gene, ignore.case = T)) |>
+            dplyr::filter(change == "down") |>
+            dplyr::arrange(-fdr, -abs(avg_log2FC)) %>%
+            dplyr::slice(1:10) |>
+            dplyr::bind_rows(.xd_geneset_down) ->
+            .xd_label_down
 
           .xd |>
             ggplot(aes(
@@ -1277,32 +1307,24 @@ fn_volcano <- function(.x, .nn) {
             ) +
             ggrepel::geom_text_repel(
               aes(label = gene),
-              data = .xd |>
-                dplyr::filter(change == "up") |>
-                dplyr::filter(!grepl(pattern = "mt-", x = gene, ignore.case = T)) |>
-                dplyr::arrange(-fdr, -abs(avg_log2FC)) %>%
-                dplyr::slice(1:10),
+              data = .xd_label_up,
               box.padding = 0.5,
               max.overlaps = Inf,
               # size = 6
             ) +
             ggrepel::geom_text_repel(
               aes(label = gene),
-              data = .xd |>
-                dplyr::filter(change == "down") |>
-                dplyr::filter(!grepl(pattern = "mt-", x = gene, ignore.case = T)) |>
-                dplyr::arrange(-fdr, -abs(avg_log2FC)) %>%
-                dplyr::slice(1:10),
+              data = .xd_label_down,
               box.padding = 0.5,
               max.overlaps = Inf,
               # size = 6
             ) +
             scale_x_continuous(
-              # limits = c(-4, 4),
+              limits = c(-4, 4),
               expand = c(0.02, 0)
             ) +
             scale_y_continuous(
-              expand = c(0.01, 0),
+              expand = c(0.03, 0),
               limits = c(
                 0,
                 ceiling(
@@ -1329,7 +1351,7 @@ fn_volcano <- function(.x, .nn) {
               y = "-log10(FDR)",
               title = .title
             ) ->
-            p
+            p;p
 
           list(
             title = .title,
@@ -1413,7 +1435,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
 
         dir.create(
           path = file.path(
-            "/home/liuc9/github/scbrain/scuvresult/09-de-3",
+            "/home/liuc9/github/scbrain/scuvresult/09-de-4",
             .r
           ),
           showWarnings = F,
@@ -1428,7 +1450,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn_volcano |>
                 ggsave(
                   filename ="{.title}.pdf" |> glue::glue(),
                   path = file.path(
-                    "/home/liuc9/github/scbrain/scuvresult/09-de-3",
+                    "/home/liuc9/github/scbrain/scuvresult/09-de-4",
                     .r
                   ),
                   plot = .p$p,
