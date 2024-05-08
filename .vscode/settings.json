@@ -54,7 +54,9 @@
     "*.egg-info": true,
     "**/outputs": true,
     "data": true,
-    "sqtl-wb": true
+    "sqtl-wb": true,
+    "scuvresult": true,
+    "scuvdata": true
   },
   "gitlens.mode.active": "zen",
   "editor.wordWrap": "on",
