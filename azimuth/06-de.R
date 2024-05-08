@@ -888,7 +888,9 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
           scale_x_continuous(
             expand = expansion(
               mult = c(0.1, 0.1)
-            )
+            ),
+            limits = c(-1100, 1100),
+            breaks = seq(-1200, 1200, 400)
           ) +
           geom_vline(xintercept = 0, linewidth = 0.5) +
           # scale_fill_manual(
@@ -913,7 +915,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
               linewidth = 0.2,
             ),
             axis.text.y = element_text(size = 12, color = "black", face = "bold"),
-            axis.text.x = element_blank(),
+            # axis.text.x = element_blank(),
             axis.line.y = element_blank(),
             axis.line.x = element_line(
               arrow = grid::arrow(
@@ -922,7 +924,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
                 ends = "both"
               )
             ),
-            axis.ticks = element_blank(),
+            axis.ticks.y = element_blank(),
             axis.title.y = element_blank(),
             axis.title.x = element_text(
               size = 16,
@@ -942,7 +944,7 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
               fontface = "bold"
             )),
             xmin = -Inf, xmax = -20,
-            ymin = 0, ymax = 0
+            ymin = -5, ymax = -5
           ) +
           annotation_custom(
             grid::textGrob(label = "UVB+tMCAO vs. tMCAO", gp = grid::gpar(
@@ -951,11 +953,11 @@ azimuth_ref_sunburst_cell_merge_norm_de_change_nn |>
               fontface = "bold"
             )),
             xmin = 20, xmax = Inf,
-            ymin = 0, ymax = 0
+            ymin = -5, ymax = -5
           ) ->
           p;p
         ggsave(
-          filename = glue::glue("{.r}-DEG-n-MERGE.pdf"),
+          filename = glue::glue("{.r}-DEG-n-MERGE-scale.pdf"),
           plot = p,
           device = "pdf",
           path = "/home/liuc9/github/scbrain/scuvresult/09-de-3",
